@@ -21,10 +21,12 @@ const JOTFORM_API_BASE = PropertiesService.getScriptProperties().getProperty("JO
   || "https://eu-api.jotform.com";
 const JOTFORM_FORM_ID = "251190647924057";
 
-const APPT_TYPES_FULL_GROOM = new Set([
-  "Full Groom or Hand Strip — with bus pick-up/drop-off",
-  "Full Groom or Hand Strip — parent drop-off/pick-up",
-]);
+// We match the "Type of Appointment" dropdown loosely (substring) because the
+// exact JotForm option text uses different em-dashes / capitalisation than the
+// spec's idealised labels. A submission counts as Full Groom if its appt-type
+// value mentions both "full groom" (or "hand strip") AND a delivery mode (bus
+// or parent drop-off). Bath & Brush + Teeth & Nails fall through.
+const FULL_GROOM_KEYWORDS = ["full groom", "hand strip"];
 
 /**
  * Discovery — calls JotForm /form/{id}/questions and prints field IDs.
@@ -237,8 +239,13 @@ function extractAppointmentDateTime_(submission) {
 }
 
 function isFullGroomAppointment_(submission) {
-  const apptType = extractField_(submission, "JOTFORM_FIELD_APPT_TYPE");
-  return apptType && APPT_TYPES_FULL_GROOM.has(apptType);
+  const raw = extractField_(submission, "JOTFORM_FIELD_APPT_TYPE");
+  if (!raw) return false;
+  const text = String(raw).toLowerCase();
+  // Exclude Bath & Brush and Teeth & Nails explicitly (in case future variants
+  // contain "groom" somewhere).
+  if (text.includes("bath") || text.includes("teeth")) return false;
+  return FULL_GROOM_KEYWORDS.some((kw) => text.includes(kw));
 }
 
 function classifyAppointmentType_(rawType) {
