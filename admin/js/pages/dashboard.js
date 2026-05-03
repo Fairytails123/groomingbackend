@@ -13,6 +13,7 @@ const tomorrowListEl = document.getElementById("tomorrow-list");
 const statusCountsEl = document.getElementById("status-counts");
 const recentListEl   = document.getElementById("recent-list");
 const backlogListEl  = document.getElementById("backlog-list");
+const alertsListEl   = document.getElementById("alerts-list");
 
 (async () => {
   // Show tomorrow's date in the panel header.
@@ -20,15 +21,47 @@ const backlogListEl  = document.getElementById("backlog-list");
   tomorrow.setDate(tomorrow.getDate() + 1);
   tomorrowDateEl.textContent = formatDate(tomorrow.toISOString());
 
-  // Fan out four reads in parallel. Each panel renders independently so a slow
+  // Fan out reads in parallel. Each panel renders independently so a slow
   // endpoint doesn't block the rest.
   await Promise.all([
     loadTomorrowPrep(),
     loadStatusCounts(),
     loadRecentUploads(),
     loadBacklog(),
+    loadAlerts(),
   ]);
 })();
+
+async function loadAlerts() {
+  try {
+    const data = await api("dashboard_alerts", { limit: 5 }).catch(() => ({ items: [] }));
+    const items = data.items ?? [];
+    if (items.length === 0) {
+      alertsListEl.innerHTML = `<p class="muted">No open alerts. ✓</p>`;
+      return;
+    }
+    alertsListEl.innerHTML = "";
+    for (const a of items) {
+      const row = document.createElement("div");
+      row.className = "row row--space-between";
+      row.style.padding = "var(--space-2) 0";
+      row.style.borderBottom = "1px solid var(--color-border)";
+      const sevColor = a.severity === "critical" ? "var(--color-error)"
+                     : a.severity === "error"    ? "var(--color-error)"
+                     : a.severity === "warning"  ? "var(--color-warning)"
+                     : "var(--color-text-muted)";
+      row.innerHTML = `
+        <div>
+          <span class="pill" style="background:${sevColor}20; color:${sevColor};">${a.severity}</span>
+          <span style="margin-left:var(--space-2);">${escapeHtml(a.message)}</span>
+        </div>
+        <span class="muted" style="font-size:var(--font-size-sm);">${escapeHtml(a.source)}</span>`;
+      alertsListEl.appendChild(row);
+    }
+  } catch {
+    alertsListEl.innerHTML = `<p class="muted">Alerts unavailable.</p>`;
+  }
+}
 
 async function loadTomorrowPrep() {
   // Until WF-02's tomorrow-prep endpoint is wired (Stage 4), the dashboard

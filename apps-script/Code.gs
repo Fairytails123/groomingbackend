@@ -55,11 +55,13 @@ const OP_REGISTRY = {
   upload_pdf:            op_not_implemented,
   job_status:            op_not_implemented,
 
-  // Dashboard helpers (stubs returning empty data so the UI doesn't break)
-  dashboard_tomorrow_prep:    () => ({ breeds: [] }),
-  dashboard_status_counts:    () => ({ counts: {} }),
-  dashboard_recent_uploads:   () => ({ items: [] }),
-  dashboard_backlog:          () => ({ items: [] }),
+  // Dashboard
+  dashboard_tomorrow_prep:    op_dashboard_tomorrow_prep,
+  dashboard_status_counts:    op_dashboard_status_counts,
+  dashboard_recent_uploads:   op_dashboard_recent_uploads,
+  dashboard_backlog:          op_dashboard_backlog,
+  dashboard_alerts:           op_dashboard_alerts,
+  get_version_history:        op_get_version_history,
 };
 
 /** Ops that do NOT require auth. */

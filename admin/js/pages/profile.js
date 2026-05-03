@@ -5,6 +5,8 @@ import { api, ApiError } from "../api.js";
 import { statusPill, toast, toastError, toastSuccess, confirmDialog } from "../ui.js";
 import { formatRelativeTime } from "../format.js";
 
+// `formatRelativeTime` is also used by loadHistory below.
+
 if (!requireSession()) throw new Error("redirecting to login");
 wireLogoutLink();
 
@@ -77,6 +79,37 @@ function switchTab(name) {
   }
   for (const panel of document.querySelectorAll(".tab-panel")) {
     panel.hidden = panel.id !== `tab-${name}`;
+  }
+  if (name === "history") loadHistory();
+}
+
+let historyLoaded = false;
+async function loadHistory() {
+  if (historyLoaded || !state.profile) return;
+  historyLoaded = true;
+  const listEl = document.getElementById("history-list");
+  try {
+    const data = await api("get_version_history", { profile_id: state.profile.profile_id, limit: 30 });
+    const items = data.items ?? [];
+    if (items.length === 0) {
+      listEl.innerHTML = `<p class="muted">No history yet. Edits and publishes will land here.</p>`;
+      return;
+    }
+    listEl.innerHTML = "";
+    for (const v of items) {
+      const row = document.createElement("div");
+      row.style.padding = "var(--space-2) 0";
+      row.style.borderBottom = "1px solid var(--color-border)";
+      row.innerHTML = `
+        <div class="row row--space-between">
+          <div><strong>${escapeText(v.change_type)}</strong> <span class="muted">— ${escapeText(v.actor ?? "kamal")}</span></div>
+          <span class="muted" style="font-size:var(--font-size-sm);">${formatRelativeTime(v.created_at)}</span>
+        </div>
+        ${v.reason ? `<div class="muted" style="font-size:var(--font-size-sm);">${escapeText(v.reason)}</div>` : ""}`;
+      listEl.appendChild(row);
+    }
+  } catch {
+    listEl.innerHTML = `<p class="muted">History unavailable.</p>`;
   }
 }
 
