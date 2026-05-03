@@ -1,0 +1,114 @@
+/**
+ * Code.gs — entry point. doPost dispatches on the `op` field. doGet is the
+ * image proxy (stubbed until Stage 3 snipping tool wires it).
+ *
+ * See docs/api.md for the full operation catalogue.
+ */
+
+/** All ops that exist. New ops register themselves here. */
+const OP_REGISTRY = {
+  // Auth
+  login:    op_login,
+  logout:   op_logout,
+  ping:     op_ping,
+
+  // Breeds + matcher
+  list_breeds:           op_list_breeds,
+  save_breed:            op_save_breed,
+  search_breeds:         op_search_breeds,
+  override_breed_match:  op_override_breed_match,
+
+  // Profiles (stubs for Week 2)
+  get_breed_profile:     op_not_implemented,
+  save_profile:          op_not_implemented,
+  list_groom_types:      op_not_implemented,
+  list_page_renders:     op_not_implemented,
+  save_crop:             op_not_implemented,
+  delete_image:          op_not_implemented,
+  upload_pdf:            op_not_implemented,
+  publish_profile:       op_not_implemented,
+  unpublish_profile:     op_not_implemented,
+  job_status:            op_not_implemented,
+
+  // Dashboard helpers (stubs returning empty data so the UI doesn't break)
+  dashboard_tomorrow_prep:    () => ({ breeds: [] }),
+  dashboard_status_counts:    () => ({ counts: {} }),
+  dashboard_recent_uploads:   () => ({ items: [] }),
+  dashboard_backlog:          () => ({ items: [] }),
+};
+
+/** Ops that do NOT require auth. */
+const PUBLIC_OPS = new Set(["login", "ping"]);
+
+function doPost(e) {
+  const requestId = newRequestId_();
+  let body = {};
+  try {
+    body = JSON.parse(e.postData.contents);
+  } catch (err) {
+    return jsonResponse_({ ok: false, request_id: requestId, error: { code: "VALIDATION_FAILED", message: "Body must be JSON" } });
+  }
+
+  const op = body.op;
+  const handler = OP_REGISTRY[op];
+
+  if (!handler) {
+    return jsonResponse_({ ok: false, request_id: requestId, error: { code: "NOT_FOUND", message: `Unknown op: ${op}` } });
+  }
+
+  try {
+    if (!PUBLIC_OPS.has(op)) {
+      const session = verifyToken_(body.auth_token);
+      if (!session) {
+        return jsonResponse_({ ok: false, request_id: requestId, error: { code: "UNAUTHORIZED", message: "Invalid or expired session" } });
+      }
+      body._session = session;
+    }
+    const data = handler(body) ?? {};
+    return jsonResponse_({ ok: true, request_id: requestId, data });
+  } catch (err) {
+    if (err && err.apiError) {
+      return jsonResponse_({ ok: false, request_id: requestId, error: { code: err.code, message: err.message } });
+    }
+    console.error("[doPost] unhandled", err && err.stack ? err.stack : err);
+    return jsonResponse_({ ok: false, request_id: requestId, error: { code: "INTERNAL", message: "Server error" } });
+  }
+}
+
+function doGet(e) {
+  // Stage 2: a tiny readiness page so we can confirm the deployment URL works.
+  // Stage 3 will replace this with the image proxy (see docs/api.md §Image proxy).
+  const id = e?.parameter?.id;
+  if (!id) {
+    return ContentService.createTextOutput(
+      JSON.stringify({ ok: true, message: "Grooming Backend API. POST with {op:...} or GET ?id=<drive_file_id> for image proxy (Stage 3)." })
+    ).setMimeType(ContentService.MimeType.JSON);
+  }
+  // Image proxy stub
+  return ContentService.createTextOutput(
+    JSON.stringify({ ok: false, error: { code: "NOT_IMPLEMENTED", message: "Image proxy lands in Stage 3 with the snipping tool." } })
+  ).setMimeType(ContentService.MimeType.JSON);
+}
+
+// ─── Helpers ────────────────────────────────────────────────────────
+
+function jsonResponse_(payload) {
+  return ContentService
+    .createTextOutput(JSON.stringify(payload))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+function newRequestId_() {
+  return "REQ-" + Utilities.getUuid().slice(0, 12);
+}
+
+function apiError_(code, message) {
+  const err = new Error(message);
+  err.apiError = true;
+  err.code = code;
+  return err;
+}
+
+function op_not_implemented(body) {
+  throw apiError_("NOT_FOUND", `op '${body.op}' not implemented yet — coming in a later stage.`);
+}

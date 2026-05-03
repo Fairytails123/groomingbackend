@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dashboard — Fairy Tails Knowledge</title>
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/components.css">
+</head>
+<body>
+  <header class="topbar">
+    <a href="dashboard.html" class="topbar__brand">Fairy Tails Knowledge</a>
+    <nav class="topbar__nav" aria-label="Primary">
+      <a href="dashboard.html" class="topbar__link" aria-current="page">Dashboard</a>
+      <a href="library.html"   class="topbar__link">Library</a>
+      <a href="upload.html"    class="topbar__link">Upload</a>
+      <a href="#"              class="topbar__link" id="logout-link">Sign out</a>
+    </nav>
+  </header>
+
+  <main class="stack">
+    <h1>Dashboard</h1>
+
+    <section class="card">
+      <div class="card__header">
+        <h2 class="card__title">Tomorrow's prep</h2>
+        <span class="muted" id="tomorrow-date"></span>
+      </div>
+      <div id="tomorrow-list">
+        <p class="muted">Loading…</p>
+      </div>
+    </section>
+
+    <section class="grid-2">
+      <div class="card">
+        <div class="card__header"><h2 class="card__title">Status counts</h2></div>
+        <div id="status-counts"><p class="muted">Loading…</p></div>
+      </div>
+      <div class="card">
+        <div class="card__header"><h2 class="card__title">Backlog (top 5)</h2></div>
+        <div id="backlog-list"><p class="muted">Loading…</p></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card__header"><h2 class="card__title">Recent uploads</h2></div>
+      <div id="recent-list"><p class="muted">Loading…</p></div>
+    </section>
+  </main>
+
+  <div class="toast-container" id="toast-container"></div>
+
+  <script type="module" src="js/pages/dashboard.js"></script>
+</body>
+</html>

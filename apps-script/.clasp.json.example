@@ -1,0 +1,5 @@
+{
+  "_comment": "After running 'clasp create', copy this file to .clasp.json and fill scriptId and rootDir. The real .clasp.json is gitignored.",
+  "scriptId": "REPLACE_WITH_APPS_SCRIPT_PROJECT_ID",
+  "rootDir": "."
+}

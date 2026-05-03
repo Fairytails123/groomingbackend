@@ -1,0 +1,162 @@
+// Dashboard page — tomorrow's prep, status counts, recent uploads, backlog.
+
+import { requireSession, wireLogoutLink } from "../auth.js";
+import { api } from "../api.js";
+import { formatRelativeTime, formatDate, pluralise } from "../format.js";
+import { statusPill } from "../ui.js";
+
+if (!requireSession()) throw new Error("redirecting to login");
+wireLogoutLink();
+
+const tomorrowDateEl = document.getElementById("tomorrow-date");
+const tomorrowListEl = document.getElementById("tomorrow-list");
+const statusCountsEl = document.getElementById("status-counts");
+const recentListEl   = document.getElementById("recent-list");
+const backlogListEl  = document.getElementById("backlog-list");
+
+(async () => {
+  // Show tomorrow's date in the panel header.
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  tomorrowDateEl.textContent = formatDate(tomorrow.toISOString());
+
+  // Fan out four reads in parallel. Each panel renders independently so a slow
+  // endpoint doesn't block the rest.
+  await Promise.all([
+    loadTomorrowPrep(),
+    loadStatusCounts(),
+    loadRecentUploads(),
+    loadBacklog(),
+  ]);
+})();
+
+async function loadTomorrowPrep() {
+  // Until WF-02's tomorrow-prep endpoint is wired (Stage 4), the dashboard
+  // panel reads from a placeholder API op that returns an empty list early in
+  // build. This fetch will surface the empty state cleanly.
+  try {
+    const data = await api("dashboard_tomorrow_prep").catch(() => ({ breeds: [] }));
+    const breeds = data.breeds ?? [];
+    if (breeds.length === 0) {
+      tomorrowListEl.innerHTML = `<p class="muted">No bookings for tomorrow yet, or the prep endpoint isn't deployed yet.</p>`;
+      return;
+    }
+    tomorrowListEl.innerHTML = "";
+    for (const b of breeds) {
+      const row = document.createElement("div");
+      row.className = "row row--space-between";
+      row.style.padding = "var(--space-3) 0";
+      row.style.borderBottom = "1px solid var(--color-border)";
+      const icon = b.kb_status === "published" ? "✅"
+                 : b.kb_status === "draft"     ? "⚠️"
+                 : "❌";
+      row.innerHTML = `
+        <div>
+          <span style="font-size:var(--font-size-lg);">${icon}</span>
+          <strong>${escapeHtml(b.breed_name)}</strong>
+          <span class="muted"> — ${escapeHtml(b.kb_status)}</span>
+        </div>`;
+      const actionLink = document.createElement("a");
+      actionLink.className = "btn btn--small btn--secondary";
+      if (b.kb_status === "published" || b.kb_status === "draft") {
+        actionLink.href = `profile.html?profile_id=${encodeURIComponent(b.profile_id)}`;
+        actionLink.textContent = b.kb_status === "draft" ? "Review & publish" : "Open";
+      } else {
+        actionLink.href = `upload.html?breed_name=${encodeURIComponent(b.breed_name)}`;
+        actionLink.textContent = "Upload PDF";
+      }
+      row.appendChild(actionLink);
+      tomorrowListEl.appendChild(row);
+    }
+  } catch (err) {
+    tomorrowListEl.innerHTML = `<p class="muted">Couldn't load tomorrow's prep.</p>`;
+  }
+}
+
+async function loadStatusCounts() {
+  try {
+    const data = await api("dashboard_status_counts").catch(() => ({ counts: {} }));
+    const counts = data.counts ?? {};
+    const labels = ["Published", "Draft", "Needs Review", "Processing", "Failed"];
+    statusCountsEl.innerHTML = "";
+    statusCountsEl.style.display = "flex";
+    statusCountsEl.style.gap = "var(--space-3)";
+    statusCountsEl.style.flexWrap = "wrap";
+    for (const label of labels) {
+      const wrap = document.createElement("div");
+      wrap.style.flex = "1";
+      wrap.style.minWidth = "100px";
+      wrap.innerHTML = `
+        <div style="font-size:var(--font-size-2xl); font-weight:bold; color:var(--color-brand-deep);">${counts[label] ?? 0}</div>
+        <div class="muted" style="font-size:var(--font-size-sm);">${label}</div>`;
+      statusCountsEl.appendChild(wrap);
+    }
+  } catch {
+    statusCountsEl.innerHTML = `<p class="muted">Counts unavailable.</p>`;
+  }
+}
+
+async function loadRecentUploads() {
+  try {
+    const data = await api("dashboard_recent_uploads", { limit: 5 }).catch(() => ({ items: [] }));
+    const items = data.items ?? [];
+    if (items.length === 0) {
+      recentListEl.innerHTML = `<p class="muted">No recent uploads.</p>`;
+      return;
+    }
+    recentListEl.innerHTML = "";
+    for (const item of items) {
+      const row = document.createElement("div");
+      row.className = "row row--space-between";
+      row.style.padding = "var(--space-2) 0";
+      row.innerHTML = `
+        <div>
+          <a href="profile.html?profile_id=${encodeURIComponent(item.profile_id)}">${escapeHtml(item.breed_name)} / ${escapeHtml(item.groom_type)}</a>
+        </div>`;
+      const right = document.createElement("div");
+      right.className = "row";
+      right.style.gap = "var(--space-3)";
+      right.appendChild(statusPill(item.status));
+      const time = document.createElement("span");
+      time.className = "muted";
+      time.style.fontSize = "var(--font-size-sm)";
+      time.textContent = formatRelativeTime(item.updated_at);
+      right.appendChild(time);
+      row.appendChild(right);
+      recentListEl.appendChild(row);
+    }
+  } catch {
+    recentListEl.innerHTML = `<p class="muted">Recent uploads unavailable.</p>`;
+  }
+}
+
+async function loadBacklog() {
+  try {
+    const data = await api("dashboard_backlog", { limit: 5 }).catch(() => ({ items: [] }));
+    const items = data.items ?? [];
+    if (items.length === 0) {
+      backlogListEl.innerHTML = `<p class="muted">No unmatched breeds.</p>`;
+      return;
+    }
+    backlogListEl.innerHTML = "";
+    for (const item of items) {
+      const row = document.createElement("div");
+      row.className = "row row--space-between";
+      row.style.padding = "var(--space-2) 0";
+      row.innerHTML = `
+        <div><strong>${escapeHtml(item.raw_breed)}</strong></div>
+        <div class="muted">${pluralise(item.search_count, "hit")}</div>`;
+      backlogListEl.appendChild(row);
+    }
+  } catch {
+    backlogListEl.innerHTML = `<p class="muted">Backlog unavailable.</p>`;
+  }
+}
+
+function escapeHtml(s) {
+  return String(s ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}

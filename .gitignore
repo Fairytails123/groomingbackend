@@ -1,0 +1,31 @@
+# clasp deployment metadata (each clone has its own)
+apps-script/.clasp.json
+apps-script/.clasprc.json
+
+# Node
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Build artefacts (not used in this project, defensive)
+dist/
+build/
+
+# Logs
+*.log
+
+# Local env / secrets
+.env
+.env.local
+admin/js/config.local.js
