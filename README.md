@@ -118,13 +118,23 @@ and click Run.
 
 Edit `admin/js/config.js` (created when this scaffolding is finished) and set `APPS_SCRIPT_URL` to the Web App URL from step 4.
 
-### 7. n8n credentials (later, Stage 3)
+### 7. JotForm API + n8n credentials
 
+**JotForm API key** (Stage 4 — needed for the daily session sync to fetch tomorrow's bookings):
+1. JotForm → My Account → API → Create New Key. Copy the key.
+2. In Apps Script Properties, set `JOTFORM_API_KEY` = (the key).
+3. Run function `discoverJotFormFields` once. It logs each form field with its question ID. Read the log and set these Script Properties:
+   - `JOTFORM_FIELD_BREED` — qid for the free-text breed field
+   - `JOTFORM_FIELD_APPT_TYPE` — qid for the appointment-type radio
+   - `JOTFORM_FIELD_DATE_FG_BUS` — qid for the date when type = Full Groom + bus
+   - `JOTFORM_FIELD_DATE_FG_PRT` — qid for the date when type = Full Groom + parent
+
+**n8n credentials** (Stage 4+):
 In `ftmanager.app.n8n.cloud` create credentials for:
 - Google Sheets (OAuth2)
 - Google Drive (OAuth2)
 - HTTP Header Auth for GitHub (PAT from step 3)
-- OpenAI (API key)
+- OpenAI (API key, Stage 3)
 - Telegram — **leave token empty until end of build.** Kamal will provide.
 
 ### 8. JotForm webhook (later, Stage 2 Week 3)

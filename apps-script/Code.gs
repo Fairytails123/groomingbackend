@@ -43,6 +43,14 @@ const OP_REGISTRY = {
   save_crop:             op_save_crop,
   list_crops_for_render: op_list_crops_for_render,
 
+  // Stage 4 — cron handlers
+  rebuild_today_json:        op_rebuild_today_json,
+  rebuild_tomorrow_json:     op_rebuild_tomorrow_json,
+  send_tomorrow_prep_alert:  op_send_tomorrow_prep_alert,
+
+  // Public endpoint for TV manual-search backlog signal
+  log_backlog_hit:       op_log_backlog_hit,
+
   // Stage 3 stubs (PDF intake + AI extraction)
   upload_pdf:            op_not_implemented,
   job_status:            op_not_implemented,
@@ -55,7 +63,14 @@ const OP_REGISTRY = {
 };
 
 /** Ops that do NOT require auth. */
-const PUBLIC_OPS = new Set(["login", "ping"]);
+const PUBLIC_OPS = new Set([
+  "login",
+  "ping",
+  "log_backlog_hit",         // TV calls this with no auth
+  "rebuild_today_json",      // n8n cron calls these — could be tightened with a service secret
+  "rebuild_tomorrow_json",
+  "send_tomorrow_prep_alert",
+]);
 
 function doPost(e) {
   const requestId = newRequestId_();

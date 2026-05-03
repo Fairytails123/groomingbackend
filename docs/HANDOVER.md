@@ -2,7 +2,7 @@
 
 > Continuously updated. If you're a fresh Claude context picking this up, **read this file first**, then `.md/grooming-knowledge-software-architecture.md` (the canonical spec), then the approved plan at `C:\Users\FT Manager\.claude\plans\read-the-md-files-glimmering-glacier.md`.
 
-**Last updated:** 2026-05-03 — Stage 2 Weeks 1+2+3 pushed. Repo at `Fairytails123/groomingbackend@main`, GitHub Pages live at https://fairytails123.github.io/groomingbackend/ . Drive folder ID `1Ry1YbBVhPwlvb6WFnsxiEBPvBzDDlNUk`. Password gate restored — staged via `DEFAULT_PASSWORD` Script Property, never committed. n8n workflow `6xHWEX3f9zrWtDDa` ("Dog Grooming Back End") populated Phase 1 with sticky-noted architecture + 4 cron/webhook entry points calling Apps Script. Stage 3 next: vendor Cropper.js + build snip.html + crops.gs.
+**Last updated:** 2026-05-03 — Stages 2+3+4 partially complete. Repo at `Fairytails123/groomingbackend@main`. GitHub Pages live. Drive folder ID `1Ry1YbBVhPwlvb6WFnsxiEBPvBzDDlNUk`. Password gate via DEFAULT_PASSWORD Script Property. n8n workflow `6xHWEX3f9zrWtDDa` Phase 1 populated. Snipping tool live (Cropper.js v1.6.2 vendored, client-side cropping, Drive direct URL serving). Stage 4 cron handlers (rebuild_today_json, rebuild_tomorrow_json, send_tomorrow_prep_alert) + token-based fuzzy matcher (matcher.gs) implemented. Pending: JOTFORM_API_KEY + JOTFORM_FIELD_* property setup (user-side); Telegram bot token (end of build); AI extraction chain (WF-04..WF-09).
 
 ---
 
