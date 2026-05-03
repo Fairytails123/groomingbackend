@@ -1,49 +1,8 @@
 # Fairy Tails Grooming Knowledge Software — Architecture & Build Plan
 
 **Owner:** Kamal (Fairy Tails K9 Centre)
-**Status:** Working spec, v3.7 (post-deploy: live system end of session 2026-05-03; Stage 5 complete; Stage 3 Phase 2 pending)
+**Status:** Working spec, v3.6 (back-end design pass — schema fixes, atomic publish, server-side cropping, mobile snipping)
 **Last updated:** 3 May 2026
-
----
-
-## 0a. Amendments since v3.6 (live deployment + bug fixes)
-
-Captured here for fast diffing. The v3.6 backup is preserved at `grooming-knowledge-software-architecture.v3.6.backup.md`. Operational truth (URLs, IDs, what's wired, next steps) is in `docs/HANDOVER.md`.
-
-**Live deployment state (locked-in, working):**
-- GitHub repo `Fairytails123/groomingbackend@main`; GitHub Pages live at `https://fairytails123.github.io/groomingbackend/`.
-- Apps Script project `1sxgzOrmd2OEmuJmMeoW15Vbb1GkbO1GIhs3h0afmOafcgOb1tDErvIA1`; Web App URL persistent at deployment `AKfycby5CU8J-xyCn38ruoe_HdDswRBCNcxXLO9O2AyiiHDt781mwsJzWeyyahySfwjpq4ZL/exec`.
-- Sheets workbook `1SZtkWUjXXgRIO5CzB_8NBeJ0_SEEq5k3IMAEPBZN01s` ("Grooming Backend") with all 13 sheets populated.
-- Drive root `1Ry1YbBVhPwlvb6WFnsxiEBPvBzDDlNUk` ("Dog Grooming Back end").
-- n8n workflow `6xHWEX3f9zrWtDDa` ("Dog Grooming Back End") populated Phase 1.
-- Telegram bot token + chat ID (`-5072836532`, group chat) saved in `.secrets/telegram-token.md` (gitignored). JotForm API key in `.secrets/jotform-api-key.md` and set as `JOTFORM_API_KEY` Property.
-
-**Decisions added since v3.6:**
-- #23 **Public Drive sharing for served images.** Page renders + crops are uploaded with `setSharing(ANYONE_WITH_LINK, VIEW)` and served via `https://lh3.googleusercontent.com/d/<file_id>=s0` so the snipping tool's `<img crossorigin="anonymous">` can be `canvas.toDataURL()`-exported by Cropper.js without a SecurityError. Soft barrier: image_id-based filenames are unguessable. Replaceable by an Apps Script doGet image proxy if stricter isolation ever needed.
-- #24 **DEFAULT_PASSWORD setup pattern.** `setupAll()` reads a one-time Script Property `DEFAULT_PASSWORD`, hashes it via `setAdminPassword()`, then deletes the property. Plaintext lives in the Apps Script editor's Properties UI for seconds, never in source code, never in git. Avoids committing plaintext to the public repo.
-- #25 **JotForm EU Safe-mode handling.** Account is in EU Safe mode; `api.jotform.com` returns a 301 to `eu-api.jotform.com` that UrlFetchApp doesn't follow cleanly for JSON. Default base URL is now `eu-api.jotform.com`, with optional Script Property `JOTFORM_API_BASE` override.
-- #26 **Lenient appt-type matching.** `isFullGroomAppointment_` is substring-based (true if value contains "full groom" or "hand strip" AND doesn't contain "bath" or "teeth") rather than exact-string set membership against idealised labels. Real JotForm option text uses different em-dashes / capitalisation than the spec.
-- #27 **Quick-add-or-update breed on dashboard.** Top-of-page card with autocomplete (debounced search_breeds) + "Add new" path that creates breed + Pet Groom profile + jumps straight into the editor. Lets Kamal proactively digitise breeds without waiting for the booking-driven loop. (Implementation in commit `dbc1352`.)
-
-**Schema additions since v3.6:**
-- Sheet 2 (Groom Profiles) gains `published_pack_url` field — populated by publish flow with the canonical GitHub Pages URL of the per-breed JSON.
-- Sheet 4 (Images) — `source_page_render_id` is empty (not null) for manual `op_save_image_record` uploads (Stage 2 Week 3 path); populated by `op_save_crop` (Stage 3 path).
-
-**API additions since v3.6** (all live; full catalogue in `docs/api.md`):
-- Stage 4 cron handlers: `op_rebuild_today_json`, `op_rebuild_tomorrow_json`, `op_send_tomorrow_prep_alert` — all in `PUBLIC_OPS` so n8n cron can call without auth.
-- Stage 5 dashboard reads: `op_dashboard_status_counts`, `op_dashboard_recent_uploads`, `op_dashboard_backlog`, `op_dashboard_alerts`, `op_dashboard_tomorrow_prep` (reads `public/tomorrow.json`), `op_get_version_history`.
-- Snipping tool: `op_list_page_renders`, `op_save_page_render`, `op_save_crop`, `op_list_crops_for_render` (Stage 3 Phase 1 — client-side cropping; Phase 2 server-side cropping deferred).
-- Quick-create flow: client composes `save_breed` + `create_profile` (no new op needed).
-- Helper functions in Apps Script editor (not API ops): `setupAll`, `discoverJotFormFields`, `setAdminPassword`, `makeAllImagesPublic`, `resetLoginFailCounter`.
-
-**Bugs fixed during the deploy session (do not reintroduce):**
-- See `docs/HANDOVER.md` "Bugs fixed" section. Highlights: clasp-overwrites-appsscript.json, JotForm EU endpoint, JotForm appt-type substring, snipping-tool Drive 403 + lh3.googleusercontent.com fix.
-
-**What's still pending:**
-- `GITHUB_PAT` Apps Script Property (Kamal-side; gates publish to GitHub Pages).
-- n8n credentials (Google Sheets/Drive/GitHub/OpenAI/Telegram) and HTTP Request URL placeholders.
-- Stage 3 Phase 2: PDF intake (Telegram + backend), AI text extraction (GPT-4o-mini), AI vision pass (GPT-4o), heading approval. Recommended order: browser-side `pdf.js` first (no Linux deps), then Telegram bot.
-- TV display — separate future repo, not in scope here.
 
 ---
 
