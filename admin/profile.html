@@ -61,13 +61,21 @@
 
     <!-- IMAGES tab -->
     <section id="tab-images" class="tab-panel" hidden role="tabpanel">
-      <div class="card">
+      <div class="card stack">
         <div class="card__header">
           <h2 class="card__title">Images</h2>
-          <a class="btn btn--small btn--secondary" id="open-snip-link">Open snipping tool</a>
+          <a class="btn" id="open-snip-link">Open snipping tool →</a>
         </div>
-        <div id="images-list">
-          <p class="muted">Snipping tool ships in Stage 3 — for now, images can be uploaded via the Upload page.</p>
+        <p class="muted">Use the snipping tool to upload page-render JPEGs (e.g. an Adobe Scan PDF saved as separate JPEGs) and snip diagrams from them. Or use the <a href="upload.html">Upload page</a> for already-cropped images with a role dropdown.</p>
+
+        <div>
+          <h3 style="margin:0 0 var(--space-2);">Page renders <span class="muted" id="page-render-count" style="font-weight:normal; font-size:var(--font-size-base);">— loading…</span></h3>
+          <div id="page-renders-list" class="muted">Loading…</div>
+        </div>
+
+        <div>
+          <h3 style="margin:0 0 var(--space-2);">Cropped images <span class="muted" id="image-count" style="font-weight:normal; font-size:var(--font-size-base);">— loading…</span></h3>
+          <div id="images-list" class="muted">Loading…</div>
         </div>
       </div>
     </section>

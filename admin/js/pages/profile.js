@@ -83,6 +83,62 @@ function switchTab(name) {
   if (name === "history") loadHistory();
 }
 
+async function loadImagesTab() {
+  if (!state.profile) return;
+  const pageEl = document.getElementById("page-renders-list");
+  const pageCountEl = document.getElementById("page-render-count");
+  const imagesEl = document.getElementById("images-list");
+  const imageCountEl = document.getElementById("image-count");
+
+  try {
+    const [pages, images] = await Promise.all([
+      api("list_page_renders", { profile_id: state.profile.profile_id }).catch(() => ({ page_renders: [] })),
+      api("list_images",       { profile_id: state.profile.profile_id }).catch(() => ({ images: [] })),
+    ]);
+
+    const renders = pages.page_renders ?? [];
+    const imgs = images.images ?? [];
+
+    pageCountEl.textContent = renders.length === 0 ? "(none yet)" : `(${renders.length})`;
+    if (renders.length === 0) {
+      pageEl.innerHTML = `<p class="muted">No page renders yet. Click <strong>"Open snipping tool"</strong> above to add some.</p>`;
+    } else {
+      pageEl.style.display = "flex";
+      pageEl.style.flexWrap = "wrap";
+      pageEl.style.gap = "var(--space-2)";
+      pageEl.innerHTML = "";
+      for (const r of renders) {
+        const tile = document.createElement("a");
+        tile.href = `snip.html?profile_id=${encodeURIComponent(state.profile.profile_id)}`;
+        tile.style.cssText = "display:inline-block; text-decoration:none; border:1px solid var(--color-border); border-radius:var(--radius-md); padding:var(--space-2); background:var(--color-surface); color:var(--color-text);";
+        tile.innerHTML = `<div style="font-size:var(--font-size-xs); color:var(--color-text-muted);">Page ${r.page_index}</div><div style="font-size:var(--font-size-xs); font-family:var(--font-family-mono); color:var(--color-text-muted);">${r.width_px}×${r.height_px}</div>`;
+        pageEl.appendChild(tile);
+      }
+    }
+
+    imageCountEl.textContent = imgs.length === 0 ? "(none yet)" : `(${imgs.length})`;
+    if (imgs.length === 0) {
+      imagesEl.innerHTML = `<p class="muted">No cropped images yet.</p>`;
+    } else {
+      imagesEl.style.display = "flex";
+      imagesEl.style.flexWrap = "wrap";
+      imagesEl.style.gap = "var(--space-2)";
+      imagesEl.innerHTML = "";
+      for (const img of imgs) {
+        const tile = document.createElement("div");
+        tile.style.cssText = "display:inline-block; border:1px solid var(--color-border); border-radius:var(--radius-md); padding:var(--space-2); background:var(--color-surface); min-width:120px;";
+        tile.innerHTML = `
+          <div style="font-size:var(--font-size-xs); color:var(--color-brand-blue); font-weight:bold; text-transform:capitalize;">${escapeText(img.image_role)}</div>
+          <div style="font-size:var(--font-size-xs); color:var(--color-text-muted); font-family:var(--font-family-mono);">${img.image_id}</div>`;
+        imagesEl.appendChild(tile);
+      }
+    }
+  } catch (err) {
+    pageEl.innerHTML = `<p class="muted">Couldn't load page renders.</p>`;
+    imagesEl.innerHTML = `<p class="muted">Couldn't load images.</p>`;
+  }
+}
+
 let historyLoaded = false;
 async function loadHistory() {
   if (historyLoaded || !state.profile) return;
@@ -153,6 +209,7 @@ async function load() {
 
     renderSections();
     renderDisplay();
+    loadImagesTab();
   } catch (err) {
     sectionsEl.innerHTML = `<p class="muted">Failed to load profile.</p>`;
   }
