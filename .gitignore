@@ -25,7 +25,8 @@ build/
 # Logs
 *.log
 
-# Local env / secrets
+# Local env / secrets — NEVER commit these to the public repo
 .env
 .env.local
 admin/js/config.local.js
+.secrets/
