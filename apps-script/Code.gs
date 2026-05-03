@@ -30,11 +30,16 @@ const OP_REGISTRY = {
   // Publish (Week 3)
   publish_profile:       op_publish_profile,
   unpublish_profile:     op_unpublish_profile,
+  list_drafts:           op_list_drafts,
+
+  // Images (Week 3 — pre-Cropper. Stage 3 adds save_crop)
+  save_image_record:     op_save_image_record,
+  list_images:           op_list_images,
+  delete_image:          op_delete_image,
 
   // Stage 3 stubs
   list_page_renders:     op_not_implemented,
   save_crop:             op_not_implemented,
-  delete_image:          op_not_implemented,
   upload_pdf:            op_not_implemented,
   job_status:            op_not_implemented,
 

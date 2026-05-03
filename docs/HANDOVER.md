@@ -2,7 +2,7 @@
 
 > Continuously updated. If you're a fresh Claude context picking this up, **read this file first**, then `.md/grooming-knowledge-software-architecture.md` (the canonical spec), then the approved plan at `C:\Users\FT Manager\.claude\plans\read-the-md-files-glimmering-glacier.md`.
 
-**Last updated:** 2026-05-03 — Stage 2 Week 1 scaffolding pushed to GitHub at `Fairytails123/groomingbackend@main`. GitHub Pages enabled (serving from `main` branch root, expected live at https://fairytails123.github.io/groomingbackend/ within minutes). Drive folder ID provided: `1Ry1YbBVhPwlvb6WFnsxiEBPvBzDDlNUk`. Working directly on Stage 2 Week 2 next.
+**Last updated:** 2026-05-03 — Stages 2 Weeks 1-2 pushed; Week 3 partially pushed (publish.gs + github.gs + setupAll DEFAULT_PASSWORD hook). Repo is at `Fairytails123/groomingbackend@main`, GitHub Pages live at https://fairytails123.github.io/groomingbackend/ . Drive folder ID `1Ry1YbBVhPwlvb6WFnsxiEBPvBzDDlNUk` recorded. Password gate is in place — user-chosen plaintext is staged via `DEFAULT_PASSWORD` Script Property and never committed. Building upload + publish admin pages next, then populating n8n workflow `6xHWEX3f9zrWtDDa` (Dog Grooming Back End).
 
 ---
 
@@ -116,10 +116,14 @@ These genuinely need Kamal's hands (Google OAuth, password choice, BotFather sec
 
 1. **Drive folder** — done ✅ (`1Ry1YbBVhPwlvb6WFnsxiEBPvBzDDlNUk`).
 2. **GitHub repo + Pages** — done ✅ (pushed; Pages enabled programmatically via gh API).
-3. **`clasp login`** (one-time OAuth in his shell): `cd apps-script && clasp login && clasp create --type webapp --rootDir . --title "Grooming Backend API" && clasp push && clasp deploy`. Note Web App URL from output.
-4. **Generate fine-grained PAT** for `Fairytails123/groomingbackend` (Contents read+write). Save it.
-5. **In Apps Script editor**, run `setupAll()` once (a one-shot bootstrapper) — this creates the Sheets workbook in the Drive folder, populates all 10 sheets with headers, generates salt + session secret. Then run `setAdminPassword('your-password-here')`. Then set Script Property `GITHUB_PAT` to the PAT from step 4.
-6. **Edit `admin/js/config.js`** — paste `APPS_SCRIPT_URL` from step 3 (build will commit a placeholder; Kamal pastes the URL and pushes).
+3. **`clasp login`** (one-time OAuth in his shell): `cd apps-script && clasp login && clasp create --type webapp --rootDir . --title "Grooming Backend API" && clasp push`. Then deploy: in the Apps Script editor (`clasp open`), Deploy → New Deployment → Web App, "Execute as: Me", "Who has access: Anyone". Copy the Web App URL.
+4. **Generate fine-grained PAT** for `Fairytails123/groomingbackend` (Contents read+write).
+5. **In Apps Script editor → Project Settings → Script Properties**, add:
+   - `DRIVE_ROOT_ID` = `1Ry1YbBVhPwlvb6WFnsxiEBPvBzDDlNUk`
+   - `DEFAULT_PASSWORD` = (the agreed-upon password — see chat)
+   - `GITHUB_PAT` = (the PAT from step 4)
+   Then run function `setupAll`. It creates the workbook, populates 13 sheets, hashes the password, deletes `DEFAULT_PASSWORD` so plaintext is gone.
+6. **Edit `admin/js/config.js`** — paste `APPS_SCRIPT_URL` and `APPS_SCRIPT_IMAGE_PROXY_URL` (same URL works for both during Stage 2/3). Commit + push.
 7. **Smoke test** from phone: open `https://fairytails123.github.io/groomingbackend/admin/login.html`, log in, add a breed, see it in the library and in Sheet 1.
 8. **Telegram bot token** — provided at end of build. Plug into n8n's Telegram credential.
 

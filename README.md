@@ -89,17 +89,30 @@ clasp deploy --description "Initial deploy"
 # Note the Web App URL — needed for admin/js/api.js config.
 ```
 
-### 5. Apps Script properties
+### 5. Apps Script properties + setupAll()
 
-In the Apps Script editor (`clasp open`), open Project Settings → Script Properties and add:
-- `SPREADSHEET_ID` = the ID from step 1
-- `DRIVE_ROOT_ID` = the ID from step 2
-- `GITHUB_PAT` = the token from step 3
-- `GITHUB_OWNER` = `Fairytails123`
-- `GITHUB_REPO` = `groomingbackend`
-- `ADMIN_PASSWORD_SALT` = run the `setupSalt()` function once (auto-generates a 32-byte salt)
-- `ADMIN_PASSWORD_HASH` = run the `setAdminPassword('your-password-here')` function once
-- `SESSION_SECRET` = run the `setupSessionSecret()` function once (auto-generates a 32-byte secret)
+In the Apps Script editor (`clasp open`), open **Project Settings → Script Properties** and add:
+
+| Key | Value |
+|---|---|
+| `DRIVE_ROOT_ID` | `1Ry1YbBVhPwlvb6WFnsxiEBPvBzDDlNUk` |
+| `DEFAULT_PASSWORD` | (the password you want to use — see chat for the agreed value) |
+| `GITHUB_PAT` | (fine-grained PAT from step 3) |
+
+Then in the editor, select function `setupAll` and click **Run**. Authorise when prompted. This single function:
+- Creates the Sheets workbook in your Drive folder (and stores `SPREADSHEET_ID`).
+- Populates all 13 sheets with headers.
+- Generates `SESSION_SECRET` and `ADMIN_PASSWORD_SALT` (random, 32 bytes each).
+- Reads `DEFAULT_PASSWORD`, hashes + stores it as `ADMIN_PASSWORD_HASH`, and **deletes the `DEFAULT_PASSWORD` property** so the plaintext is gone.
+- Sets `GITHUB_OWNER` and `GITHUB_REPO` defaults.
+
+Result: the Apps Script Properties only ever hold the hashed password. Plaintext lives in the editor's Properties UI for the few seconds between paste and Run, then it's deleted.
+
+If you ever want to change the password later, in the editor's function picker run:
+```javascript
+setAdminPassword('new-password-here')
+```
+and click Run.
 
 ### 6. Admin website config
 

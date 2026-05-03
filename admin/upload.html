@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Upload images — Fairy Tails Knowledge</title>
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/pages/upload.css">
+</head>
+<body>
+  <header class="topbar">
+    <a href="dashboard.html" class="topbar__brand">Fairy Tails Knowledge</a>
+    <nav class="topbar__nav" aria-label="Primary">
+      <a href="dashboard.html" class="topbar__link">Dashboard</a>
+      <a href="library.html"   class="topbar__link">Library</a>
+      <a href="upload.html"    class="topbar__link" aria-current="page">Upload</a>
+      <a href="#"              class="topbar__link" id="logout-link">Sign out</a>
+    </nav>
+  </header>
+
+  <main class="stack">
+    <h1>Upload images</h1>
+    <p class="muted">Manual upload of pre-cropped diagrams. The full snipping tool ships in Stage 3.</p>
+
+    <div class="card stack">
+      <div>
+        <label for="profile-search">Profile</label>
+        <select id="profile-select">
+          <option value="">Loading profiles…</option>
+        </select>
+        <p class="muted" id="profile-meta" style="font-size:var(--font-size-sm); margin-top:var(--space-1);"></p>
+      </div>
+
+      <div>
+        <label for="image-role">Image role</label>
+        <select id="image-role">
+          <option value="main">Main (largest, hero image)</option>
+          <option value="front">Front view</option>
+          <option value="back">Back view</option>
+          <option value="head">Head detail</option>
+          <option value="supplementary">Supplementary</option>
+        </select>
+      </div>
+
+      <div>
+        <label for="file-input">Image file</label>
+        <div class="dropzone" id="dropzone">
+          <input id="file-input" type="file" accept="image/jpeg,image/png" hidden>
+          <p>Drop an image here, or <button type="button" class="btn btn--small btn--secondary" id="browse-button">browse</button></p>
+          <p class="muted" style="font-size:var(--font-size-sm); margin-top:var(--space-2);">JPEG or PNG, ideally under 5 MB. Crop before uploading until snipping tool ships.</p>
+        </div>
+        <div id="preview-wrap" hidden style="margin-top:var(--space-3);">
+          <img id="preview" alt="Selected image preview" style="max-height:240px; border-radius:var(--radius-md); border:1px solid var(--color-border);">
+          <p class="muted" style="font-size:var(--font-size-sm);" id="file-meta"></p>
+        </div>
+      </div>
+
+      <div class="row" style="justify-content:flex-end; gap:var(--space-3);">
+        <button class="btn btn--secondary" id="reset-button" type="button">Clear</button>
+        <button class="btn" id="upload-button" type="button" disabled>Upload</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card__header"><h2 class="card__title">Existing images on this profile</h2></div>
+      <div id="existing-images"><p class="muted">Pick a profile above.</p></div>
+    </div>
+  </main>
+
+  <div id="modal-root"></div>
+  <div class="toast-container" id="toast-container"></div>
+
+  <script type="module" src="js/pages/upload.js"></script>
+</body>
+</html>

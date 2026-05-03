@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Publish — Fairy Tails Knowledge</title>
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/components.css">
+</head>
+<body>
+  <header class="topbar">
+    <a href="dashboard.html" class="topbar__brand">Fairy Tails Knowledge</a>
+    <nav class="topbar__nav" aria-label="Primary">
+      <a href="dashboard.html" class="topbar__link">Dashboard</a>
+      <a href="library.html"   class="topbar__link">Library</a>
+      <a href="upload.html"    class="topbar__link">Upload</a>
+      <a href="#"              class="topbar__link" id="logout-link">Sign out</a>
+    </nav>
+  </header>
+
+  <main class="stack">
+    <h1>Publish drafts</h1>
+    <p class="muted">Profiles in Draft or Needs Review — click Publish to push to the TV-facing JSON on GitHub Pages.</p>
+
+    <div class="card">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Breed / Groom</th>
+            <th>Status</th>
+            <th class="col-hide-sm">Updated</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="drafts-body">
+          <tr><td colspan="4" class="muted center">Loading…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+
+  <div id="modal-root"></div>
+  <div class="toast-container" id="toast-container"></div>
+
+  <script type="module" src="js/pages/publish.js"></script>
+</body>
+</html>
