@@ -2,7 +2,7 @@
 
 > Continuously updated. If you're a fresh Claude context picking this up, **read this file first**, then `.md/grooming-knowledge-software-architecture.md` (the canonical spec), then the approved plan at `C:\Users\FT Manager\.claude\plans\read-the-md-files-glimmering-glacier.md`.
 
-**Last updated:** 2026-05-03 — Stages 2 Weeks 1-2 pushed; Week 3 partially pushed (publish.gs + github.gs + setupAll DEFAULT_PASSWORD hook). Repo is at `Fairytails123/groomingbackend@main`, GitHub Pages live at https://fairytails123.github.io/groomingbackend/ . Drive folder ID `1Ry1YbBVhPwlvb6WFnsxiEBPvBzDDlNUk` recorded. Password gate is in place — user-chosen plaintext is staged via `DEFAULT_PASSWORD` Script Property and never committed. Building upload + publish admin pages next, then populating n8n workflow `6xHWEX3f9zrWtDDa` (Dog Grooming Back End).
+**Last updated:** 2026-05-03 — Stage 2 Weeks 1+2+3 pushed. Repo at `Fairytails123/groomingbackend@main`, GitHub Pages live at https://fairytails123.github.io/groomingbackend/ . Drive folder ID `1Ry1YbBVhPwlvb6WFnsxiEBPvBzDDlNUk`. Password gate restored — staged via `DEFAULT_PASSWORD` Script Property, never committed. n8n workflow `6xHWEX3f9zrWtDDa` ("Dog Grooming Back End") populated Phase 1 with sticky-noted architecture + 4 cron/webhook entry points calling Apps Script. Stage 3 next: vendor Cropper.js + build snip.html + crops.gs.
 
 ---
 
