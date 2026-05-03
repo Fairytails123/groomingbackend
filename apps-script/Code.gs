@@ -27,13 +27,15 @@ const OP_REGISTRY = {
   restore_profile:       op_restore_profile,
   duplicate_profile:     op_duplicate_profile,
 
+  // Publish (Week 3)
+  publish_profile:       op_publish_profile,
+  unpublish_profile:     op_unpublish_profile,
+
   // Stage 3 stubs
   list_page_renders:     op_not_implemented,
   save_crop:             op_not_implemented,
   delete_image:          op_not_implemented,
   upload_pdf:            op_not_implemented,
-  publish_profile:       op_not_implemented,
-  unpublish_profile:     op_not_implemented,
   job_status:            op_not_implemented,
 
   // Dashboard helpers (stubs returning empty data so the UI doesn't break)

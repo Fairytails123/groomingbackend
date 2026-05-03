@@ -92,12 +92,34 @@ function setupAll() {
   ensureGitHubDefaults_();
   ensureWorkbook_();
   ensureSheets_();
+  applyDefaultPasswordIfStaged_();
   Logger.log("=== setupAll() complete ===");
   Logger.log("Next steps:");
-  Logger.log("  1. setAdminPassword('your-password-here')");
-  Logger.log("  2. Set Script Property GITHUB_PAT (fine-grained, Contents read+write on the repo)");
-  Logger.log("  3. Add midnight time trigger for resetLoginFailCounter");
-  Logger.log("  4. Deploy as Web App, then paste the URL into admin/js/config.js");
+  Logger.log("  1. Set Script Property GITHUB_PAT (fine-grained, Contents read+write on the repo)");
+  Logger.log("  2. Add midnight time trigger for resetLoginFailCounter");
+  Logger.log("  3. Deploy as Web App, then paste the URL into admin/js/config.js");
+}
+
+/**
+ * If a Script Property `DEFAULT_PASSWORD` is set, hash + store it via
+ * setAdminPassword(), then DELETE the property so the plaintext only lives
+ * in the editor's Properties UI for the few seconds between paste and run —
+ * never in source code, never committed.
+ */
+function applyDefaultPasswordIfStaged_() {
+  const props = PropertiesService.getScriptProperties();
+  const staged = props.getProperty("DEFAULT_PASSWORD");
+  if (!staged) {
+    if (props.getProperty("ADMIN_PASSWORD_HASH")) {
+      Logger.log("[setup] Admin password already set — skipping.");
+    } else {
+      Logger.log("[setup] No DEFAULT_PASSWORD staged. Run setAdminPassword('your-password') manually, OR set Script Property DEFAULT_PASSWORD then re-run setupAll().");
+    }
+    return;
+  }
+  setAdminPassword(staged);
+  props.deleteProperty("DEFAULT_PASSWORD");
+  Logger.log("[setup] DEFAULT_PASSWORD applied and cleared.");
 }
 
 function ensureCryptoProperties_() {
