@@ -13,7 +13,12 @@
  *   - Run discoverJotFormFields() once to populate the conditional date field IDs
  */
 
-const JOTFORM_API_BASE = "https://api.jotform.com";
+// JotForm EU Safe-mode account — must use the eu-api endpoint, not api.jotform.com.
+// (api.jotform.com returns a 301 redirect to the EU endpoint with no body, which
+// UrlFetchApp doesn't follow when fetching JSON.) If this account ever moves
+// regions, override via Script Property `JOTFORM_API_BASE`.
+const JOTFORM_API_BASE = PropertiesService.getScriptProperties().getProperty("JOTFORM_API_BASE")
+  || "https://eu-api.jotform.com";
 const JOTFORM_FORM_ID = "251190647924057";
 
 const APPT_TYPES_FULL_GROOM = new Set([
