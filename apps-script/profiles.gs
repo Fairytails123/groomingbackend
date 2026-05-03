@@ -185,10 +185,11 @@ function breedToView_(b) {
 
 function imageProxyUrl_(driveFileId) {
   if (!driveFileId) return null;
-  // The image proxy is the same Apps Script Web App's doGet endpoint.
-  // ScriptApp.getService().getUrl() returns the deployment URL when a Web App is published.
-  const baseUrl = ScriptApp.getService().getUrl();
-  return `${baseUrl}?id=${encodeURIComponent(driveFileId)}`;
+  // Stage 3 phase 1: use Drive's direct view URL. Works for the editor (Kamal)
+  // because he's authenticated to his own Drive account in the same browser.
+  // For wider exposure (e.g. cross-account, third-party embed) Stage 3 phase 2
+  // will route through Apps Script doGet with a token.
+  return `https://drive.google.com/uc?export=view&id=${encodeURIComponent(driveFileId)}`;
 }
 
 // ─── op: list_groom_types ───────────────────────────────────────────

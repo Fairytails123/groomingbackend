@@ -37,9 +37,13 @@ const OP_REGISTRY = {
   list_images:           op_list_images,
   delete_image:          op_delete_image,
 
-  // Stage 3 stubs
-  list_page_renders:     op_not_implemented,
-  save_crop:             op_not_implemented,
+  // Stage 3 — snipping tool
+  list_page_renders:     op_list_page_renders,
+  save_page_render:      op_save_page_render,
+  save_crop:             op_save_crop,
+  list_crops_for_render: op_list_crops_for_render,
+
+  // Stage 3 stubs (PDF intake + AI extraction)
   upload_pdf:            op_not_implemented,
   job_status:            op_not_implemented,
 

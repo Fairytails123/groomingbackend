@@ -1,0 +1,191 @@
+.snip-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  max-width: none;
+  padding: 0;
+  width: 100%;
+}
+
+.snip-layout {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 180px 1fr 240px;
+  gap: 0;
+  min-height: 0;
+}
+
+.snip-filmstrip {
+  background: var(--color-surface-alt);
+  border-right: 1px solid var(--color-border);
+  padding: var(--space-3);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.thumb {
+  position: relative;
+  border: 2px solid transparent;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  cursor: pointer;
+  background: var(--color-surface);
+  transition: border-color var(--transition-fast);
+}
+.thumb:hover { border-color: var(--color-border); }
+.thumb--active { border-color: var(--color-brand-cyan); }
+.thumb img {
+  display: block;
+  width: 100%;
+  height: 130px;
+  object-fit: contain;
+  background: var(--color-bg);
+}
+.thumb__index {
+  position: absolute;
+  top: var(--space-1);
+  left: var(--space-1);
+  background: rgba(15, 23, 42, 0.7);
+  color: white;
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+}
+.thumb__badge {
+  position: absolute;
+  top: var(--space-1);
+  right: var(--space-1);
+  background: var(--color-brand-cyan);
+  color: white;
+  padding: 0 var(--space-1);
+  min-width: 20px;
+  height: 20px;
+  border-radius: 9999px;
+  font-size: var(--font-size-xs);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.snip-canvas-wrap {
+  display: flex;
+  flex-direction: column;
+  background: var(--color-bg);
+  min-height: 0;
+}
+
+.snip-empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.snip-canvas-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.snip-coords {
+  padding: var(--space-2) var(--space-4);
+  background: var(--color-surface-alt);
+  border-bottom: 1px solid var(--color-border);
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+.snip-img-wrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-text);
+  min-height: 0;
+  overflow: hidden;
+}
+
+.snip-img-wrap img {
+  display: block;
+  max-width: 100%;
+}
+
+.snip-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-surface);
+  border-top: 1px solid var(--color-border);
+  align-items: center;
+}
+
+.snip-summary {
+  background: var(--color-surface-alt);
+  border-left: 1px solid var(--color-border);
+  padding: var(--space-3);
+  overflow-y: auto;
+}
+.snip-summary h3 {
+  margin: 0 0 var(--space-3);
+  font-size: var(--font-size-base);
+  color: var(--color-brand-deep);
+}
+
+.crop-tile {
+  display: flex;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  margin-bottom: var(--space-2);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  align-items: center;
+}
+.crop-tile img {
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  background: var(--color-bg);
+}
+.crop-tile__role {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-brand-blue);
+  text-transform: capitalize;
+}
+.crop-tile__meta {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  font-family: var(--font-family-mono);
+}
+
+@media (max-width: 768px) {
+  .snip-layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: 130px 1fr auto;
+  }
+  .snip-filmstrip {
+    flex-direction: row;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: var(--space-2);
+    border-right: 0;
+    border-bottom: 1px solid var(--color-border);
+  }
+  .thumb {
+    flex-shrink: 0;
+    width: 100px;
+  }
+  .thumb img { height: 100px; }
+  .snip-summary {
+    border-left: 0;
+    border-top: 1px solid var(--color-border);
+    max-height: 200px;
+  }
+}

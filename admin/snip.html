@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Snipping tool — Fairy Tails Knowledge</title>
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="../vendor/cropperjs/cropper.min.css">
+  <link rel="stylesheet" href="css/pages/snip.css">
+</head>
+<body>
+  <header class="topbar">
+    <a href="dashboard.html" class="topbar__brand">Fairy Tails Knowledge</a>
+    <nav class="topbar__nav" aria-label="Primary">
+      <a href="dashboard.html" class="topbar__link">Dashboard</a>
+      <a href="library.html"   class="topbar__link">Library</a>
+      <a href="upload.html"    class="topbar__link">Upload</a>
+      <a href="#"              class="topbar__link" id="logout-link">Sign out</a>
+    </nav>
+  </header>
+
+  <main class="snip-main">
+    <div class="row row--space-between" style="flex-wrap:wrap; padding:var(--space-4); border-bottom:1px solid var(--color-border);">
+      <div>
+        <a id="back-link" class="muted" style="font-size:var(--font-size-sm);" href="library.html">← Back</a>
+        <h1 id="page-title" style="margin:0;">Snipping tool</h1>
+      </div>
+      <div class="row" style="gap:var(--space-3);">
+        <button class="btn btn--secondary" type="button" id="add-page-button">+ Add page render</button>
+        <input id="page-file-input" type="file" accept="image/jpeg,image/png" hidden>
+        <span id="status" class="muted" style="font-size:var(--font-size-sm); align-self:center;"></span>
+      </div>
+    </div>
+
+    <div class="snip-layout">
+      <aside class="snip-filmstrip" id="filmstrip">
+        <p class="muted center" style="padding:var(--space-4);">No page renders yet. Click "+ Add page render" to upload one.</p>
+      </aside>
+
+      <section class="snip-canvas-wrap">
+        <div class="snip-empty" id="canvas-empty">
+          <p class="muted center">Pick a page from the filmstrip, or add one to get started.</p>
+        </div>
+        <div class="snip-canvas-area" id="canvas-area" hidden>
+          <div class="snip-coords" id="coords">x: 0, y: 0, w: 0, h: 0</div>
+          <div class="snip-img-wrap">
+            <img id="snip-img" alt="Page render" crossorigin="anonymous">
+          </div>
+          <div class="snip-toolbar">
+            <span class="muted" style="font-size:var(--font-size-sm);">Save crop as:</span>
+            <button class="btn btn--small" type="button" data-role="main">Main (M)</button>
+            <button class="btn btn--small btn--secondary" type="button" data-role="front">Front (F)</button>
+            <button class="btn btn--small btn--secondary" type="button" data-role="back">Back (B)</button>
+            <button class="btn btn--small btn--secondary" type="button" data-role="head">Head (H)</button>
+            <button class="btn btn--small btn--secondary" type="button" data-role="supplementary">Supplementary (S)</button>
+          </div>
+          <div id="existing-on-page" class="muted" style="font-size:var(--font-size-sm); padding:0 var(--space-4) var(--space-4);"></div>
+        </section>
+      </section>
+
+      <aside class="snip-summary" id="all-crops">
+        <h3>All crops</h3>
+        <div id="all-crops-list">
+          <p class="muted">No crops yet.</p>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <div id="modal-root"></div>
+  <div class="toast-container" id="toast-container"></div>
+
+  <script src="../vendor/cropperjs/cropper.min.js" defer></script>
+  <script type="module" src="js/pages/snip.js"></script>
+</body>
+</html>
