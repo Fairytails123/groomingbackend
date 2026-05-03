@@ -1,12 +1,14 @@
 // Dashboard page — tomorrow's prep, status counts, recent uploads, backlog.
 
 import { requireSession, wireLogoutLink } from "../auth.js";
-import { api } from "../api.js";
+import { api, ApiError } from "../api.js";
 import { formatRelativeTime, formatDate, pluralise } from "../format.js";
-import { statusPill } from "../ui.js";
+import { statusPill, formDialog, toast, toastError, toastSuccess } from "../ui.js";
 
 if (!requireSession()) throw new Error("redirecting to login");
 wireLogoutLink();
+
+wireQuickAdd();
 
 const tomorrowDateEl = document.getElementById("tomorrow-date");
 const tomorrowListEl = document.getElementById("tomorrow-list");
@@ -192,4 +194,133 @@ function escapeHtml(s) {
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
+}
+
+// ─── Quick add or update breed ──────────────────────────────────────
+
+function wireQuickAdd() {
+  const input = document.getElementById("quick-add-input");
+  const results = document.getElementById("quick-add-results");
+  if (!input || !results) return;
+
+  let debounceTimer = null;
+  let lastQuery = "";
+
+  input.addEventListener("input", () => {
+    const q = input.value.trim();
+    if (debounceTimer) clearTimeout(debounceTimer);
+    if (!q) { hideResults(); return; }
+    debounceTimer = setTimeout(() => runSearch(q), 200);
+  });
+
+  input.addEventListener("focus", () => {
+    if (input.value.trim()) runSearch(input.value.trim());
+  });
+
+  // Close dropdown when clicking outside
+  document.addEventListener("click", (e) => {
+    if (!input.contains(e.target) && !results.contains(e.target)) hideResults();
+  });
+
+  // Esc closes
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") { hideResults(); input.blur(); }
+    if (e.key === "Enter") {
+      e.preventDefault();
+      const first = results.querySelector(".quick-add__row");
+      if (first) first.click();
+    }
+  });
+
+  async function runSearch(q) {
+    if (q === lastQuery) return;
+    lastQuery = q;
+    try {
+      const data = await api("search_breeds", { query: q, limit: 8 });
+      renderResults(q, data.matches ?? []);
+    } catch {
+      hideResults();
+    }
+  }
+
+  function renderResults(q, matches) {
+    results.innerHTML = "";
+    for (const m of matches) {
+      const row = document.createElement("div");
+      row.className = "quick-add__row";
+      row.innerHTML = `
+        <div>
+          <strong>${escapeHtml(m.breed_name)}</strong>
+          <span class="quick-add__row-meta"> — ${m.reason === "name" ? "exact" : m.reason.replace("_", " ")}</span>
+        </div>
+        <span class="quick-add__row-meta">Open editor →</span>`;
+      row.addEventListener("click", () => {
+        location.href = `profile.html?breed_id=${encodeURIComponent(m.breed_id)}`;
+      });
+      results.appendChild(row);
+    }
+    // "Add new" option only if no exact-match (name) match exists
+    const exactName = matches.find((m) => m.reason === "name" && m.breed_name.toLowerCase() === q.toLowerCase());
+    if (!exactName) {
+      const create = document.createElement("div");
+      create.className = "quick-add__row quick-add__create";
+      create.innerHTML = `
+        <div>+ Add new breed: <strong>"${escapeHtml(q)}"</strong></div>
+        <span class="quick-add__row-meta">Creates a Pet Groom profile and opens the editor</span>`;
+      create.addEventListener("click", () => quickCreate(q, create));
+      results.appendChild(create);
+    }
+    results.hidden = false;
+  }
+
+  async function quickCreate(name, rowEl) {
+    const choice = await formDialog({
+      title: `Add ${name}?`,
+      fields: [
+        { name: "breed_type", label: "Breed type", type: "select", required: true,
+          options: [
+            { value: "pure", label: "Pure breed" },
+            { value: "cross", label: "Cross breed" },
+          ] },
+        { name: "groom_type", label: "Initial groom type", type: "select", required: true,
+          options: [
+            { value: "Pet Groom",   label: "Pet Groom (recommended baseline)" },
+            { value: "Show",        label: "Show" },
+            { value: "Sporting",    label: "Sporting" },
+            { value: "Puppy",       label: "Puppy" },
+            { value: "Maintenance", label: "Maintenance" },
+            { value: "Hand Strip",  label: "Hand Strip" },
+          ] },
+      ],
+      submitLabel: "Create + open editor",
+    });
+    if (!choice) return;
+
+    rowEl?.classList.add("quick-add__row--working");
+    rowEl?.querySelector(":nth-child(2)")?.replaceChildren(document.createTextNode("Creating…"));
+
+    try {
+      const breed = await api("save_breed", {
+        breed: { breed_name: name, breed_type: choice.breed_type },
+      });
+      const profile = await api("create_profile", {
+        breed_id: breed.breed_id,
+        groom_type: choice.groom_type,
+        source_type: "manual",
+      });
+      toastSuccess(`Created ${name} (${choice.groom_type}). Opening editor…`);
+      location.href = `profile.html?profile_id=${encodeURIComponent(profile.profile_id)}`;
+    } catch (err) {
+      rowEl?.classList.remove("quick-add__row--working");
+      if (err instanceof ApiError && err.code === "VALIDATION_FAILED") {
+        toastError(err.message);
+      }
+    }
+  }
+
+  function hideResults() {
+    results.hidden = true;
+    results.innerHTML = "";
+    lastQuery = "";
+  }
 }

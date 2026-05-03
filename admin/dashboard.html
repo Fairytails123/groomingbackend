@@ -22,6 +22,18 @@
   <main class="stack">
     <h1>Dashboard</h1>
 
+    <section class="card quick-add-card">
+      <div class="card__header">
+        <h2 class="card__title">Quick add or update breed</h2>
+        <span class="muted" style="font-size:var(--font-size-sm);">Get ahead of the booking queue</span>
+      </div>
+      <p class="muted" style="margin-bottom:var(--space-3);">Type a breed name to find an existing profile to edit, or create a brand new breed and jump straight into the editor.</p>
+      <div class="quick-add">
+        <input id="quick-add-input" type="search" placeholder="Type a breed name… e.g. Cavapoo" autocomplete="off">
+        <div id="quick-add-results" class="quick-add__results" hidden></div>
+      </div>
+    </section>
+
     <section class="card">
       <div class="card__header">
         <h2 class="card__title">Tomorrow's prep</h2>

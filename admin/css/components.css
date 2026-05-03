@@ -227,3 +227,53 @@
 
 .muted { color: var(--color-text-muted); }
 .center { text-align: center; }
+
+/* ─── Quick-add (dashboard) ───────────────────────────────────────── */
+
+.quick-add-card {
+  border-left: 4px solid var(--color-brand-cyan);
+}
+
+.quick-add { position: relative; }
+
+.quick-add__results {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0; right: 0;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  max-height: 320px;
+  overflow-y: auto;
+  z-index: 20;
+}
+
+.quick-add__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+  border-bottom: 1px solid var(--color-border);
+}
+.quick-add__row:last-child { border-bottom: 0; }
+.quick-add__row:hover, .quick-add__row--focused { background: var(--color-surface-alt); }
+
+.quick-add__row-meta {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+.quick-add__create {
+  background: var(--color-bg);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-brand-blue);
+}
+
+.quick-add__row--working {
+  pointer-events: none;
+  opacity: 0.6;
+}
