@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Groom types — Fairy Tails Knowledge</title>
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/components.css">
+</head>
+<body>
+  <header class="topbar">
+    <a href="dashboard.html" class="topbar__brand">Fairy Tails Knowledge</a>
+    <nav class="topbar__nav" aria-label="Primary">
+      <a href="dashboard.html" class="topbar__link">Dashboard</a>
+      <a href="library.html"   class="topbar__link" aria-current="page">Library</a>
+      <a href="upload.html"    class="topbar__link">Upload</a>
+      <a href="#"              class="topbar__link" id="logout-link">Sign out</a>
+    </nav>
+  </header>
+
+  <main class="stack">
+    <div class="row row--space-between" style="flex-wrap:wrap;">
+      <div>
+        <a href="library.html" class="muted" style="font-size:var(--font-size-sm);">← Library</a>
+        <h1 id="page-title" style="margin:0;">Loading…</h1>
+      </div>
+      <button class="btn btn--secondary" id="add-button" type="button">+ Add groom type</button>
+    </div>
+
+    <div class="card">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Groom type</th>
+            <th>Status</th>
+            <th>Default?</th>
+            <th class="col-hide-sm">Last updated</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="profiles-body">
+          <tr><td colspan="5" class="muted center">Loading…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+
+  <div id="modal-root"></div>
+  <div class="toast-container" id="toast-container"></div>
+
+  <script type="module" src="js/pages/groom-types.js"></script>
+</body>
+</html>

@@ -18,10 +18,16 @@ const OP_REGISTRY = {
   search_breeds:         op_search_breeds,
   override_breed_match:  op_override_breed_match,
 
-  // Profiles (stubs for Week 2)
-  get_breed_profile:     op_not_implemented,
-  save_profile:          op_not_implemented,
-  list_groom_types:      op_not_implemented,
+  // Profiles
+  get_breed_profile:     op_get_breed_profile,
+  save_profile:          op_save_profile,
+  list_groom_types:      op_list_groom_types,
+  create_profile:        op_create_profile,
+  archive_profile:       op_archive_profile,
+  restore_profile:       op_restore_profile,
+  duplicate_profile:     op_duplicate_profile,
+
+  // Stage 3 stubs
   list_page_renders:     op_not_implemented,
   save_crop:             op_not_implemented,
   delete_image:          op_not_implemented,

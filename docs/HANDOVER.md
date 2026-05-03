@@ -2,7 +2,7 @@
 
 > Continuously updated. If you're a fresh Claude context picking this up, **read this file first**, then `.md/grooming-knowledge-software-architecture.md` (the canonical spec), then the approved plan at `C:\Users\FT Manager\.claude\plans\read-the-md-files-glimmering-glacier.md`.
 
-**Last updated:** 2026-05-03 — Stage 2 Week 1 SCAFFOLDING COMPLETE on the Claude side. Pending: Kamal's external setup (GitHub push, Sheets workbook, Drive folder, Apps Script clasp deploy, password setup). See "What does the user need to do externally?" below.
+**Last updated:** 2026-05-03 — Stage 2 Week 1 scaffolding pushed to GitHub at `Fairytails123/groomingbackend@main`. GitHub Pages enabled (serving from `main` branch root, expected live at https://fairytails123.github.io/groomingbackend/ within minutes). Drive folder ID provided: `1Ry1YbBVhPwlvb6WFnsxiEBPvBzDDlNUk`. Working directly on Stage 2 Week 2 next.
 
 ---
 
@@ -110,19 +110,20 @@ See §0 of the spec for the full list. Highlights:
 - ✅ Dashboard placeholder ops (`dashboard_tomorrow_prep`, etc.) returning empty so the dashboard renders cleanly
 - 🟡 All other ops registered but throw `NOT_FOUND` with "coming in a later stage" — implementation lands in Week 2/3.
 
-### Pending (Kamal's external setup — see README §"One-time setup")
+### Pending (Kamal's external setup — minimised by automation)
 
-These need Kamal's hands. The local code is ready; nothing else moves until he does these:
+These genuinely need Kamal's hands (Google OAuth, password choice, BotFather security):
 
-1. Create Google Sheets workbook `Grooming Knowledge Base — DB` with all 10 sheets + auxiliaries (Page Renders, Jobs, Telegram Outbox). Schema in spec §7.
-2. Create Drive folder `Grooming Knowledge Base/`.
-3. Push this repo to `Fairytails123/groomingbackend` (currently empty on GitHub). Enable GitHub Pages (deploy from `main` branch root).
-4. Generate fine-grained PAT for the repo (Contents read+write).
-5. `clasp login`, `clasp create --type webapp --rootDir apps-script`, `clasp push`, `clasp deploy`. Note Web App URL.
-6. Set Apps Script Properties: `SPREADSHEET_ID`, `DRIVE_ROOT_ID`, `GITHUB_PAT`, `GITHUB_OWNER=Fairytails123`, `GITHUB_REPO=groomingbackend`. Run `setupSalt()`, `setAdminPassword('...')`, `setupSessionSecret()` once each.
-7. Edit `admin/js/config.js` — fill in `APPS_SCRIPT_URL` and `APPS_SCRIPT_IMAGE_PROXY_URL`.
-8. Add midnight time trigger for `resetLoginFailCounter`.
-9. Smoke test: open `https://fairytails123.github.io/groomingbackend/admin/login.html` from phone on cellular, log in, add a breed, see it appear in the library and in Sheet 1.
+1. **Drive folder** — done ✅ (`1Ry1YbBVhPwlvb6WFnsxiEBPvBzDDlNUk`).
+2. **GitHub repo + Pages** — done ✅ (pushed; Pages enabled programmatically via gh API).
+3. **`clasp login`** (one-time OAuth in his shell): `cd apps-script && clasp login && clasp create --type webapp --rootDir . --title "Grooming Backend API" && clasp push && clasp deploy`. Note Web App URL from output.
+4. **Generate fine-grained PAT** for `Fairytails123/groomingbackend` (Contents read+write). Save it.
+5. **In Apps Script editor**, run `setupAll()` once (a one-shot bootstrapper) — this creates the Sheets workbook in the Drive folder, populates all 10 sheets with headers, generates salt + session secret. Then run `setAdminPassword('your-password-here')`. Then set Script Property `GITHUB_PAT` to the PAT from step 4.
+6. **Edit `admin/js/config.js`** — paste `APPS_SCRIPT_URL` from step 3 (build will commit a placeholder; Kamal pastes the URL and pushes).
+7. **Smoke test** from phone: open `https://fairytails123.github.io/groomingbackend/admin/login.html`, log in, add a breed, see it in the library and in Sheet 1.
+8. **Telegram bot token** — provided at end of build. Plug into n8n's Telegram credential.
+
+Everything else (Sheets schema setup, Drive sub-folder layout per breed, GitHub Pages enable, ID counters, etc.) is automated via Apps Script setup functions.
 
 ### Stage 2 Week 2 (next coding chunk)
 
