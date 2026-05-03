@@ -68,6 +68,7 @@ function op_save_page_render(body) {
     const filename = `${profile.profile_id}__page-${String(pageIndex).padStart(2, "0")}__${renderId}.jpg`;
     const blob = Utilities.newBlob(bytes, "image/jpeg", filename);
     const file = pageFolder.createFile(blob);
+    makeFilePublicForServing_(file);
 
     const sheet = getDb_().getSheetByName("Page Renders");
     appendRow_(sheet, readSheet_("Page Renders").headers, {
@@ -143,6 +144,7 @@ function op_save_crop(body) {
     const filename = `${role}__x${cropX}_y${cropY}_w${cropW}_h${cropH}__from-page-${pageNum}__${imageId}.jpg`;
     const blob = Utilities.newBlob(bytes, "image/jpeg", filename);
     const file = cropsFolder.createFile(blob);
+    makeFilePublicForServing_(file);
 
     // Enforce one-main-per-profile.
     const imagesSheet = getDb_().getSheetByName("Images");
@@ -178,6 +180,52 @@ function op_save_crop(body) {
       url: imageProxyUrl_(file.getId()),
     };
   });
+}
+
+// ─── Drive file sharing helpers ─────────────────────────────────────
+//
+// The snipping tool loads page renders + crops into <img crossorigin="anonymous">
+// elements so Cropper.js can canvas.toDataURL() the cropped region without a
+// "tainted canvas" SecurityError. Drive's drive.google.com/uc URLs strip cookies
+// when crossorigin is set, so private files return 403. We make every uploaded
+// image publicly viewable (link-only, unguessable image_id-based filename) and
+// serve via lh3.googleusercontent.com which returns CORS-permissive headers.
+
+function makeFilePublicForServing_(file) {
+  try {
+    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+  } catch (err) {
+    // Best-effort. If sharing change fails (e.g. Drive policy), the snipping
+    // tool will fail to load — surface the error to ops alerts.
+    Logger.log(`[crops] could not set sharing on ${file.getId()}: ${err}`);
+  }
+}
+
+/**
+ * One-shot fix-up: walk Page Renders + Images sheets, set every referenced
+ * Drive file to ANYONE_WITH_LINK / VIEW. Run once after deploying this code
+ * to retro-fit images uploaded before the sharing change landed.
+ */
+function makeAllImagesPublic() {
+  Logger.log("=== makeAllImagesPublic() ===");
+  let fixed = 0, skipped = 0, failed = 0;
+  for (const sheetName of ["Page Renders", "Images"]) {
+    const { rows } = readSheet_(sheetName);
+    for (const r of rows) {
+      const id = r.drive_file_id;
+      if (!id) { skipped++; continue; }
+      try {
+        const file = DriveApp.getFileById(id);
+        file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+        fixed++;
+      } catch (err) {
+        Logger.log(`  failed ${sheetName} ${id}: ${err}`);
+        failed++;
+      }
+    }
+  }
+  Logger.log(`Done. fixed=${fixed} skipped=${skipped} failed=${failed}`);
+  return { fixed, skipped, failed };
 }
 
 // ─── op: list_crops_for_render ──────────────────────────────────────

@@ -163,7 +163,7 @@ function renderAllCrops() {
     const tile = document.createElement("div");
     tile.className = "crop-tile";
     tile.innerHTML = `
-      <img src="${escapeAttr(`https://drive.google.com/uc?export=view&id=${c.drive_file_id}`)}" alt="${escapeAttr(c.image_role)}" referrerpolicy="no-referrer">
+      <img src="${escapeAttr(`https://lh3.googleusercontent.com/d/${c.drive_file_id}=s200`)}" alt="${escapeAttr(c.image_role)}" referrerpolicy="no-referrer">
       <div style="flex:1;">
         <div class="crop-tile__role">${escapeText(c.image_role)}</div>
         <div class="crop-tile__meta">${c.crop_w}×${c.crop_h}</div>

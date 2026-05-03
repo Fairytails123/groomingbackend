@@ -185,11 +185,13 @@ function breedToView_(b) {
 
 function imageProxyUrl_(driveFileId) {
   if (!driveFileId) return null;
-  // Stage 3 phase 1: use Drive's direct view URL. Works for the editor (Kamal)
-  // because he's authenticated to his own Drive account in the same browser.
-  // For wider exposure (e.g. cross-account, third-party embed) Stage 3 phase 2
-  // will route through Apps Script doGet with a token.
-  return `https://drive.google.com/uc?export=view&id=${encodeURIComponent(driveFileId)}`;
+  // Use lh3.googleusercontent.com — the URL format Google Photos uses internally.
+  // Returns the image with permissive CORS headers AND works with `<img crossorigin="anonymous">`,
+  // which we need so Cropper.js can canvas.toDataURL() the cropped region.
+  // Requires the underlying Drive file to be shared as ANYONE_WITH_LINK / VIEW
+  // — which op_save_page_render and op_save_crop now enforce on creation.
+  // `=s0` returns the original dimensions; we override per-use if we want a thumbnail.
+  return `https://lh3.googleusercontent.com/d/${encodeURIComponent(driveFileId)}=s0`;
 }
 
 // ─── op: list_groom_types ───────────────────────────────────────────
