@@ -78,15 +78,20 @@ export function formDialog({ title, fields, submitLabel = "Save" }) {
     const root = document.getElementById("modal-root") ?? document.body;
     const backdrop = document.createElement("div");
     backdrop.className = "modal-backdrop";
-    const fieldHtml = fields.map((f) => `
-      <div style="margin-bottom:var(--space-3);">
-        <label for="modal-${f.name}">${escapeHtml(f.label)}</label>
-        ${f.type === "select"
-          ? `<select id="modal-${f.name}" name="${f.name}" ${f.required ? "required" : ""}>
-              ${f.options.map(o => `<option value="${escapeHtml(o.value)}">${escapeHtml(o.label)}</option>`).join("")}
-             </select>`
-          : `<input id="modal-${f.name}" name="${f.name}" type="${f.type ?? "text"}" ${f.required ? "required" : ""} ${f.value ? `value="${escapeHtml(f.value)}"` : ""}>`}
-      </div>`).join("");
+    const fieldHtml = fields.map((f) => {
+      const inputId = `modal-${f.name}`;
+      let control;
+      if (f.type === "select") {
+        control = `<select id="${inputId}" name="${f.name}" ${f.required ? "required" : ""}>
+              ${f.options.map(o => `<option value="${escapeHtml(o.value)}" ${o.value === f.value ? "selected" : ""}>${escapeHtml(o.label)}</option>`).join("")}
+             </select>`;
+      } else if (f.type === "textarea") {
+        control = `<textarea id="${inputId}" name="${f.name}" rows="${f.rows ?? 4}" ${f.required ? "required" : ""}>${escapeHtml(f.value ?? "")}</textarea>`;
+      } else {
+        control = `<input id="${inputId}" name="${f.name}" type="${f.type ?? "text"}" ${f.required ? "required" : ""} ${f.value ? `value="${escapeHtml(f.value)}"` : ""}>`;
+      }
+      return `<div style="margin-bottom:var(--space-3);"><label for="${inputId}">${escapeHtml(f.label)}</label>${control}</div>`;
+    }).join("");
     backdrop.innerHTML = `
       <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
         <div class="modal__header"><h2 id="modal-title">${escapeHtml(title)}</h2></div>
@@ -107,7 +112,7 @@ export function formDialog({ title, fields, submitLabel = "Save" }) {
       const action = e.target.dataset?.action;
       if (action === "cancel" || e.target === backdrop) finish(null);
     });
-    backdrop.querySelector("input,select")?.focus();
+    backdrop.querySelector("input,select,textarea")?.focus();
   });
 }
 

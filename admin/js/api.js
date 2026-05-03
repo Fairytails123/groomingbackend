@@ -20,8 +20,11 @@ class ApiError extends Error {
  *
  * Throws ApiError on non-ok responses. Surfaces a toast on network failures.
  * On UNAUTHORIZED: clears the session and redirects to login.
+ *
+ * `opts.timeoutMs` overrides the default config timeout — needed for slow
+ * AI ops (extract_sections, run_vision_pass_page can take 5-30s).
  */
-export async function api(op, body = {}) {
+export async function api(op, body = {}, opts = {}) {
   if (!config.APPS_SCRIPT_URL || config.APPS_SCRIPT_URL.startsWith("REPLACE_ME")) {
     const msg = "API URL not configured — edit admin/js/config.js after deploying Apps Script.";
     toastError(msg);
@@ -36,7 +39,7 @@ export async function api(op, body = {}) {
   }
 
   const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), config.REQUEST_TIMEOUT_MS);
+  const timer = setTimeout(() => ctrl.abort(), opts.timeoutMs ?? config.REQUEST_TIMEOUT_MS);
 
   let response;
   try {

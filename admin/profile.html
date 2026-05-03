@@ -64,7 +64,10 @@
       <div class="card stack">
         <div class="card__header">
           <h2 class="card__title">Images</h2>
-          <a class="btn" id="open-snip-link">Open snipping tool →</a>
+          <div class="row" style="gap:var(--space-2); flex-wrap:wrap;">
+            <button class="btn btn--secondary" id="reextract-button" type="button" hidden>Re-extract sections</button>
+            <a class="btn" id="open-snip-link">Open snipping tool →</a>
+          </div>
         </div>
         <p class="muted">Use the snipping tool to upload page-render JPEGs (e.g. an Adobe Scan PDF saved as separate JPEGs) and snip diagrams from them. Or use the <a href="upload.html">Upload page</a> for already-cropped images with a role dropdown.</p>
 
@@ -77,6 +80,14 @@
           <h3 style="margin:0 0 var(--space-2);">Cropped images <span class="muted" id="image-count" style="font-weight:normal; font-size:var(--font-size-base);">— loading…</span></h3>
           <div id="images-list" class="muted">Loading…</div>
         </div>
+      </div>
+
+      <div class="card stack" id="pending-headings-card" hidden>
+        <div class="card__header">
+          <h2 class="card__title">Pending heading approvals <span class="muted" id="pending-headings-count" style="font-weight:normal; font-size:var(--font-size-base);"></span></h2>
+        </div>
+        <p class="muted">AI suggested these extra section headings during PDF extraction. Approve to add to the profile, ignore to discard, or edit before adding.</p>
+        <div id="pending-headings-list"></div>
       </div>
     </section>
 

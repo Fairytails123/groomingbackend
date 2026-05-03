@@ -52,7 +52,7 @@ const SHEET_SCHEMAS = {
     "supplementary_order", "font_size", "show_blade_box", "show_warnings", "theme"
   ],
   "Extra Heading Approvals": [
-    "approval_id", "profile_id", "suggested_heading", "ai_reason",
+    "approval_id", "profile_id", "suggested_heading", "suggested_text", "ai_reason",
     "telegram_message_id", "user_decision", "final_status",
     "decided_at", "created_at"
   ],
@@ -79,6 +79,11 @@ const SHEET_SCHEMAS = {
   "Telegram Outbox": [
     "outbox_id", "intended_chat_id", "message_text", "inline_buttons_json",
     "scheduled_for", "status", "sent_at", "error"
+  ],
+  "AI Call Log": [
+    "call_id", "profile_id", "source", "model",
+    "prompt_tokens", "completion_tokens", "cost_usd",
+    "latency_ms", "success", "error_code", "created_at"
   ],
 };
 

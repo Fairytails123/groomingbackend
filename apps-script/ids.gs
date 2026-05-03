@@ -17,6 +17,7 @@ const ID_PREFIXES = {
   backlog:     "BLG",
   alert:       "ALT",
   job:         "JOB",
+  ai_call:     "AIC",
 };
 
 function nextId_(kind) {

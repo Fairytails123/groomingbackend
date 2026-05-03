@@ -51,9 +51,15 @@ const OP_REGISTRY = {
   // Public endpoint for TV manual-search backlog signal
   log_backlog_hit:       op_log_backlog_hit,
 
-  // Stage 3 stubs (PDF intake + AI extraction)
-  upload_pdf:            op_not_implemented,
-  job_status:            op_not_implemented,
+  // Stage 3 Phase 2 — PDF intake (browser-orchestrated)
+  upload_pdf:            op_upload_pdf,
+  get_source_pdf:        op_get_source_pdf,
+  extract_sections:      op_extract_sections,
+  run_vision_pass_page:  op_run_vision_pass_page,
+  finalize_pdf_intake:   op_finalize_pdf_intake,
+  list_pending_headings: op_list_pending_headings,
+  decide_heading:        op_decide_heading,
+  job_status:            op_not_implemented,  // unused; Phase 2 is synchronous
 
   // Dashboard
   dashboard_tomorrow_prep:    op_dashboard_tomorrow_prep,

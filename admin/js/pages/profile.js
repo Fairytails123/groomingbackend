@@ -2,7 +2,7 @@
 
 import { requireSession, wireLogoutLink } from "../auth.js";
 import { api, ApiError } from "../api.js";
-import { statusPill, toast, toastError, toastSuccess, confirmDialog } from "../ui.js";
+import { statusPill, toast, toastError, toastSuccess, confirmDialog, formDialog } from "../ui.js";
 import { formatRelativeTime } from "../format.js";
 
 // `formatRelativeTime` is also used by loadHistory below.
@@ -31,6 +31,7 @@ const showBladeEl = document.getElementById("show-blade-box");
 const showWarnEl  = document.getElementById("show-warnings");
 const defaultEl   = document.getElementById("default-profile");
 const snipLink    = document.getElementById("open-snip-link");
+const reextractBtn = document.getElementById("reextract-button");
 
 const CORE_NAMES = new Set([
   "Body", "Throat and chest", "Carriage and tail end", "Legs and feet", "Head/ears/brows",
@@ -137,6 +138,97 @@ async function loadImagesTab() {
     pageEl.innerHTML = `<p class="muted">Couldn't load page renders.</p>`;
     imagesEl.innerHTML = `<p class="muted">Couldn't load images.</p>`;
   }
+
+  await loadPendingHeadings();
+}
+
+async function loadPendingHeadings() {
+  if (!state.profile) return;
+  const card = document.getElementById("pending-headings-card");
+  const countEl = document.getElementById("pending-headings-count");
+  const listEl = document.getElementById("pending-headings-list");
+  if (!card || !listEl) return;
+
+  try {
+    const data = await api("list_pending_headings", { profile_id: state.profile.profile_id });
+    const pending = data.pending ?? [];
+    if (pending.length === 0) {
+      card.hidden = true;
+      return;
+    }
+    card.hidden = false;
+    countEl.textContent = `(${pending.length})`;
+    listEl.innerHTML = "";
+    for (const p of pending) {
+      const row = document.createElement("div");
+      row.className = "pending-heading-row";
+      row.style.cssText = "border:1px solid var(--color-border); border-radius:var(--radius-md); padding:var(--space-3); background:var(--color-surface); margin-bottom:var(--space-2);";
+      row.innerHTML = `
+        <div class="row row--space-between" style="flex-wrap:wrap; gap:var(--space-2); align-items:flex-start;">
+          <div style="flex:1; min-width:240px;">
+            <div style="font-weight:var(--font-weight-medium);">${escapeText(p.suggested_heading)}</div>
+            ${p.ai_reason ? `<div class="muted" style="font-size:var(--font-size-sm);">${escapeText(p.ai_reason)}</div>` : ""}
+            ${p.suggested_text ? `<details style="margin-top:var(--space-2);"><summary class="muted" style="cursor:pointer; font-size:var(--font-size-sm);">Show body text</summary><div style="margin-top:var(--space-2); white-space:pre-wrap; font-size:var(--font-size-sm);">${escapeText(p.suggested_text)}</div></details>` : ""}
+          </div>
+          <div class="row" style="gap:var(--space-2); flex-wrap:wrap;">
+            <button class="btn btn--small" type="button" data-action="approve">Approve</button>
+            <button class="btn btn--small btn--secondary" type="button" data-action="edit">Edit & approve</button>
+            <button class="btn btn--small btn--secondary" type="button" data-action="ignore">Ignore</button>
+          </div>
+        </div>`;
+      listEl.appendChild(row);
+      row.querySelector('[data-action="approve"]').addEventListener("click", () => decidePending(p, "approve"));
+      row.querySelector('[data-action="edit"]').addEventListener("click", () => decidePending(p, "edit_and_approve"));
+      row.querySelector('[data-action="ignore"]').addEventListener("click", () => decidePending(p, "ignore"));
+    }
+  } catch (err) {
+    listEl.innerHTML = `<p class="muted">Couldn't load pending headings.</p>`;
+    card.hidden = false;
+  }
+}
+
+async function decidePending(p, decision) {
+  let payload = { approval_id: p.approval_id, decision };
+
+  if (decision === "ignore") {
+    const ok = await confirmDialog({
+      title: `Ignore "${p.suggested_heading}"?`,
+      body: `This won't add it to the profile. You can still re-extract later if you change your mind.`,
+      confirmLabel: "Ignore",
+    });
+    if (!ok) return;
+  } else if (decision === "edit_and_approve") {
+    const result = await formDialog({
+      title: "Edit & approve heading",
+      submitLabel: "Approve",
+      fields: [
+        { name: "edited_heading", label: "Heading", type: "text", value: p.suggested_heading, required: true },
+        { name: "edited_text", label: "Body text", type: "textarea", rows: 6, value: p.suggested_text },
+      ],
+    });
+    if (!result) return;
+    payload.edited_heading = result.edited_heading;
+    payload.edited_text = result.edited_text;
+  }
+
+  try {
+    const result = await api("decide_heading", payload);
+    if (result.final_status === "approved") {
+      toastSuccess(`Approved "${decision === "edit_and_approve" ? payload.edited_heading : p.suggested_heading}"`);
+      // Reload the profile so the new section appears in TEXT tab next time it's rendered.
+      await load();
+    } else {
+      toast("Heading ignored.", "default");
+    }
+    await loadPendingHeadings();
+  } catch (err) {
+    if (err instanceof ApiError && err.code === "CONFLICT") {
+      toast("Already decided in another tab.", "default");
+      await loadPendingHeadings();
+    } else {
+      toastError("Couldn't save decision.");
+    }
+  }
 }
 
 let historyLoaded = false;
@@ -206,6 +298,10 @@ async function load() {
 
     publishBtn.disabled = false;
     snipLink.href = `snip.html?profile_id=${encodeURIComponent(data.profile.profile_id)}`;
+    if (reextractBtn) {
+      reextractBtn.hidden = !data.profile.source_pdf_drive_id;
+      reextractBtn.onclick = onReextract;
+    }
 
     renderSections();
     renderDisplay();
@@ -427,6 +523,34 @@ async function saveNow() {
     }
   } finally {
     savingInFlight = false;
+  }
+}
+
+async function onReextract() {
+  if (!state.profile?.source_pdf_drive_id) return;
+  const ok = await confirmDialog({
+    title: "Re-extract from PDF?",
+    body: "This re-runs AI extraction on the existing PDF. Core sections will be overwritten with fresh AI output (manual edits to Body/Throat/Carriage/Legs/Head will be lost — version history captures them). Vision findings are upserted in place. OK to continue?",
+    confirmLabel: "Re-extract",
+  });
+  if (!ok) return;
+
+  reextractBtn.disabled = true;
+  reextractBtn.textContent = "Fetching PDF…";
+  try {
+    const result = await api("get_source_pdf", { profile_id: state.profile.profile_id }, { timeoutMs: 120000 });
+    sessionStorage.setItem("ft_reextract_pdf_b64", result.pdf_blob_b64);
+    sessionStorage.setItem("ft_reextract_filename", result.original_filename ?? "source.pdf");
+    sessionStorage.setItem("ft_reextract_profile_id", state.profile.profile_id);
+    location.href = "upload.html?reextract=1";
+  } catch (err) {
+    reextractBtn.disabled = false;
+    reextractBtn.textContent = "Re-extract sections";
+    if (err instanceof ApiError) {
+      toastError(err.message);
+    } else {
+      toastError("Couldn't fetch source PDF.");
+    }
   }
 }
 
