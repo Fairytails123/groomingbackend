@@ -2,9 +2,9 @@
 
 Admin website + Apps Script API + n8n workflow exports for the Fairy Tails K9 Centre grooming knowledge system.
 
-**Status:** Stage 2 Week 1 — scaffolding (2026-05-03).
+**Status:** Stages 2–5 live and verified. Stage 3 Phase 2 (browser-orchestrated PDF intake + AI extraction) deployed live as Web App v5 on 2026-05-03; pending real-PDF smoke test.
 
-> **New here?** Start with `docs/HANDOVER.md`, then the spec at `.md/grooming-knowledge-software-architecture.md`, then the approved plan at `<.claude>/plans/read-the-md-files-glimmering-glacier.md`.
+> **New here?** Start with `docs/HANDOVER.md` (operational truth), then memory at `<.claude>/projects/.../memory/MEMORY.md` (user/feedback/reference notes), then the spec at `.md/grooming-knowledge-software-architecture.md` v3.8 (§0a amendments at the top is the recent diff).
 
 ---
 

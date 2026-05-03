@@ -19,11 +19,11 @@ Distilled from the data + API design agent output (2026-05-03 design pass) and t
 { "ok": false, "error": { "code": "STRING", "message": "..." }, "request_id": "REQ-..." }
 ```
 
-**Error codes:** `UNAUTHORIZED`, `NOT_FOUND`, `VALIDATION_FAILED`, `CONFLICT`, `QUOTA_EXCEEDED`, `GITHUB_FAILED`, `TIMEOUT`, `INTERNAL`.
+**Error codes:** `UNAUTHORIZED`, `NOT_FOUND`, `VALIDATION_FAILED`, `CONFLICT`, `QUOTA_EXCEEDED`, `GITHUB_FAILED`, `OPENAI_FAILED`, `TIMEOUT`, `INTERNAL`.
 
 **Concurrency:** Mutating ops accept `expected_version` (int). Server compares against `Groom Profiles.current_version`; mismatch returns `CONFLICT`. This guards two-tabs-same-user accidents.
 
-**Async work:** Long ops return `{ ok: true, data: { job_id, status: "queued" } }`. Client polls `op: "job_status"` with `{ job_id }` until `status: "ready"` or `"failed"`. Backed by a `Jobs` sheet + a 1-minute time trigger that picks up `queued` rows. This sidesteps the 6-min Apps Script execution limit.
+**Async work:** Stage 3 Phase 2 is fully synchronous — the browser orchestrates the PDF intake sequence and each op completes in seconds. The earlier `Jobs` sheet + 1-minute trigger pattern is reserved for future server-driven work (e.g. WF-04 Telegram intake) and the `op: "job_status"` stub remains for that.
 
 **Auth in body, not header:** Apps Script Web Apps strip non-standard headers. The token goes in the JSON body field `auth_token`.
 
@@ -122,13 +122,51 @@ Distilled from the data + API design agent output (2026-05-03 design pass) and t
 **Request:** `{ op: "list_page_renders", auth_token, profile_id }`
 **Response:** `{ page_renders: [ { page_render_id, page_index, url, width_px, height_px } ] }`. `url` is the Apps Script image-proxy URL.
 
-### Uploads
+### PDF intake (Stage 3 Phase 2 — browser-orchestrated)
 
-#### `op: "upload_pdf"` (async)
-**Recommended flow:** browser uploads PDF directly to Drive via resumable upload using a short-lived OAuth token returned by Apps Script — Apps Script's POST body cap is too small for some Adobe Scans. Then call this op to trigger processing.
+The browser drives the whole intake sequence: pdf.js renders pages locally, Apps Script saves each page render and the source PDF, then calls OpenAI directly for structuring + vision. No n8n hop.
 
-**Request:** `{ op: "upload_pdf", auth_token, breed_id?, breed_name?, groom_type, source_type, drive_file_id }`
-**Behaviour:** creates breed if `breed_name` is novel, creates a profile in `Processing`, enqueues n8n WF-04/05 intake. Returns `{ profile_id, job_id }`. Client polls until `Needs Review`.
+#### `op: "upload_pdf"` (sync)
+**Request:** `{ op: "upload_pdf", auth_token, profile_id, pdf_blob_b64, original_filename }`
+**Behaviour:** writes the source PDF to Drive `…/01-original-pdf/`, sets `Groom Profiles.{source_pdf_drive_id, source_type:"pdf", status:"Processing", error_message:""}`. PDFs are kept private (no public sharing).
+**Response:** `{ profile_id, drive_file_id, original_filename, status: "Processing" }`
+**Errors:** `VALIDATION_FAILED`, `NOT_FOUND` (profile), `INTERNAL` (DRIVE_ROOT_ID missing).
+
+#### `op: "get_source_pdf"` (sync)
+**Request:** `{ op: "get_source_pdf", auth_token, profile_id }`
+**Behaviour:** reads the stored source PDF back as base64 so the profile editor's "Re-extract sections" flow can re-run the same in-browser pipeline.
+**Response:** `{ profile_id, drive_file_id, original_filename, pdf_blob_b64 }`
+**Errors:** `NOT_FOUND` (no source PDF for this profile).
+
+#### `op: "extract_sections"` (sync, calls OpenAI)
+**Request:** `{ op: "extract_sections", auth_token, profile_id, raw_text }`
+**Behaviour:** calls `gpt-4o-mini` with the WF-06 prompt (`docs/workflows.md`). Upserts the 5 core rows in `Groom Knowledge` by `(profile_id, section_name)`. Inserts each AI-suggested extra heading as a `pending` row in `Extra Heading Approvals`, de-duped by `(profile_id, suggested_heading)`. Logs the call to `AI Call Log` and clears any stale `error_message`.
+**Response:** `{ profile_id, sections_updated, extra_headings_pending, overall_confidence }`
+**Errors:** `VALIDATION_FAILED`, `NOT_FOUND`, `QUOTA_EXCEEDED`, `OPENAI_FAILED`.
+
+#### `op: "run_vision_pass_page"` (sync, calls OpenAI)
+**Request:** `{ op: "run_vision_pass_page", auth_token, profile_id, page_render_id }`
+**Behaviour:** reads the page render JPEG from Drive, calls `gpt-4o` with the WF-08 prompt + image as data URL. Upserts a `Vision findings — page N` section row in `Groom Knowledge` (stable `section_order = 100 + page_index`). Merges any `type:"blade"` findings into the Body row's `blade_numbers` JSON array (de-duped).
+**Response:** `{ page_render_id, page_index, findings_count, blade_numbers_added, section_id }`
+**Errors:** `VALIDATION_FAILED`, `NOT_FOUND`, `QUOTA_EXCEEDED`, `OPENAI_FAILED`. Per-page failure does NOT abort intake — the browser catches and continues to the next page.
+
+#### `op: "finalize_pdf_intake"` (sync)
+**Request:** `{ op: "finalize_pdf_intake", auth_token, profile_id, partial_failures: [{ page_render_id, message }] }`
+**Behaviour:** flips `Groom Profiles.status` from `Processing` to `Needs Review`. If `partial_failures` is non-empty, populates `error_message` with the count and writes a `warning` Operational Alerts row.
+**Response:** `{ profile_id, status: "Needs Review", partial_failure_count }`
+**Errors:** `CONFLICT` (profile not in `Processing`).
+
+#### `op: "list_pending_headings"` (sync)
+**Request:** `{ op: "list_pending_headings", auth_token, profile_id }`
+**Response:** `{ pending: [{ approval_id, suggested_heading, suggested_text, ai_reason, created_at }] }`
+
+#### `op: "decide_heading"` (sync)
+**Request:** `{ op: "decide_heading", auth_token, approval_id, decision: "approve"|"ignore"|"edit_and_approve", edited_heading?, edited_text? }`
+**Behaviour:** patches the `Extra Heading Approvals` row. On `approve` / `edit_and_approve`, also appends a new section row to `Groom Knowledge` with `section_order = max + 1` and the (possibly edited) heading + text.
+**Response:** `{ approval_id, final_status: "approved"|"ignored", section_id }`
+**Errors:** `CONFLICT` (already decided), `NOT_FOUND`.
+
+### Image upload (legacy)
 
 ### Publish
 
@@ -178,7 +216,16 @@ Apps Script Web App settings: `Execute as: Me, Who has access: Anyone with the l
 
 ## Quota guard rails
 
-- 6-min Apps Script execution per request: enforce by routing any op that touches more than ~50 rows or makes more than 5 UrlFetch calls through the Jobs queue.
-- ~20K UrlFetch/day budget: reserved for GitHub Contents API calls (~10/day) and n8n webhook fires (~20/day). Apps Script does NOT call ChatGPT — that's n8n's job.
-- `LockService.getScriptLock()` on every mutation, 30s timeout.
+- 6-min Apps Script execution per request: each Phase 2 op is well under this (extract_sections ≤30s, single vision page ≤30s).
+- ~20K UrlFetch/day budget: GitHub Contents API (~10/day), OpenAI calls (~10-20 per breed × ~10 breeds/day = ~200/day).
+- **OpenAI daily cap:** `OPENAI_DAILY_CAP_GBP` Script Property (default `5.0`). Sum of today's `cost_usd` from `AI Call Log` × `OPENAI_USD_TO_GBP` (default `0.85`) is checked before every AI op. Cap exceeded → `QUOTA_EXCEEDED`. One-per-day Operational Alerts row logged.
+- `LockService.getScriptLock()` on every mutation, 30s timeout (60s for AI ops via `withProfileLock_`).
 - Login rate limit: 50 fails/day in Script Properties, reset by midnight cron.
+
+## Required Script Properties
+
+| Key | Required? | Default | Notes |
+|---|---|---|---|
+| `OPENAI_API_KEY` | yes (Phase 2) | — | sk-proj-… |
+| `OPENAI_DAILY_CAP_GBP` | optional | `5.0` | soft cap; `0` disables |
+| `OPENAI_USD_TO_GBP` | optional | `0.85` | conservative; reality ~0.79 |

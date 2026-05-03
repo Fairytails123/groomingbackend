@@ -1,12 +1,55 @@
 # Fairy Tails Grooming Knowledge Software — Architecture & Build Plan
 
 **Owner:** Kamal (Fairy Tails K9 Centre)
-**Status:** Working spec, v3.7 (post-deploy: live system end of session 2026-05-03; Stage 5 complete; Stage 3 Phase 2 pending)
+**Status:** Working spec, v3.8 (Stage 3 Phase 2 deployed live as Web App v5 on 2026-05-03; pending real-PDF smoke test).
 **Last updated:** 3 May 2026
 
 ---
 
-## 0a. Amendments since v3.6 (live deployment + bug fixes)
+## 0a. Amendments since v3.7 (Stage 3 Phase 2 ship)
+
+The Phase 2 design and deployment landed on 2026-05-03. The plan that drove the build is at `<.claude>/plans/read-analyse-and-get-iterative-pond.md`. Operational truth (URLs, pending items, verification status) lives in `docs/HANDOVER.md`.
+
+**Decisions added since v3.7:**
+- #28 **Browser-orchestrated PDF intake** (replaces the spec's earlier WF-06 / WF-07 / WF-08 path for the Phase 2 ship). pdf.js v4.6.82 is vendored at `vendor/pdfjs/`; `admin/js/pdf.js` renders each page to JPEG via `<canvas>.convertToBlob({type:"image/jpeg"})` and extracts the printed-text layer via `getTextContent()`. The browser-side `admin/js/pdf-intake.js` orchestrator drives the full sequence sequentially: `op_upload_pdf` → N× `op_save_page_render` → `op_extract_sections` → N× `op_run_vision_pass_page` → `op_finalize_pdf_intake`. This sidesteps the n8n + Linux dependency that `pdftoppm` / `pdftotext` would need, and gives Kamal per-step progress visibility. The n8n WF-06/07/08 entries in `docs/workflows.md` are deprecated for this path but kept as a future fallback.
+- #29 **Apps Script calls OpenAI directly via UrlFetchApp**, not via n8n. Single hop keeps logging + cost-cap accounting in one place (the new `AI Call Log` sheet). Apps Script's 6-minute execution limit easily fits one extract call (~10s) plus per-page vision calls (~5-15s each).
+- #30 **Vision model: `gpt-5`** (best-in-class multimodal, picked for the handwritten-annotation + tiny-blade-number workload). Text-structuring stays on `gpt-4o-mini` because OCR text doesn't need a flagship model. Pricing snapshot in `apps-script/ai.gs` `OPENAI_RATES_USD_PER_M`; verify at openai.com/api/pricing/ if you change the model.
+- #31 **Inline heading approval in admin website** (Telegram WF-09 deferred). The "Pending heading approvals" card on the profile editor's IMAGES tab uses `op_list_pending_headings` + `op_decide_heading` to approve/edit/ignore each AI-suggested extra heading. Sheet 6 schema is unchanged from v3.7, so the future Telegram path can drop in alongside without touching this UI.
+- #32 **Daily AI cost cap** enforced at the Apps Script layer. Property `OPENAI_DAILY_CAP_GBP` (default `5.0`); `assertCostCapNotExceeded_()` runs at the start of every AI op and sums today's `cost_usd` from the `AI Call Log` sheet (× `OPENAI_USD_TO_GBP`, default `0.85`). Exceeding throws `QUOTA_EXCEEDED` and logs one Operational Alerts row per UTC day.
+- #33 **`Re-extract sections` round-trip** — the profile editor's IMAGES tab has a button that fetches the stored source PDF via `op_get_source_pdf` (returns base64 bytes), stashes it in `sessionStorage`, and redirects to `upload.html?reextract=1` which auto-fires the same intake pipeline with `skipPageRenders=true` (page renders already exist in Drive). Idempotent: core sections upsert by `(profile_id, section_name)`; vision findings upsert by `(profile_id, "Vision findings — page N")`; extra-heading suggestions de-dupe against existing decisions.
+
+**Schema additions since v3.7:**
+- New Sheet 14 (`AI Call Log`) — auto-created by `setupAll()`. Columns: `call_id, profile_id, source, model, prompt_tokens, completion_tokens, cost_usd, latency_ms, success, error_code, created_at`. ID prefix `AIC` (added to `apps-script/ids.gs`).
+- Sheet 6 (`Extra Heading Approvals`) gains `suggested_text` column at end. `setupAll()` auto-appends missing columns; already applied 2026-05-03.
+
+**API additions since v3.7** (all live; full catalogue in `docs/api.md`):
+- `op_upload_pdf` — sync, browser POSTs PDF as base64 → Drive `01-original-pdf/` (private). Sets `source_pdf_drive_id`, `source_type:"pdf"`, `status:"Processing"`.
+- `op_get_source_pdf` — sync, reads stored PDF back as base64 for Re-extract.
+- `op_extract_sections` — sync, OpenAI gpt-4o-mini with WF-06 prompt → upsert 5 core rows in Sheet 3 + insert pending Sheet 6 rows.
+- `op_run_vision_pass_page` — sync, OpenAI gpt-5 with WF-08 prompt + image data URL → upsert "Vision findings — page N" row in Sheet 3 + merge blade numbers into Body row.
+- `op_finalize_pdf_intake` — sync, flips status `Processing` → `Needs Review`. Records `partial_failure_count` if any vision pages errored.
+- `op_list_pending_headings` / `op_decide_heading` — sheet ops for the inline approval UI.
+
+**Required Script Properties for Phase 2:**
+- `OPENAI_API_KEY` — required. Set 2026-05-03; value in `.secrets/openai-api-key.md`.
+- `OPENAI_DAILY_CAP_GBP` — optional, default `5.0`.
+- `OPENAI_USD_TO_GBP` — optional, default `0.85`.
+
+**Deployment state:**
+- Web App at deployment `AKfycby5CU8J-xyCn38ruoe_HdDswRBCNcxXLO9O2AyiiHDt781mwsJzWeyyahySfwjpq4ZL` is on Version 5 as of 2026-05-03 22:14 UTC (`v5 Stage 3 Phase 2 — PDF intake + AI extraction`). URL persistent across versions.
+
+**What's still pending:**
+- Real-PDF end-to-end smoke test of the deployed Phase 2 path (P0 in HANDOVER.md §5).
+- `GITHUB_PAT` Script Property — gates publish to GitHub Pages.
+- n8n credentials wiring + URL placeholder fill-in.
+- Midnight `resetLoginFailCounter` time trigger.
+- JotForm webhook → n8n WF-01 trigger.
+- TV display — separate future repo.
+- Telegram intake (WF-04) and Telegram heading approval (WF-09) — deferred.
+
+---
+
+## 0b. Amendments since v3.6 (live deployment + bug fixes)
 
 Captured here for fast diffing. The v3.6 backup is preserved at `grooming-knowledge-software-architecture.v3.6.backup.md`. Operational truth (URLs, IDs, what's wired, next steps) is in `docs/HANDOVER.md`.
 
