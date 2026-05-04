@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-05-04T20:19:46.139Z",
+  "generated_at": "2026-05-04T21:09:30.648Z",
   "breed_id": "BRD-001",
   "breed_name": "Miniature Schnauzer",
   "breed_slug": "miniature-schnauzer",
@@ -12,8 +12,8 @@
       "profile_id": "PRF-001",
       "groom_type": "Pet Groom",
       "groom_type_slug": "pet-groom",
-      "version": 15,
-      "published_at": "2026-05-04T20:19:46.090Z",
+      "version": 17,
+      "published_at": "2026-05-04T21:09:30.586Z",
       "blade_numbers": [
         "#10",
         "#9",
@@ -137,10 +137,10 @@
       ],
       "images": {
         "main": {
-          "image_id": "IMG-003",
-          "url": "https://Fairytails123.github.io/groomingbackend/public/images/miniature-schnauzer/PRF-001/IMG-003.jpg",
-          "width_px": 1026,
-          "height_px": 1116
+          "image_id": "IMG-008",
+          "url": "https://Fairytails123.github.io/groomingbackend/public/images/miniature-schnauzer/PRF-001/IMG-008.jpg",
+          "width_px": 1104,
+          "height_px": 975
         },
         "supplementary": [
           {
@@ -156,6 +156,13 @@
             "url": "https://Fairytails123.github.io/groomingbackend/public/images/miniature-schnauzer/PRF-001/IMG-002.jpg",
             "width_px": 1158,
             "height_px": 999
+          },
+          {
+            "image_id": "IMG-003",
+            "role": "supplementary",
+            "url": "https://Fairytails123.github.io/groomingbackend/public/images/miniature-schnauzer/PRF-001/IMG-003.jpg",
+            "width_px": 1026,
+            "height_px": 1116
           },
           {
             "image_id": "IMG-004",
@@ -184,6 +191,27 @@
             "url": "https://Fairytails123.github.io/groomingbackend/public/images/miniature-schnauzer/PRF-001/IMG-007.jpg",
             "width_px": 1070,
             "height_px": 960
+          },
+          {
+            "image_id": "IMG-009",
+            "role": "front",
+            "url": "https://Fairytails123.github.io/groomingbackend/public/images/miniature-schnauzer/PRF-001/IMG-009.jpg",
+            "width_px": 309,
+            "height_px": 456
+          },
+          {
+            "image_id": "IMG-010",
+            "role": "back",
+            "url": "https://Fairytails123.github.io/groomingbackend/public/images/miniature-schnauzer/PRF-001/IMG-010.jpg",
+            "width_px": 299,
+            "height_px": 521
+          },
+          {
+            "image_id": "IMG-011",
+            "role": "head",
+            "url": "https://Fairytails123.github.io/groomingbackend/public/images/miniature-schnauzer/PRF-001/IMG-011.jpg",
+            "width_px": 1085,
+            "height_px": 964
           }
         ]
       },
