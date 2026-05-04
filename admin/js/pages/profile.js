@@ -555,9 +555,62 @@ async function onReextract() {
 }
 
 async function onPublish() {
-  // Stage 2 Week 3 wires this up to op_publish_profile. For Week 2 we just save and tell the user.
+  if (!state.profile) return;
+
+  // 1) Flush any pending edits first so we publish the latest version.
+  if (saveDebounce) { clearTimeout(saveDebounce); saveDebounce = null; }
   await saveNow();
-  toast("Publish flow lands in Stage 2 Week 3 — save was applied.", "default");
+
+  // 2) Confirm with the user.
+  const breedName = state.breed && state.breed.breed_name ? state.breed.breed_name : "";
+  const groomType = state.profile.groom_type || "";
+  const ok = await confirmDialog({
+    title: "Publish profile?",
+    body: "This pushes the current draft of " + breedName + " / " + groomType + " to GitHub Pages so the TV display can pick it up.",
+    confirmLabel: "Publish",
+  });
+  if (!ok) return;
+
+  const originalLabel = publishBtn.textContent;
+  publishBtn.disabled = true;
+  publishBtn.textContent = "Publishing...";
+  saveEl.textContent = "Publishing...";
+
+  try {
+    const result = await api(
+      "publish_profile",
+      {
+        profile_id: state.profile.profile_id,
+        expected_version: state.profile.current_version,
+      },
+      { timeoutMs: 120000 },
+    );
+    const imgs = result.images_pushed != null ? result.images_pushed : 0;
+    toastSuccess("Published \u2014 " + imgs + " image(s) pushed.");
+    saveEl.textContent = "";
+    await load();
+  } catch (err) {
+    saveEl.textContent = "";
+    if (err instanceof ApiError && err.code === "VALIDATION_FAILED") {
+      toastError(err.message || "Profile failed validation \u2014 fix issues and try again.");
+    } else if (err instanceof ApiError && err.code === "GITHUB_FAILED") {
+      toastError("GitHub push failed \u2014 check GITHUB_PAT in Apps Script Properties.");
+    } else if (err instanceof ApiError && err.code === "CONFLICT") {
+      const reload = await confirmDialog({
+        title: "Edited elsewhere",
+        body: "This profile was changed in another tab since the last save. Reload to pull the latest?",
+        confirmLabel: "Reload",
+      });
+      if (reload) location.reload();
+    } else if (err instanceof ApiError) {
+      toastError(err.message || "Publish failed.");
+    } else {
+      toastError("Publish failed \u2014 please try again.");
+    }
+  } finally {
+    publishBtn.disabled = false;
+    publishBtn.textContent = originalLabel || "Publish";
+  }
 }
 
 function escapeText(s) { return String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
