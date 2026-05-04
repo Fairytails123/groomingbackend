@@ -82,6 +82,43 @@ function op_dashboard_alerts(body) {
   }
 }
 
+// ─── op: acknowledge_alert ─────────────────────────────────────────
+//
+// Marks an Operational Alerts row as acknowledged so it stops appearing on
+// the dashboard. We patch acknowledged_at + acknowledged_by; the row is kept
+// for audit. Idempotent — second ack is a no-op (returns the existing
+// acknowledged_at).
+
+function op_acknowledge_alert(body) {
+  const alertId = requireString_(body.alert_id, "alert_id", { maxLength: 64 });
+
+  const alertsSheet = getDb_().getSheetByName("Operational Alerts");
+  if (!alertsSheet) throw apiError_("INTERNAL", "Operational Alerts sheet missing");
+  const { headers, rows } = readSheet_("Operational Alerts");
+
+  const row = rows.find((r) => r.alert_id === alertId);
+  if (!row) throw apiError_("NOT_FOUND", `alert '${alertId}' not found`);
+
+  if (row.acknowledged_at) {
+    return {
+      alert_id: alertId,
+      acknowledged_at: toIso_(row.acknowledged_at),
+      already_acknowledged: true,
+    };
+  }
+
+  const now = nowIso_();
+  writeRow_(alertsSheet, headers, row._rowIndex, {
+    acknowledged_at: now,
+    acknowledged_by: "admin",
+  });
+  return {
+    alert_id: alertId,
+    acknowledged_at: now,
+    already_acknowledged: false,
+  };
+}
+
 // ─── op: dashboard_tomorrow_prep ────────────────────────────────────
 //
 // Reads tomorrow.json straight from GitHub Pages (canonical), falling back
@@ -147,4 +184,89 @@ function op_get_version_history(body) {
     .sort((a, b) => String(b.created_at ?? "").localeCompare(String(a.created_at ?? "")))
     .slice(0, limit);
   return { items };
+}
+
+// ─── op: health_check ───────────────────────────────────────────────
+//
+// Surface backend wiring state to the dashboard. Returns:
+//   - script_properties: which Properties are set (boolean only — never the
+//                        values, so the dashboard never leaks secrets).
+//   - sheet_counts: row counts for the most operationally relevant sheets.
+//   - last_ai_call: shape { created_at, model, success, source } for the
+//                   most recent AI Call Log entry (or null if none).
+//   - openai_today_gbp: total estimated AI cost for today (UTC).
+//   - server_time: ISO timestamp.
+//
+// Read-only and cheap (a few sheet reads). Used by a small status panel
+// on the dashboard so Kamal can see at a glance whether GITHUB_PAT /
+// OPENAI_API_KEY etc. are wired without opening the Apps Script editor.
+
+function op_health_check(body) {
+  const props = PropertiesService.getScriptProperties();
+  const required = [
+    "ADMIN_PASSWORD_HASH", "ADMIN_PASSWORD_SALT", "SESSION_SECRET",
+    "SPREADSHEET_ID", "DRIVE_ROOT_ID",
+    "GITHUB_OWNER", "GITHUB_REPO", "GITHUB_PAT",
+    "OPENAI_API_KEY", "JOTFORM_API_KEY",
+    "JOTFORM_FIELD_BREED", "JOTFORM_FIELD_DOG_NAME",
+    "JOTFORM_FIELD_APPT_TYPE", "JOTFORM_FIELD_DATE_FG_BUS",
+    "JOTFORM_FIELD_DATE_FG_PRT",
+  ];
+  const optional = [
+    "OPENAI_DAILY_CAP_GBP", "OPENAI_USD_TO_GBP",
+    "JOTFORM_API_BASE", "TELEGRAM_BOT_TOKEN", "TELEGRAM_CHAT_ID",
+  ];
+  const scriptProperties = {};
+  for (const k of required) scriptProperties[k] = { required: true, set: !!props.getProperty(k) };
+  for (const k of optional) scriptProperties[k] = { required: false, set: !!props.getProperty(k) };
+
+  const sheetCounts = {};
+  for (const name of ["Breeds", "Groom Profiles", "Groom Knowledge", "Images", "Page Renders", "Operational Alerts", "AI Call Log"]) {
+    try {
+      const { rows } = readSheet_(name);
+      sheetCounts[name] = rows.length;
+    } catch {
+      sheetCounts[name] = null;
+    }
+  }
+
+  // Most recent AI call (cheap — sheet read, sort by created_at desc, take first)
+  let lastAiCall = null;
+  try {
+    const { rows } = readSheet_("AI Call Log");
+    if (rows.length) {
+      const sorted = rows.slice().sort((a, b) =>
+        String(b.created_at ?? "").localeCompare(String(a.created_at ?? ""))
+      );
+      const r = sorted[0];
+      lastAiCall = {
+        created_at: toIso_(r.created_at),
+        model: String(r.model ?? ""),
+        source: String(r.source ?? ""),
+        success: String(r.success ?? "").toUpperCase() === "TRUE",
+        error_code: String(r.error_code ?? ""),
+      };
+    }
+  } catch {}
+
+  // Today's AI spend (UTC day, in GBP).
+  let openaiTodayGbp = 0;
+  try {
+    const fxRate = Number(props.getProperty("OPENAI_USD_TO_GBP") ?? 0.85);
+    const todayStart = todayStartUtcIso_();
+    const { rows } = readSheet_("AI Call Log");
+    let usd = 0;
+    for (const r of rows) {
+      if (toIso_(r.created_at) >= todayStart) usd += Number(r.cost_usd ?? 0);
+    }
+    openaiTodayGbp = Number((usd * fxRate).toFixed(4));
+  } catch {}
+
+  return {
+    server_time: nowIso_(),
+    script_properties: scriptProperties,
+    sheet_counts: sheetCounts,
+    last_ai_call: lastAiCall,
+    openai_today_gbp: openaiTodayGbp,
+  };
 }

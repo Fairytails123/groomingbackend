@@ -98,11 +98,55 @@ function setupAll() {
   ensureWorkbook_();
   ensureSheets_();
   applyDefaultPasswordIfStaged_();
+  ensureTriggers_();
   Logger.log("=== setupAll() complete ===");
   Logger.log("Next steps:");
   Logger.log("  1. Set Script Property GITHUB_PAT (fine-grained, Contents read+write on the repo)");
-  Logger.log("  2. Add midnight time trigger for resetLoginFailCounter");
-  Logger.log("  3. Deploy as Web App, then paste the URL into admin/js/config.js");
+  Logger.log("  2. Deploy as Web App, then paste the URL into admin/js/config.js");
+}
+
+/**
+ * Standalone shortcut: install the time-driven triggers without re-running
+ * the rest of setupAll(). Idempotent — checks for existing triggers by
+ * function name and skips creation if one is already in place.
+ */
+function setupTriggers() {
+  Logger.log("=== setupTriggers() running ===");
+  ensureTriggers_();
+  Logger.log("=== setupTriggers() complete ===");
+}
+
+/**
+ * Idempotent trigger management. Currently:
+ *   - resetLoginFailCounter: midnight (00:00–01:00 UTC) daily.
+ * Add new triggers here; the function is safe to re-run because we look up
+ * existing triggers by handler-function name before creating a new one.
+ */
+function ensureTriggers_() {
+  const wanted = [
+    {
+      handler: "resetLoginFailCounter",
+      describe: "midnight (00:00–01:00) daily",
+      install: () => ScriptApp.newTrigger("resetLoginFailCounter")
+        .timeBased()
+        .atHour(0)
+        .everyDays(1)
+        .create(),
+    },
+  ];
+  const existing = ScriptApp.getProjectTriggers();
+  const existingByHandler = {};
+  for (const t of existing) {
+    existingByHandler[t.getHandlerFunction()] = t;
+  }
+  for (const w of wanted) {
+    if (existingByHandler[w.handler]) {
+      Logger.log(`  trigger '${w.handler}' already installed — skipping`);
+      continue;
+    }
+    w.install();
+    Logger.log(`  trigger '${w.handler}' installed (${w.describe})`);
+  }
 }
 
 /**

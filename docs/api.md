@@ -186,6 +186,38 @@ The browser drives the whole intake sequence: pdf.js renders pages locally, Apps
 **Request:** `{ op: "job_status", auth_token, job_id }`
 **Response:** `{ status: "queued|running|ready|failed", result?: { ... }, error?: { code, message } }`
 
+### Dashboard ops
+
+#### `op: "acknowledge_alert"`
+**Request:** `{ op: "acknowledge_alert", auth_token, alert_id }`
+**Response:** `{ alert_id, acknowledged_at, already_acknowledged: boolean }`
+**Behaviour:** Patches the Operational Alerts row with `acknowledged_at = nowIso_()` and `acknowledged_by = "admin"`. The row is kept for audit. Idempotent — second ack returns `already_acknowledged: true` and the existing timestamp without writing again. The dashboard reads alerts where `acknowledged_at` is empty, so dismissed alerts fall out of the panel naturally.
+**Errors:** `NOT_FOUND` (no row with that alert_id), `VALIDATION_FAILED` (alert_id missing or > 64 chars), `UNAUTHORIZED` (no auth token).
+
+#### `op: "health_check"`
+**Request:** `{ op: "health_check" }` — no auth required, in `PUBLIC_OPS`.
+**Response:**
+```json
+{
+  "server_time": "2026-05-04T11:42:21.974Z",
+  "script_properties": {
+    "GITHUB_PAT":      { "required": true,  "set": false },
+    "OPENAI_API_KEY":  { "required": true,  "set": true },
+    "OPENAI_DAILY_CAP_GBP": { "required": false, "set": false }
+  },
+  "sheet_counts": { "Breeds": 1, "Groom Profiles": 1, "AI Call Log": 14, ... },
+  "last_ai_call": {
+    "created_at":  "2026-05-04T09:51:57.373Z",
+    "model":       "gpt-5",
+    "source":      "vision_page",
+    "success":     true,
+    "error_code":  ""
+  },
+  "openai_today_gbp": 0.0874
+}
+```
+**Behaviour:** Returns booleans only for Properties (never the values themselves), row counts for the operationally interesting sheets, the most recent AI Call Log entry, and today's GBP spend. Surfaces in the dashboard's "Backend health" card. Read-only and cheap.
+
 ### Backlog (called by TV — separate concern, here for completeness)
 
 #### `op: "log_backlog_hit"`

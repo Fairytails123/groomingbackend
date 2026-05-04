@@ -2,13 +2,15 @@
 
 > **Read this in full before touching anything.** Then the spec at `.md/grooming-knowledge-software-architecture.md` (v3.8). Memory at `<.claude>/projects/.../memory/MEMORY.md` has user/feedback/reference notes that are authoritative for *how* to work on this project.
 >
-> **System state:** Stages 2–5 are live and verified. Stage 3 Phase 2 (browser-orchestrated PDF intake + AI extraction) is **deployed live as Web App Version 8** (`2026-05-04 10:46 UTC`) and **smoke-tested end-to-end on a real PDF** (`min sch.pdf`, Miniature Schnauzer, 5 pages). Three real bugs found and fixed during the smoke test — see §7 entries 8, 9, 10 below.
+> **System state:** Stages 2–5 are live and verified. Stage 3 Phase 2 (browser-orchestrated PDF intake + AI extraction) is **deployed live as Web App Version 10** (`2026-05-04 12:41 UTC`) and **smoke-tested end-to-end on a real PDF** (`min sch.pdf`, Miniature Schnauzer, 5 pages). v9 adds `op_acknowledge_alert` + dashboard Dismiss button. v10 adds `op_health_check` + dashboard Backend health card. Re-extract catches up on missing page renders. Spec bumped to v3.9.
 
 **Last updated:** 2026-05-04 — Phase 2 smoke-test session. `.gitattributes` added (commit `5b3a826`) to stop OneDrive CRLF flips. Three live bugs fixed and redeployed as Versions 6, 7, 8 of the Apps Script:
 - v6: `max_tokens` → `max_completion_tokens` for gpt-5/o1/o3 model family (older models keep `max_tokens` + `temperature`).
 - v7: vision user_content text now includes the word "JSON" — required by OpenAI when `response_format: { type: "json_object" }` is set.
 - v8: vision `max_tokens` bumped 1024 → 8192 + `reasoning_effort: "low"` for gpt-5 (reasoning tokens were exhausting the output budget; vision is transcription-grade and doesn't need deep reasoning).
-After v8: PRF-001 (Miniature Schnauzer / Pet Groom) extracted 14 vision findings on page 1, 4 on page 2, more on page 3 with blade numbers `#7F #5F #10 #15 #40` merged into the Body row. Status flipped to `Needs Review`. Apps Script Web App URL unchanged from prior deployments.
+- v9: `op_acknowledge_alert` added (dashboard Dismiss button on Operational Alerts).
+- v10: `op_health_check` added (dashboard "Backend health" card surfacing wiring state, sheet counts, today's AI spend, last AI call).
+After v8: PRF-001 (Miniature Schnauzer / Pet Groom) extracted 14 vision findings on page 1, 4 on page 2, more on page 3 with blade numbers `#7F #5F #10 #15 #40` merged into the Body row. Status flipped to `Needs Review`. Re-extract now catches up on missing page renders (bug #25 fix in `admin/js/pdf-intake.js`). Apps Script Web App URL unchanged from prior deployments.
 
 ---
 
@@ -45,7 +47,7 @@ Everything below is live unless flagged ⏳ pending or 🟡 not-yet-verified.
 | GitHub Pages site | https://fairytails123.github.io/groomingbackend/ |
 | Admin website (login) | https://fairytails123.github.io/groomingbackend/admin/login.html |
 | Apps Script project | https://script.google.com/home/projects/1sxgzOrmd2OEmuJmMeoW15Vbb1GkbO1GIhs3h0afmOafcgOb1tDErvIA1/edit (project ID `1sxgzOrmd2OEmuJmMeoW15Vbb1GkbO1GIhs3h0afmOafcgOb1tDErvIA1`) |
-| Apps Script Web App URL | `https://script.google.com/macros/s/AKfycby5CU8J-xyCn38ruoe_HdDswRBCNcxXLO9O2AyiiHDt781mwsJzWeyyahySfwjpq4ZL/exec` (deployment Version 5, persistent — same URL across all v1→v5 redeploys) |
+| Apps Script Web App URL | `https://script.google.com/macros/s/AKfycby5CU8J-xyCn38ruoe_HdDswRBCNcxXLO9O2AyiiHDt781mwsJzWeyyahySfwjpq4ZL/exec` (deployment Version 10, persistent — same URL across all v1→v10 redeploys) |
 | n8n workflow | https://ftmanager.app.n8n.cloud/workflow/6xHWEX3f9zrWtDDa ("Dog Grooming Back End") |
 
 ### Data + storage
@@ -101,7 +103,7 @@ These files are gitignored. Memory holds pointers to them, never the values.
 
 | Doc | What's in it |
 |---|---|
-| `.md/grooming-knowledge-software-architecture.md` | **Canonical spec, v3.8.** Sheets schema, Drive layout, API contract, atomic publish, all design decisions. §0a "v3.8 amendments" at top is the recent diff. |
+| `.md/grooming-knowledge-software-architecture.md` | **Canonical spec, v3.9.** Sheets schema, Drive layout, API contract, atomic publish, all design decisions. §0a "v3.9 amendments" at top is the recent diff. |
 | `.md/*.v3.[4-7].backup.md` | Earlier spec versions kept for historical context |
 | `docs/HANDOVER.md` | This file — operational truth (what's live, what's pending, how to verify) |
 | `docs/api.md` | Apps Script op catalogue — request/response shapes for every op |

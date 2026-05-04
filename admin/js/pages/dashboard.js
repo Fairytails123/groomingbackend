@@ -16,6 +16,7 @@ const statusCountsEl = document.getElementById("status-counts");
 const recentListEl   = document.getElementById("recent-list");
 const backlogListEl  = document.getElementById("backlog-list");
 const alertsListEl   = document.getElementById("alerts-list");
+const healthPanelEl  = document.getElementById("health-panel");
 
 (async () => {
   // Show tomorrow's date in the panel header.
@@ -31,6 +32,7 @@ const alertsListEl   = document.getElementById("alerts-list");
     loadRecentUploads(),
     loadBacklog(),
     loadAlerts(),
+    loadHealth(),
   ]);
 })();
 
@@ -53,11 +55,39 @@ async function loadAlerts() {
                      : a.severity === "warning"  ? "var(--color-warning)"
                      : "var(--color-text-muted)";
       row.innerHTML = `
-        <div>
+        <div style="flex:1;">
           <span class="pill" style="background:${sevColor}20; color:${sevColor};">${a.severity}</span>
           <span style="margin-left:var(--space-2);">${escapeHtml(a.message)}</span>
         </div>
-        <span class="muted" style="font-size:var(--font-size-sm);">${escapeHtml(a.source)}</span>`;
+        <span class="muted" style="font-size:var(--font-size-sm); margin-right:var(--space-3);">${escapeHtml(a.source)}</span>`;
+
+      const dismissBtn = document.createElement("button");
+      dismissBtn.className = "btn btn--small btn--secondary";
+      dismissBtn.textContent = "Dismiss";
+      dismissBtn.addEventListener("click", async () => {
+        dismissBtn.disabled = true;
+        const original = dismissBtn.textContent;
+        dismissBtn.textContent = "Dismissing…";
+        try {
+          await api("acknowledge_alert", { alert_id: a.alert_id });
+          // Optimistically fade and remove the row.
+          row.style.transition = "opacity 200ms";
+          row.style.opacity = "0.4";
+          setTimeout(() => {
+            row.remove();
+            // If the list is now empty, restore the empty-state message.
+            if (!alertsListEl.querySelector("div")) {
+              alertsListEl.innerHTML = `<p class="muted">No open alerts. ✓</p>`;
+            }
+          }, 200);
+        } catch (err) {
+          dismissBtn.disabled = false;
+          dismissBtn.textContent = original;
+          toastError(err?.message ?? "Could not dismiss alert.");
+        }
+      });
+      row.appendChild(dismissBtn);
+
       alertsListEl.appendChild(row);
     }
   } catch {
@@ -185,6 +215,78 @@ async function loadBacklog() {
     }
   } catch {
     backlogListEl.innerHTML = `<p class="muted">Backlog unavailable.</p>`;
+  }
+}
+
+async function loadHealth() {
+  if (!healthPanelEl) return;
+  try {
+    const data = await api("health_check").catch(() => null);
+    if (!data) {
+      healthPanelEl.innerHTML = `<p class="muted">Health check unavailable.</p>`;
+      return;
+    }
+    const sp = data.script_properties ?? {};
+    const sheetCounts = data.sheet_counts ?? {};
+    const last = data.last_ai_call;
+    const todayGbp = Number(data.openai_today_gbp ?? 0);
+
+    // Group properties: show pending (required + not set) loudly,
+    // then required+set in muted text, then optional ones at the bottom.
+    const required = Object.entries(sp).filter(([_, v]) => v.required);
+    const optional = Object.entries(sp).filter(([_, v]) => !v.required);
+    const missing = required.filter(([_, v]) => !v.set).map(([k]) => k);
+    const setRequired = required.filter(([_, v]) => v.set).map(([k]) => k);
+    const setOptional = optional.filter(([_, v]) => v.set).map(([k]) => k);
+
+    const formatPills = (names, color) => names.map((n) =>
+      `<span class="pill" style="background:${color}20; color:${color}; font-family:var(--font-mono); font-size:var(--font-size-xs);">${escapeHtml(n)}</span>`
+    ).join(" ");
+
+    const lastAiHtml = last
+      ? `<span class="muted">Last AI call:</span> <strong>${escapeHtml(last.source)}</strong> (${escapeHtml(last.model)}) — ${last.success ? "✓ success" : `✗ ${escapeHtml(last.error_code || "failed")}`} <span class="muted">${formatRelativeTime(last.created_at)}</span>`
+      : `<span class="muted">No AI calls yet.</span>`;
+
+    healthPanelEl.innerHTML = `
+      <div class="stack" style="gap:var(--space-3);">
+        ${missing.length ? `
+          <div>
+            <div class="muted" style="font-size:var(--font-size-sm); margin-bottom:var(--space-1);">Required Properties not set (${missing.length}):</div>
+            <div>${formatPills(missing, "var(--color-error)")}</div>
+          </div>` : `
+          <div class="muted" style="font-size:var(--font-size-sm);">All required Script Properties are set ✓</div>`}
+
+        ${setRequired.length ? `
+          <details>
+            <summary class="muted" style="font-size:var(--font-size-sm); cursor:pointer;">${setRequired.length} required Properties set</summary>
+            <div style="margin-top:var(--space-2);">${formatPills(setRequired, "var(--color-text-muted)")}</div>
+          </details>` : ``}
+
+        ${setOptional.length ? `
+          <details>
+            <summary class="muted" style="font-size:var(--font-size-sm); cursor:pointer;">${setOptional.length} optional Properties set</summary>
+            <div style="margin-top:var(--space-2);">${formatPills(setOptional, "var(--color-text-muted)")}</div>
+          </details>` : ``}
+
+        <div class="row" style="gap:var(--space-4); flex-wrap:wrap; padding-top:var(--space-2); border-top:1px solid var(--color-border);">
+          <div>
+            <div class="muted" style="font-size:var(--font-size-xs);">Today's AI spend</div>
+            <div style="font-weight:bold; font-size:var(--font-size-lg);">£${todayGbp.toFixed(2)}</div>
+          </div>
+          ${Object.entries(sheetCounts).filter(([_, v]) => v != null).map(([name, count]) => `
+            <div>
+              <div class="muted" style="font-size:var(--font-size-xs);">${escapeHtml(name)}</div>
+              <div style="font-weight:bold; font-size:var(--font-size-lg);">${count}</div>
+            </div>`).join("")}
+        </div>
+
+        <div style="font-size:var(--font-size-sm); border-top:1px solid var(--color-border); padding-top:var(--space-2);">
+          ${lastAiHtml}
+        </div>
+      </div>
+    `;
+  } catch {
+    healthPanelEl.innerHTML = `<p class="muted">Health check unavailable.</p>`;
   }
 }
 

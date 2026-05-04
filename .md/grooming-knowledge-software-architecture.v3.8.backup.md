@@ -1,43 +1,12 @@
 # Fairy Tails Grooming Knowledge Software — Architecture & Build Plan
 
 **Owner:** Kamal (Fairy Tails K9 Centre)
-**Status:** Working spec, v3.9 (Stage 3 Phase 2 smoke-tested and live as Web App v9 on 2026-05-04; vision-call shape decisions captured below).
-**Last updated:** 4 May 2026
+**Status:** Working spec, v3.8 (Stage 3 Phase 2 deployed live as Web App v5 on 2026-05-03; pending real-PDF smoke test).
+**Last updated:** 3 May 2026
 
 ---
 
-## 0a. Amendments since v3.8 (smoke-test fixes, dashboard polish)
-
-The Phase 2 real-PDF smoke test ran on 2026-05-04 against `min sch.pdf` (Miniature Schnauzer, 5 pages, Adobe Scan). Three live bugs were found and fixed in `apps-script/ai.gs`, each redeployed to the same persistent Apps Script deployment in turn (v6 → v7 → v8). One small auxiliary bug in the Re-extract path was caught the same day. A new operational op was added to clear dashboard alerts. The v3.8 backup is preserved at `grooming-knowledge-software-architecture.v3.8.backup.md`. Operational truth (URLs, current Web App version, what's wired) lives in `docs/HANDOVER.md`.
-
-**Decisions added since v3.8:**
-- #34 **OpenAI request shape branches by model family.** Reasoning-class models (`gpt-5*`, `o1*`, `o3*`) require `max_completion_tokens` instead of `max_tokens` and reject custom `temperature`. Older chat models (`gpt-4*`, `gpt-4o*`, `gpt-3.5*`) keep `max_tokens` + `temperature`. `callOpenAI_` in `ai.gs` now branches on `/^(gpt-5|o1|o3)/i.test(model)` and shapes the payload accordingly. The wrapper is the single source of truth — every op (extract, vision, future) inherits the right shape automatically.
-- #35 **`response_format: { type: "json_object" }` requires the literal word "json" in messages.** OpenAI rejects with HTTP 400 if neither the system nor user message contains the substring "json". `WF06_SYSTEM_PROMPT` has it ("structured JSON document"), but `WF08_SYSTEM_PROMPT` did not — only showed JSON syntax in the schema example. `op_run_vision_pass_page` user_content text is now `Return JSON findings for page ${pageIndex} of the source PDF.` so the constraint is satisfied without lengthening the prompt. Lesson: when adding a new op that uses `json_object` mode, ensure the prompt or user message says "JSON" in prose.
-- #36 **gpt-5 reasoning-effort policy: `low` for transcription, generous `max_completion_tokens` budget.** gpt-5 reasoning tokens count against `max_completion_tokens` and frequently consume the entire budget before any visible output, leaving `message.content` empty/non-JSON. `op_run_vision_pass_page` now sets `max_tokens: 8192` (passed through as `max_completion_tokens` for gpt-5) and `callOpenAI_` adds `reasoning_effort: "low"` inside the gpt-5 branch. Vision pass is transcription-grade — it doesn't benefit from deep reasoning. After v8 the same vision call returns 14 findings on page 1, 4 on page 2, etc., all valid JSON. If a future op needs reasoning (e.g. complex section restructuring), it can override `reasoning_effort` per-call.
-- #37 **Re-extract catches up on missing page renders.** When `Re-extract sections` runs and the existing `page_renders` set is a strict subset of the source PDF's pages (e.g. an earlier intake bailed before saving every render), the orchestrator now diffs locally-rendered pages against existing `page_render_id`s and saves the missing ones via `op_save_page_render` before the vision pass. Replaces the previous behaviour of silently vision-passing only the existing subset (which left the back of the PDF unprocessed). Implementation in `admin/js/pdf-intake.js`.
-- #38 **`op_acknowledge_alert` for the dashboard.** Operational Alerts surfaced on the dashboard now have a Dismiss button. Patches `acknowledged_at` + `acknowledged_by:"admin"` on the row; idempotent (second ack returns the existing timestamp). Rows are kept for audit; the dashboard reads `WHERE acknowledged_at IS NULL` so dismissed rows fall out of the panel naturally. No Sheet 10 schema change — the columns were always there from setup.gs.
-
-**Required Script Properties for Phase 2 (unchanged from v3.8):**
-- `OPENAI_API_KEY`, `OPENAI_DAILY_CAP_GBP` (default `5.0`), `OPENAI_USD_TO_GBP` (default `0.85`).
-
-**Deployment state:**
-- Apps Script Web App at deployment `AKfycby5CU8J-xyCn38ruoe_HdDswRBCNcxXLO9O2AyiiHDt781mwsJzWeyyahySfwjpq4ZL` is on Version 9 as of 2026-05-04 12:31 UTC (`v9 op_acknowledge_alert (dashboard Dismiss button)`). URL persistent across versions.
-
-**Operational lessons captured in HANDOVER §7 (do not reintroduce):**
-- Bug #11: OneDrive Files-On-Demand can dehydrate `.git` objects, presenting as "corrupt object" to git. Fix: pin the repo with "Always keep on this device" in File Explorer; long-term, move the repo out of OneDrive.
-- Bug #12: The `Edit` tool's writes through Windows can race with OneDrive sync, truncating files mid-write. Workaround: prefer `mcp__workspace__bash` `sed -i` (atomic in-place writes) or Python `open('w')` for any non-trivial edit, and verify line count + tail + `node --check` immediately after every change.
-
-**What's still pending (unchanged from v3.8):**
-- `GITHUB_PAT` Script Property — gates publish to GitHub Pages.
-- n8n credentials wiring + URL placeholder fill-in.
-- Midnight `resetLoginFailCounter` time trigger.
-- JotForm webhook → n8n WF-01 trigger.
-- TV display — separate future repo.
-- Telegram intake (WF-04) and Telegram heading approval (WF-09) — deferred.
-
----
-
-## 0b. Amendments since v3.7 (Stage 3 Phase 2 ship)
+## 0a. Amendments since v3.7 (Stage 3 Phase 2 ship)
 
 The Phase 2 design and deployment landed on 2026-05-03. The plan that drove the build is at `<.claude>/plans/read-analyse-and-get-iterative-pond.md`. Operational truth (URLs, pending items, verification status) lives in `docs/HANDOVER.md`.
 
@@ -80,7 +49,7 @@ The Phase 2 design and deployment landed on 2026-05-03. The plan that drove the 
 
 ---
 
-## 0c. Amendments since v3.6 (live deployment + bug fixes)
+## 0b. Amendments since v3.6 (live deployment + bug fixes)
 
 Captured here for fast diffing. The v3.6 backup is preserved at `grooming-knowledge-software-architecture.v3.6.backup.md`. Operational truth (URLs, IDs, what's wired, next steps) is in `docs/HANDOVER.md`.
 

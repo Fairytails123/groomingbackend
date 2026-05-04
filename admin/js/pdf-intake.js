@@ -91,10 +91,34 @@ export async function runPdfIntake(opts) {
 
   let pageRenderIds = [];
   if (skipPageRenders) {
-    onProgress({ step: "pages", status: "skipped", message: "Re-extract: page renders already exist." });
-    // We still need the page_render_ids for the vision pass. Pull from the profile.
+    // Pull existing renders, then catch up on any pages the prior session
+    // never saved. Bug #25 in HANDOVER: re-extract used to vision-pass only
+    // the existing render set; if the PDF had more pages than the saved
+    // renders, the back of the PDF was silently skipped.
     const detail = await api("get_breed_profile", { profile_id: profileId });
-    pageRenderIds = (detail.page_renders ?? []).map((r) => r.page_render_id);
+    const existingRenders = detail.page_renders ?? [];
+    pageRenderIds = existingRenders.map((r) => r.page_render_id);
+
+    const existingPageIndexes = new Set(existingRenders.map((r) => Number(r.page_index)));
+    const missingPages = pages.filter((p) => !existingPageIndexes.has(Number(p.pageIndex)));
+
+    if (missingPages.length === 0) {
+      onProgress({ step: "pages", status: "skipped", message: `Re-extract: all ${pages.length} page renders already exist.` });
+    } else {
+      onProgress({ step: "pages", status: "running", message: `Re-extract: catching up on ${missingPages.length} missing page render(s)…` });
+      for (const page of missingPages) {
+        const result = await api("save_page_render", {
+          profile_id: profileId,
+          page_index: page.pageIndex,
+          width_px: page.widthPx,
+          height_px: page.heightPx,
+          jpeg_blob_b64: page.jpegBlobB64,
+        }, { timeoutMs: UPLOAD_TIMEOUT_MS });
+        pageRenderIds.push(result.page_render_id);
+        onProgress({ step: "pages", status: "running", message: `Saved missing page ${page.pageIndex}.`, pageIndex: page.pageIndex, totalPages: pages.length });
+      }
+      onProgress({ step: "pages", status: "done", message: `Re-extract: saved ${missingPages.length} previously-missing page render(s); ${pageRenderIds.length} total now.` });
+    }
   } else {
     onProgress({ step: "pages", status: "running", message: `Saving ${pages.length} page renders…` });
     for (const page of pages) {

@@ -67,6 +67,8 @@ const OP_REGISTRY = {
   dashboard_recent_uploads:   op_dashboard_recent_uploads,
   dashboard_backlog:          op_dashboard_backlog,
   dashboard_alerts:           op_dashboard_alerts,
+  acknowledge_alert:          op_acknowledge_alert,
+  health_check:               op_health_check,
   get_version_history:        op_get_version_history,
 };
 
@@ -74,6 +76,7 @@ const OP_REGISTRY = {
 const PUBLIC_OPS = new Set([
   "login",
   "ping",
+  "health_check",
   "log_backlog_hit",         // TV calls this with no auth
   "rebuild_today_json",      // n8n cron calls these — could be tightened with a service secret
   "rebuild_tomorrow_json",
