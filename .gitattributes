@@ -1,0 +1,43 @@
+# Enforce consistent line endings across Windows / Linux / macOS contributors
+# and protect against OneDrive / Windows-editor CRLF flips on this repo.
+#
+# Default: auto-detect text vs binary; on checkout, hand text files to the OS
+# in its native line ending, but on commit always store as LF.
+* text=auto eol=lf
+
+# Be explicit for the file types we actually use, so a future contributor
+# doesn't have to wonder. All of these are LF in the working tree and in git.
+*.gs       text eol=lf
+*.js       text eol=lf
+*.mjs      text eol=lf
+*.cjs      text eol=lf
+*.html     text eol=lf
+*.css      text eol=lf
+*.md       text eol=lf
+*.json     text eol=lf
+*.yml      text eol=lf
+*.yaml     text eol=lf
+*.sh       text eol=lf
+
+# Apps Script project manifest is JSON — keep it LF-only.
+appsscript.json text eol=lf
+
+# Windows-only batch / PowerShell scripts (none in this repo today, but
+# defined so it's correct if any are ever added).
+*.bat      text eol=crlf
+*.cmd      text eol=crlf
+*.ps1      text eol=crlf
+
+# Common binary file types in this repo — leave them alone.
+*.png      binary
+*.jpg      binary
+*.jpeg     binary
+*.gif      binary
+*.webp     binary
+*.pdf      binary
+*.ico      binary
+*.woff     binary
+*.woff2    binary
+*.ttf      binary
+*.otf      binary
+*.zip      binary
