@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-05-04T19:43:32.917Z",
+  "generated_at": "2026-05-04T20:19:46.139Z",
   "breed_id": "BRD-001",
   "breed_name": "Miniature Schnauzer",
   "breed_slug": "miniature-schnauzer",
@@ -12,27 +12,31 @@
       "profile_id": "PRF-001",
       "groom_type": "Pet Groom",
       "groom_type_slug": "pet-groom",
-      "version": 4,
-      "published_at": "2026-05-04T19:43:32.843Z",
+      "version": 15,
+      "published_at": "2026-05-04T20:19:46.090Z",
       "blade_numbers": [
+        "#10",
+        "#9",
+        "#8.5",
         "#7F",
         "#5F",
-        "#10",
         "#15",
         "#40"
       ],
-      "important_notes": "",
+      "important_notes": "[Body] Many pet owners choose to clipper-cut their pet dog, which destroys the correct harsh coat texture on most dogs and dilutes the color on salt-and-pepper dogs.",
       "is_default": true,
       "sections": [
         {
           "section_id": "SEC-001",
           "name": "Body",
           "order": 1,
-          "text": "(See \"Vision findings — page N\" sections below for AI-extracted detail. Test populate 2026-05-04.)",
+          "text": "The Miniature Schnauzer is a powerful, muscular and squarely built dog of high energy and great intelligence. Its tail is docked short. It may have cropped or uncropped ears. When grooming a Miniature Schnauzer, remember there is nothing soft or fluffy about the breed. In the finished groom, there is very little coat hiding the contours of its body. The leg coat and muzzle coat are slightly longer. The hallmark of the breed is its rectangular head, arched eyebrows and full mustache and beard. Pattern lines are well blended on the body, clearly defined on head and throat. The well-toned body is accentuated by the groom. The head is rectangular in shape. All pattern lines should be invisible on the main body. If using clippers on the main body, feather off transition points in a smooth and steady fashion. If the pattern line is still visible after clipping, use thinning shears to blend the line. The pattern lines start at the turn of the shoulder and continue to just above the elbow, back to the flank on a diagonal and then drop into the thigh region.",
           "blade_numbers": [
+            "#10",
+            "#9",
+            "#8.5",
             "#7F",
             "#5F",
-            "#10",
             "#15",
             "#40"
           ]
@@ -41,28 +45,93 @@
           "section_id": "SEC-002",
           "name": "Throat and chest",
           "order": 2,
-          "text": "(See \"Vision findings — page N\" sections below for AI-extracted detail. Test populate 2026-05-04.)",
-          "blade_numbers": []
+          "text": "The throat is trimmed close with a #7F used against the grain or a #10 or #15 blade used with the coat growth. Follow the natural cowlick line that runs in a 'U' or 'V' shape from the base of the neck to just below the turn of the muzzle. When blending the chest, be aware of the heavy cowlicks in the area. Many stylists prefer to leave the chest area to blend by hand with thinning shears or shears.",
+          "blade_numbers": [
+            "#10",
+            "#7F",
+            "#15"
+          ]
         },
         {
           "section_id": "SEC-003",
           "name": "Carriage and tail end",
           "order": 3,
-          "text": "(See \"Vision findings — page N\" sections below for AI-extracted detail. Test populate 2026-05-04.)",
-          "blade_numbers": []
+          "text": "The top side of the tail is trimmed with the same blade as the body. The underside of the tail is clipped close, with blades ranging from #15 to a #7F, used with or against the grain based on the sensitivity of the dog's skin.",
+          "blade_numbers": [
+            "#15",
+            "#7F"
+          ]
         },
         {
           "section_id": "SEC-004",
           "name": "Legs and feet",
           "order": 4,
-          "text": "(See \"Vision findings — page N\" sections below for AI-extracted detail. Test populate 2026-05-04.)",
+          "text": "The coat on the legs can range from 1/16 of an inch to 2 inches in length depending on the amount of bone, the size of the dog and coat density. The front legs drop straight down from the body and have ample bone. The feet are small for the size of the dog. Both the front and rear feet are compact with well-arched toes. Trim the feet round by first boxing them in the shape of a square while the dog is standing in a natural, square position.",
           "blade_numbers": []
         },
         {
           "section_id": "SEC-005",
           "name": "Head/ears/brows",
           "order": 5,
-          "text": "(See \"Vision findings — page N\" sections below for AI-extracted detail. Test populate 2026-05-04.)",
+          "text": "Their head is rectangular with long, arched eyebrows and a full beard. The top skull and the muzzle are equal in length with the stop area being the middle point. All lines on the head are clean and sharp. Use a #10 or #15 blade on the outside of the ear, a #40 blade can be used on the inside of the ear leather with a very light touch. The eyebrows are long and arched. The beard is long, full and natural.",
+          "blade_numbers": [
+            "#7F",
+            "#10",
+            "#15",
+            "#40"
+          ]
+        },
+        {
+          "section_id": "SEC-009",
+          "name": "Vision findings — page 1",
+          "order": 6,
+          "text": "[handwritten_note] @near-diagram: ~ The Goal ~ Everything about this breed is tight and tailored. The well toned body is accentuated by the groom. The head is rectangular in shape. All pattern lines are invisible. (conf 0.86)\n[handwritten_note] @near-diagram: Correctly Groomed: Handstrip Typical blades used on the body for pet grooming; (conf 0.84)\n[blade] @near-diagram: #10 (conf 0.90)\n[blade] @near-diagram: #9 (conf 0.86)\n[blade] @near-diagram: #8.5 (conf 0.88)\n[blade] @near-diagram: #7F (conf 0.90)\n[blade] @near-diagram: #5F (conf 0.90)\n[handwritten_note] @near-diagram: Head is rectangular with arched, long eye brows and a full beard. (conf 0.87)\n[handwritten_note] @near-diagram: ears clipped very close (conf 0.88)\n[handwritten_note] @near-diagram: Throat is tight and the chest is flat (conf 0.86)\n[handwritten_note] @near-diagram: Pattern lines are well blended on the body, clearly defined on head and throat (conf 0.86)\n[handwritten_note] @near-diagram: Legs are scissored slightly full, straight and parallel (conf 0.88)\n[handwritten_note] @near-diagram: trim nails (conf 0.88)\n[handwritten_note] @near-diagram: Feet are tight & round (conf 0.90)\n[handwritten_note] @near-diagram: Underline is short, tight and tailored. Depth of chest to the elbow. (conf 0.86)\n[handwritten_note] @near-diagram: Rump is tight and clean showing off a well angulated rear assembly with strong thighs (conf 0.86)\n[handwritten_note] @near-diagram: Clip sanitary areas (conf 0.90)\n[handwritten_note] @near-diagram: Hocks are well let down (conf 0.89)\n[annotation] @near-diagram: Scissor (conf 0.90)\n[annotation] @near-diagram: Scissor (conf 0.88)",
+          "blade_numbers": [
+            "#10",
+            "#9",
+            "#8.5",
+            "#7F",
+            "#5F"
+          ]
+        },
+        {
+          "section_id": "SEC-010",
+          "name": "Vision findings — page 2",
+          "order": 7,
+          "text": "[handwritten_note] @near-diagram: From the front and rear, the legs drop in straight, parallel lines from well toned shoulders and thighs. When setting the pattern, use the turn of the muscles to set the lines. Chest is flat but use caution not to bald out this area due to cowlicks where the front legs join the chest. Rear is short, tight and clean. Leg furnishings are longer than the body coat. (conf 0.72)\n[annotation] @near-diagram: Scissor (conf 0.86)\n[annotation] @near-diagram: Scissor (conf 0.85)\n[annotation] @near-diagram: Scissor (conf 0.84)",
+          "blade_numbers": []
+        },
+        {
+          "section_id": "SEC-011",
+          "name": "Vision findings — page 3",
+          "order": 8,
+          "text": "[annotation] @near-diagram: Clip in 'S' shape (conf 0.82)\n[annotation] @near-diagram: normal blending area (conf 0.66)\n[annotation] @near-diagram: Brow (conf 0.73)\n[handwritten_note] @near-diagram: The eyebrows are split, long and arched. The brows will be very short at the back corner of the eye. (conf 0.74)\n[handwritten_note] @near-diagram: The beard is long, full and natural. When combing down the beard, the lines at the side of the face form a straight plane. Just below the back corner of the eyes, the fur is short and well blended, creating fill under the eye. The clipper lines of the beard are clean and sharp. (conf 0.69)\n[handwritten_note] @near-diagram: The throat is trimmed close with a #7F used against the grain or a #10 or #15 blade used with the coat growth. (conf 0.78)\n[handwritten_note] @near-diagram: Stay inside the natural caulk line of the neck that runs from the ear bulb down in a 'U' or 'W' shape. Stop about 2 or 3 finger widths above the breast bone. Thinning shear the caulk seam to blend with the longer coat of the neck. (conf 0.71)\n[handwritten_note] @near-diagram: Use a #10 or #15 blade on the outside of the ear; a #40 blade can be used on the inside of the ear leather with a very light touch. Edge the ear with small detailing shears. (conf 0.80)\n[handwritten_note] @near-diagram: When setting the beard, use the back corners of the eyes and the whisker nodule on the cheeks and under the jaw as basic guidelines... 'connect the dots'... (conf 0.76)\n[handwritten_note] @near-diagram: Ear Safety Tip... Remember, always keep the tips of the shears towards the tips of the ears when edging for safety. (conf 0.86)\n[blade] @near-diagram: #10 (conf 0.90)\n[blade] @near-diagram: #15 (conf 0.90)\n[blade] @near-diagram: #40 (conf 0.88)\n[blade] @near-diagram: #7F (conf 0.83)",
+          "blade_numbers": [
+            "#10",
+            "#15",
+            "#40",
+            "#7F"
+          ]
+        },
+        {
+          "section_id": "SEC-012",
+          "name": "Vision findings — page 4",
+          "order": 9,
+          "text": "[annotation] @near-diagram: Typical Rectangular Head Style (conf 0.90)\n[annotation] @near-diagram: Hair inside the line stays; outside the line, it needs to be removed. (conf 0.90)\n[annotation] @near-diagram: Straight line along the side of the skull. Use a greyhound comb to double check your work. (conf 0.88)\n[annotation] @near-diagram: Eye socket ridge creates the arched line for the brows. (conf 0.90)",
+          "blade_numbers": []
+        },
+        {
+          "section_id": "SEC-013",
+          "name": "Beard care",
+          "order": 10,
+          "text": "The fur on the muzzle is a natural length as it forms the beard.",
+          "blade_numbers": []
+        },
+        {
+          "section_id": "SEC-014",
+          "name": "Topknot",
+          "order": 11,
+          "text": "The top skull can be dipped with a #10 used with the grain to a #7F or #5F, used with the grain or against depending on the dog's sensitivity and density of the coat.",
           "blade_numbers": []
         }
       ],
@@ -119,8 +188,8 @@
         ]
       },
       "display": {
-        "image_panel_width": 75,
-        "text_panel_width": 25,
+        "image_panel_width": 70,
+        "text_panel_width": 30,
         "font_size": "medium",
         "show_blade_box": true,
         "show_warnings": true,
