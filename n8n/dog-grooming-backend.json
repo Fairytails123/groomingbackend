@@ -329,7 +329,7 @@
     {
       "parameters": {
         "chatId": "={{ $('Parse text + look up pending').item.json.chat_id }}",
-        "text": "=✓ PDF \"{{ $('Parse text + look up pending').item.json.file_name }}\" attached to {{ $('Parse text + look up pending').item.json.profile_id }}.\n\n👉 Tap to start AI extraction (one click — keep the page open ~2 min):\n\nhttps://fairytails123.github.io/groomingbackend/admin/upload.html?reextract=1&profile_id={{ $('Parse text + look up pending').item.json.profile_id }}\n\nWhen extraction finishes, the profile will be in 'Needs Review' — click Publish to push to the TV.",
+        "text": "=✓ PDF \"{{ $('Parse text + look up pending').item.json.file_name }}\" attached to {{ $('Parse text + look up pending').item.json.profile_id }}.\n\n👉 Tap to start AI extraction (one click — keep the page open ~2 min):\n\nhttps://fairytails123.github.io/groomingbackend/admin/upload.html?reextract=1&pid={{ $('Parse text + look up pending').item.json.profile_id }}\n\nWhen extraction finishes, the profile will be in 'Needs Review' — click Publish to push to the TV.",
         "additionalFields": {
           "reply_to_message_id": "={{ $('Parse text + look up pending').item.json.message_id }}"
         }

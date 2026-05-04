@@ -91,8 +91,15 @@ let pdfSelectedProfileId = null;
   if (params.get("reextract") === "1") {
     if (sessionStorage.getItem("ft_reextract_pdf_b64")) {
       await tryReextractFromSessionStorage();
-    } else if (params.get("profile_id")) {
-      await tryReextractFromUrl(params.get("profile_id"));
+    } else {
+      // Accept multiple param-name spellings:
+      //   profile_id   — canonical
+      //   profileid    — emerges when Telegram strips the underscore (its plain-text
+      //                  parser eats `_…_` thinking it's italic markup)
+      //   pid          — short, underscore-free form used by the Telegram-reply URL
+      //                  going forward; never gets mangled by Telegram's parser
+      const pid = params.get("profile_id") || params.get("profileid") || params.get("pid");
+      if (pid) await tryReextractFromUrl(pid);
     }
   }
 })();
