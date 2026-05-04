@@ -1,10 +1,12 @@
 # HANDOVER — Fairy Tails Grooming Knowledge Software
 
-> **Read this in full before touching anything.** Then the spec at `.md/grooming-knowledge-software-architecture.md` (v3.8). Memory at `<.claude>/projects/.../memory/MEMORY.md` has user/feedback/reference notes that are authoritative for *how* to work on this project.
+> **Read this in full before touching anything.** Then the spec at `.md/grooming-knowledge-software-architecture.md` (v3.9). Memory at `<.claude>/projects/.../memory/MEMORY.md` has user/feedback/reference notes that are authoritative for *how* to work on this project.
 >
-> **System state:** Stages 2–5 are live and verified. Stage 3 Phase 2 (browser-orchestrated PDF intake + AI extraction) is **deployed live as Web App Version 10** (`2026-05-04 12:41 UTC`) and **smoke-tested end-to-end on a real PDF** (`min sch.pdf`, Miniature Schnauzer, 5 pages). v9 adds `op_acknowledge_alert` + dashboard Dismiss button. v10 adds `op_health_check` + dashboard Backend health card. Re-extract catches up on missing page renders. Spec bumped to v3.9. **GITHUB_PAT wired and publish flow verified end-to-end** (commit `12020ed` on origin written by Apps Script). **WF-04 Telegram intake live** (`n8n/dog-grooming-backend.json`, two-message protocol: PDF first, then PRF-XXX; one-click extract URL in success reply).
+> **System state — Stage 3 Phase 2 fully verified end-to-end on real PDF.** Stages 2–5 live. Apps Script Web App at Version 10 (`2026-05-04 12:41 UTC`). WF-04 Telegram intake live in n8n (`n8n/dog-grooming-backend.json`, two-message protocol). Publish button on profile page wired up and verified — commit `906d0756 Publish Miniature Schnauzer / Pet Groom v15` on `main` confirms the click → save → publish chain works. Spec at v3.9.
 
-**Last updated:** 2026-05-04 — Phase 2 smoke-test session. `.gitattributes` added (commit `5b3a826`) to stop OneDrive CRLF flips. Three live bugs fixed and redeployed as Versions 6, 7, 8 of the Apps Script:
+**Last updated:** 2026-05-04 (evening) — Publish-button fix session. Commit `93a2ce1`.
+
+Earlier same-day work folded in:
 - v6: `max_tokens` → `max_completion_tokens` for gpt-5/o1/o3 model family (older models keep `max_tokens` + `temperature`).
 - v7: vision user_content text now includes the word "JSON" — required by OpenAI when `response_format: { type: "json_object" }` is set.
 - v8: vision `max_tokens` bumped 1024 → 8192 + `reasoning_effort: "low"` for gpt-5 (reasoning tokens were exhausting the output budget; vision is transcription-grade and doesn't need deep reasoning).
@@ -16,7 +18,10 @@ After v10:
 - Apps Script `setupTriggers()` ran; midnight `resetLoginFailCounter` trigger installed.
 - n8n cron HTTP Request URLs pasted into all 3 nodes of "Dog Grooming Back End" workflow.
 - WF-04 Telegram intake workflow built into the same n8n workflow as a 14-node chain (Telegram Trigger → IF chat-id → IF document → stash-or-route → upload chain → success/error replies). Two-message protocol (PDF first, then PRF-XXX as a separate text). State persists across n8n executions via `$getWorkflowStaticData('global').pendingPdfs[chatId]`.
-- `admin/js/pages/upload.js` gains `tryReextractFromUrl(profileId)` — `/admin/upload.html?reextract=1&profile_id=PRF-XXX` now fetches the source PDF via `op_get_source_pdf` and auto-runs the intake pipeline. Used by the WF-04 success reply for one-click extraction from Telegram.
+- `admin/js/pages/upload.js` gains `tryReextractFromUrl(profileId)` — `/admin/upload.html?reextract=1&pid=PRF-XXX` (or `profile_id=` / `profileid=` for back-compat) fetches the source PDF via `op_get_source_pdf` and auto-runs the intake pipeline. Used by the WF-04 success reply for one-click extraction from Telegram.
+- `apps-script/Code.gs` doPost accepts `service_token` as an alternative to `auth_token` for n8n calls (matches the Property `SERVICE_TOKEN`).
+- **`admin/js/pages/profile.js` `onPublish()` no longer a stub.** Real publish flow: flush autosave → confirm dialog → `op_publish_profile` (120s timeout) → friendly toasts for VALIDATION_FAILED / GITHUB_FAILED / CONFLICT → reload state on success.
+
 After v8: PRF-001 (Miniature Schnauzer / Pet Groom) extracted 14 vision findings on page 1, 4 on page 2, more on page 3 with blade numbers `#7F #5F #10 #15 #40` merged into the Body row. Status flipped to `Needs Review`. Re-extract now catches up on missing page renders (bug #25 fix in `admin/js/pdf-intake.js`). Apps Script Web App URL unchanged from prior deployments.
 
 ---
@@ -25,12 +30,12 @@ After v8: PRF-001 (Miniature Schnauzer / Pet Groom) extracted 14 vision findings
 
 1. **Read this file end-to-end.**
 2. **Skim memory:** `<.claude>/projects/.../memory/MEMORY.md` (six entries, all short).
-3. **Open the spec:** `.md/grooming-knowledge-software-architecture.md` v3.8, §0a "v3.8 amendments" block at the top is the diff-from-current-truth. Don't read the whole thing unless you need a specific section.
+3. **Open the spec:** `.md/grooming-knowledge-software-architecture.md` v3.9, §0a "v3.9 amendments" block at the top is the diff-from-current-truth. Don't read the whole thing unless you need a specific section.
 4. **Sanity check the live system:** `curl -s -o /dev/null -w "%{http_code}\n" https://fairytails123.github.io/groomingbackend/admin/login.html` should print `200`. Login URL + password in §"Live deployment state" below.
-5. **Check git state:** `git log --oneline -10`. Last meaningful commit should be `e8c7d21 Docs: spec v3.7 + comprehensive HANDOVER rewrite`. Any newer commits should match what this file describes.
+5. **Check git state:** `git log --oneline -10`. Last meaningful commit (this session): `93a2ce1 Wire Publish button on profile page to op_publish_profile`. Earlier in same day: `35229b4 WF-04 Telegram-safe URL param`, `364b67c WF-04 Telegram intake live + service-token`. Any newer commits should match what this file describes.
 6. **Pick a task** from §"Recommended next-task priorities" — items are ranked by what unblocks the most.
 
-**The single biggest pending item:** smoke-test Phase 2 with a real Adobe Scan PDF end-to-end. The deploy succeeded but the runtime hasn't been exercised. Everything else can wait behind that.
+**The single biggest pending item:** ✅ DONE — Phase 2 smoke-tested end-to-end with `min sch.pdf` (Miniature Schnauzer). Publish chain verified via commit `906d0756`. Next biggest item: pick from §5 priorities (recommended: P0 = move repo out of OneDrive).
 
 ---
 
@@ -136,7 +141,7 @@ Every row links the relevant commit so a `git show` brings up the diff.
 - ✅ **Phase 1**: Cropper.js v1.6.2 vendored; `snip.html` with filmstrip + canvas + role buttons (M/F/B/H/S keyboard shortcuts); `crops.gs` with `op_list_page_renders`, `op_save_page_render`, `op_save_crop`, `op_list_crops_for_render` (`9626999`)
 - ✅ Drive serving fixed: switched to `lh3.googleusercontent.com/d/<id>=s0` URLs + auto-public sharing on upload + `makeAllImagesPublic()` retro-fix helper (`bff73b3`)
 - ✅ IMAGES tab on profile editor lists real page-render + image counts with thumbnails (`5e0427e`)
-- ✅ **Phase 2 deployed live as Web App v5 (2026-05-03)** — code complete, deploy verified, **runtime not yet exercised end-to-end with a real PDF (🟡 next session)**.
+- ✅ **Phase 2 deployed and verified end-to-end (2026-05-04)** — Web App v10. Smoke-tested with `min sch.pdf` Miniature Schnauzer 5-page Adobe Scan. Bugs #8/#9/#10 fixed in flight. Publish chain confirmed via commit `906d0756 Publish Miniature Schnauzer / Pet Groom v15`.
   - Vendored pdf.js v4.6.82 (`vendor/pdfjs/pdf.min.mjs` + `pdf.worker.min.mjs`)
   - `admin/js/pdf.js` renders each page to JPEG + extracts text via pdf.js
   - `admin/js/pdf-intake.js` orchestrator: upload → render → save renders → extract → vision per page → finalize
@@ -167,8 +172,21 @@ Every row links the relevant commit so a `git show` brings up the diff.
 ### n8n workflow Phase 1
 
 - ✅ "Dog Grooming Back End" workflow `6xHWEX3f9zrWtDDa` populated with sticky-noted architecture + 4 entry points (cron 06:00+11:30, cron 07:00, cron 19:00, Telegram intake webhook stub, crop generation webhook stub)
-- ⏳ Cron HTTP Request nodes have placeholder for Apps Script URL (Kamal pastes the actual URL `…/AKfycby5CU8J-xyCn38ruoe_HdDswRBCNcxXLO9O2AyiiHDt781mwsJzWeyyahySfwjpq4ZL/exec` into all three)
-- ⏳ No credentials wired yet (Sheets/Drive OAuth, GitHub HTTP Header Auth, OpenAI for Phase 2, Telegram from `.secrets/`)
+- ✅ Cron HTTP Request nodes all hold the live URL `…/AKfycby5CU8J-xyCn38ruoe_HdDswRBCNcxXLO9O2AyiiHDt781mwsJzWeyyahySfwjpq4ZL/exec`
+- ✅ Credentials wired: Telegram bot creds (`Telegram groomingbackend` from `.secrets/telegram-token.md`), HTTP Header Auth for SERVICE_TOKEN
+
+### n8n WF-04 — Telegram intake (live, this session)
+
+- ✅ **Two-message protocol.** Telegram mobile doesn't expose a caption field on document send, so the original "send PDF with `PRF-XXX` caption" design doesn't work. The shipping flow is: send the PDF → bot replies "got it, now send `PRF-XXX`" → user sends `PRF-XXX` as plain text → bot uploads PDF + replies with one-click reextract URL.
+- ✅ **State correlation** via `$getWorkflowStaticData('global').pendingPdfs[chatId]`. Stash on PDF arrival, drain on `PRF-XXX` arrival, clear after successful upload.
+- ✅ **Binary handling.** Uses `await this.helpers.getBinaryDataBuffer(0, binaryName)` not `binary.data` (n8n cloud uses `filesystem-v2` storage; the literal string `'filesystem-v2'` is what `binary.data` holds, not the bytes).
+- ✅ **One-click re-extract URL** in the success reply: `https://fairytails123.github.io/groomingbackend/admin/upload.html?reextract=1&pid=PRF-XXX`. Uses `pid=` (no underscores) because Telegram silently interprets `_` in plain text as italic markers and strips them — see bug #13.
+- ✅ **`tryReextractFromUrl()`** in `admin/js/pages/upload.js` accepts `profile_id`, `profileid`, OR `pid` URL params (defensive — survives Telegram mangling either way).
+
+### Service-token Apps Script branch
+
+- ✅ `apps-script/Code.gs` doPost accepts `body.service_token` matching the `SERVICE_TOKEN` Script Property as an alternative to a HMAC session token. n8n holds the secret in an HTTP Header Auth credential and forwards it on every call. Means n8n doesn't need an admin login session and Kamal's password rotations don't break the bot.
+- ✅ `apps-script/setup.gs` `setupServiceToken()` generates a 32-byte random token and writes it to `SERVICE_TOKEN` Property (idempotent — only writes if missing).
 
 ---
 
@@ -176,32 +194,27 @@ Every row links the relevant commit so a `git show` brings up the diff.
 
 Items ranked by what unblocks the most. Pick one, finish it, update this section.
 
-### P0 — Phase 2 real-PDF smoke test (🟡 not yet done)
+### P0 — Move repo out of OneDrive (~10 min, blocks nothing but pays back forever)
 
-Code is deployed but never run end-to-end with a real Adobe Scan PDF. This is the riskiest unverified path. Walk it before touching anything else.
+OneDrive on top of `.git` is the cause of the recurring lock-file fights, the Edit-tool truncation (bug #12), the CRLF flip (bug #11), and the dehydration risk. The git remote on GitHub already gives you off-machine backup. Moving to a plain local folder costs you OneDrive sync of the source tree but you don't need that — git is the cross-machine sync layer.
 
-1. Open https://fairytails123.github.io/groomingbackend/admin/login.html, log in (`fairytails22`).
-2. Library → ensure Miniature Schnauzer (or any breed Kamal has a real PDF for) exists with a `Pet Groom` profile.
-3. Open `/admin/upload.html` → click "PDF intake" tab → pick the breed → drop the real PDF → click "Start extraction".
-4. Watch the progress panel. Expected sequence: Upload PDF → Render pages (per-page progress) → Save page renders (per-page progress) → Extract text + structure (gpt-4o-mini, ~10s) → Vision pass (gpt-5 per page, ~5-15s each) → Finalize. Tab must stay open.
-5. On success → click "Open profile →". TEXT tab should show the 5 core sections populated with `ai_confidence`. IMAGES tab should show N page-render thumbnails + a "Pending heading approvals" card if AI suggested any extras.
-6. Snip a body diagram → save as `main`. Verify the image lands in Sheet 4 (Images).
-7. Approve one suggested heading → confirm a new section appears in TEXT tab. Ignore another → confirm it disappears from pending.
-8. Cost-cap test: temporarily set `OPENAI_DAILY_CAP_GBP=0.001` Property → click "Re-extract sections" → expect a `QUOTA_EXCEEDED` toast and an Operational Alerts row severity=error. Restore the cap.
-9. Failure-injection test: temporarily corrupt `OPENAI_API_KEY` (suffix random chars) → re-extract → expect status stays `Processing`, `error_message` set, alert logged. Restore the key.
-10. Open `AI Call Log` sheet → verify one row per OpenAI call with token counts and `cost_usd` populated.
+Recommended location: `C:\dev\groomingbackend\`.
 
-If any step fails, debug via DevTools (Network tab catches Apps Script responses; Console catches client errors). Apps Script editor → Execution log shows server-side stack traces.
+Steps:
+1. **Push everything from the OneDrive copy first.** `git status` clean, `git push origin main` — make sure no local-only commits.
+2. In a new PowerShell: `cd C:\ ; mkdir dev ; cd dev ; git clone https://github.com/Fairytails123/groomingbackend.git`. This becomes your new working copy.
+3. Sign in to https://github.com/settings/personal-access-tokens — your existing fine-grained PAT (`groomingbackend (publish)`) works for `git clone`/`push` from any machine.
+4. Open Cowork on the new path; set `request_cowork_directory` to `C:\dev\groomingbackend`. The `.secrets/`, `.md/`, and `outputs/` paths inside the repo all stay relative.
+5. Once the new clone works, **rename the OneDrive copy** to `groomingbackend.OLD-do-not-edit` so you don't accidentally edit the wrong tree. Don't delete it for a few days.
+6. The laptop sees this same git remote — it's a `git clone` away from being identical.
 
-When all green: commit the verification result (`docs/HANDOVER.md` flag flips from 🟡 to ✅), push.
+### P1 — Phase A: Kamal-side wiring (mostly DONE)
 
-### P1 — Phase A: Kamal-side wiring (~30 min, mostly Kamal's hands)
-
-1. **`GITHUB_PAT`**: Settings → Developer settings → Fine-grained tokens → scope `Fairytails123/groomingbackend`, Contents r/w + Metadata r → paste into Apps Script Property `GITHUB_PAT`. Then smoke-test publish: log in, edit a profile, click Publish on `/admin/publish.html`, verify `public/breeds/<slug>.json` lands on GitHub Pages.
-2. **n8n Apps Script URL placeholders**: open the workflow at https://ftmanager.app.n8n.cloud/workflow/6xHWEX3f9zrWtDDa, paste the URL `https://script.google.com/macros/s/AKfycby5CU8J-xyCn38ruoe_HdDswRBCNcxXLO9O2AyiiHDt781mwsJzWeyyahySfwjpq4ZL/exec` into all three HTTP Request nodes, save, activate.
-3. **n8n Credentials**: create Google Sheets OAuth, Google Drive OAuth, HTTP Header Auth for GitHub (header `Authorization`, value `Bearer <PAT>`), OpenAI API (key — only needed if you ever revive the n8n WF-06/07/08 path; the live path uses Apps Script direct).
-4. **Midnight time trigger** for `resetLoginFailCounter`: Apps Script editor → Triggers → Add Trigger → Function `resetLoginFailCounter`, Event source `Time-driven`, Type `Day timer`, Time `Midnight to 1am`. Stops the brute-force counter from accumulating forever.
-5. **JotForm webhook → n8n WF-01** (so `today.json` rebuilds within seconds of a new booking, not just on the 06:00 / 11:30 cron). JotForm form `251190647924057` → Settings → Integrations → Webhooks → add the n8n webhook URL.
+1. ✅ **`GITHUB_PAT`** set; publish flow verified end-to-end (commits `12020ed` and `906d0756` on origin written by Apps Script).
+2. ✅ **n8n Apps Script URL placeholders** filled in across all three cron HTTP Request nodes.
+3. ✅ **n8n Credentials** — Telegram bot, HTTP Header Auth (SERVICE_TOKEN). Sheets/Drive OAuth + OpenAI **not needed** for the live path (Apps Script holds OPENAI_API_KEY directly; WF-06/07/08 are deprecated).
+4. ✅ **Midnight time trigger** for `resetLoginFailCounter` installed via `setupTriggers()` (programmatic) — see `apps-script/setup.gs`.
+5. ⏳ **JotForm webhook → n8n WF-01** — still pending; current daily flow falls back to the 06:00 / 11:30 cron for `today.json` rebuilds. Optional polish; not blocking.
 
 ### P2 — `clasp login` so future deploys are one command
 
@@ -209,15 +222,16 @@ When all green: commit the verification result (`docs/HANDOVER.md` flag flips fr
 
 ### P3 — small follow-ups (any order, when you have a slice)
 
-- **`op_acknowledge_alert`** — Operational Alerts panel on the dashboard surfaces alerts but has no clear path. Add a small op + button.
-- **Spec amendments back-fold** — every time you make a non-trivial decision, append a numbered entry to `.md/grooming-knowledge-software-architecture.md` §0a "v3.8 amendments" block. Bump to v3.9 when there are >3 new entries.
+- ✅ **`op_acknowledge_alert`** — done in v9 (Dismiss button on Operational Alerts panel).
+- **Spec amendments back-fold** — current spec is **v3.9**. Every non-trivial decision should append a numbered entry to `.md/grooming-knowledge-software-architecture.md` §0a "v3.9 amendments" block. Bump to v4.0 when there are >3 new entries since v3.9 was minted.
 - **Server-side cropping** (n8n + Pillow / WF-10) — replace client-side `canvas.toDataURL()` for byte-perfect crops. Only do this if you actually see image-quality issues; current path is fine for personal-scale.
 - **Apps Script doGet image proxy** with token gating — current path makes Drive page-render and crop files publicly viewable by URL (image-id-based filenames are unguessable as a soft barrier). Do this if Kamal ever wants stricter isolation.
 
-### P4 — Stage 3 Phase 2 follow-ons (deferred from scope)
+### P4 — Stage 3 Phase 2 follow-ons
 
-- **WF-04 Telegram intake** — bot token already in `.secrets/telegram-token.md`. Reuses the existing `op_upload_pdf` + `op_extract_sections` + `op_run_vision_pass_page` chain. n8n → on bot message with PDF document → `getFile` → upload to Drive → call `op_upload_pdf` → fire downstream chain.
-- **WF-09 Telegram heading approval** — n8n → on Phase 2 finalize → if `extra_headings_pending > 0`, send Telegram message with inline buttons → callback writes to Sheet 6 with the same shape `op_decide_heading` writes (so the inline UI keeps working too).
+- ✅ **WF-04 Telegram intake** — built and verified end-to-end this session. Two-message protocol; one-click re-extract URL in success reply.
+- ⏳ **WF-09 Telegram heading approval** — still deferred. n8n → on Phase 2 finalize → if `extra_headings_pending > 0`, send Telegram message with inline Approve / Edit / Ignore buttons → callback writes to Sheet 6 with the same shape `op_decide_heading` writes (so the inline UI keeps working in parallel). The two-message-correlation pattern from WF-04 is the template.
+- **Auto-extract trigger on `?reextract=1` URLs** — eliminate the one-click "Start extraction" step on `upload.html?reextract=1&pid=PRF-XXX` so the Telegram → publish loop is fully hands-off after the user snips diagrams. Currently `tryReextractFromUrl()` populates the breed select and PDF blob; we just need to also call `runIntakeWithUi()` immediately when `auto=1` is in the URL.
 - **Cost guard rails for n8n path** — if WF-06/07/08 ever revive (they're deprecated for Phase 2 but kept as fallback), they should call `op_extract_sections` / `op_run_vision_pass_page` rather than calling OpenAI themselves, so the Apps Script `AI Call Log` + cost cap stays single-source-of-truth.
 
 ### P5 — TV display
@@ -266,6 +280,14 @@ In chronological order; only the ones that left a trap if you're not careful.
 
 12. **Edit tool truncates files when the working file lives in OneDrive (2026-05-04).** During the Phase 2 fix session, two separate `Edit` tool calls on `apps-script/ai.gs` produced files that were truncated mid-function (e.g. `section_order: maxOrder +` ending mid-expression). The targeted change had landed near the top, but the bottom of the file lost ~28 lines. Workaround: backup before edit, do edits via `mcp__workspace__bash` `sed -i` (atomic in-place writes), and verify line count + tail + `node --check` immediately after. Lesson: when editing a file inside OneDrive, prefer bash sed over Edit tool for any change beyond a couple of lines. Better long-term: move repo out of OneDrive (see bug #11).
 
+13. **Telegram silently strips underscores in plain-text URLs (2026-05-04 evening).** First version of WF-04 success reply included `https://…/upload.html?reextract=1&profile_id=PRF-001`. On the user's mobile Telegram client, the URL rendered as `…?reextract=1&profileid=PRF-001` because `_id` was being parsed as italic markup (`_..._`). Symptom: clicking the link landed on `/admin/upload.html` but `tryReextractFromUrl(null)` was called and the page sat empty. Fix: WF-04 now ships the URL with a fully underscore-free key (`pid=` — short for profile id), and `tryReextractFromUrl` accepts `profile_id`, `profileid`, OR `pid` to be defensive against past Telegram quirks too. Lesson: any URL that travels through Telegram plain text must contain zero underscores in keys or values — use kebab-case or short keys.
+
+14. **`onPublish()` was a stub that swallowed clicks (2026-05-04 evening).** `admin/js/pages/profile.js` had `async function onPublish() { await saveNow(); toast("Publish flow lands in Stage 2 Week 3 — save was applied."); }`. Misread by Kamal as "stage 2 of 3" + "nothing is published". Confirmed by API state: `last_publish_succeeded_at` was hours-stale despite the click. Fixed in commit `93a2ce1` — now flushes autosave debounce, confirms with the user, calls `op_publish_profile` (120s timeout), handles `VALIDATION_FAILED` / `GITHUB_FAILED` / `CONFLICT`, and reloads on success. Verified end-to-end: commit `906d0756 Publish Miniature Schnauzer / Pet Groom v15` was created by Apps Script as a result of the click. Lesson: stub strings that say "Stage X Week Y" can be misread as progress indicators by users; either remove the stub or make the message obviously a TODO.
+
+15. **Browser cache traps for ES modules (2026-05-04 evening).** After bug #14 was fixed and pushed (commit `93a2ce1`), Kamal's regular Chrome tab continued running the old `profile.js` even after Ctrl+Shift+R. ES module imports cache aggressively beyond what hard-refresh clears. Two reliable fixes: (a) DevTools (F12) → Application tab → **Clear site data** button — wipes service worker + all caches + sessionStorage in one shot; (b) DevTools → Network tab → **Disable cache** while DevTools is open + reload. Incognito always serves fresh, useful as a sanity check. Lesson: when telling the user "now hard-refresh", lead with "DevTools → Clear site data" instead. Note this affects every code change to `admin/js/`, so factor it into smoke-test scripts.
+
+16. **Stale `.git/index.lock` on OneDrive cannot be removed by Linux (2026-05-04 evening, recurring).** When git is interrupted (or when OneDrive sync is mid-flight) the index lock can be left behind. The Linux mount inside the Cowork sandbox sees the file but `rm -f` returns "Operation not permitted" because of OneDrive's Windows ACL. Fix: from PowerShell, `if (Test-Path .git\index.lock) { Remove-Item -Force .git\index.lock }`. Sometimes git itself re-creates the lock during a write; then run the same Remove-Item between failed `git add` invocations. Lesson: `git` operations on the OneDrive copy are fragile; the proper fix is bug #11's recommendation — move the repo to `C:\dev\groomingbackend\` (P0 in §5).
+
 
 ---
 
@@ -273,9 +295,9 @@ In chronological order; only the ones that left a trap if you're not careful.
 
 1. **Read this file in full** (you just did).
 2. **Read memory:** `<.claude>/projects/.../memory/MEMORY.md` index, then any of the six entries that look relevant.
-3. **Spec read:** §0a "v3.8 amendments" at the top of `.md/grooming-knowledge-software-architecture.md`. Don't read the whole spec unless you need a specific section.
+3. **Spec read:** §0a "v3.9 amendments" at the top of `.md/grooming-knowledge-software-architecture.md`. Don't read the whole spec unless you need a specific section.
 4. **Verify alive:** the cheat-sheet in §6 above.
-5. **Check git state:** `git log --oneline -10`. The Phase 2 work is in the local working tree but **not yet committed** as of this session — see `git status`. Consider creating a single commit for the Phase 2 ship before doing anything else, with a message like `Stage 3 Phase 2 ship: browser-orchestrated PDF intake + AI extraction (deployed v5)`.
+5. **Check git state:** `git log --oneline -10`. Last meaningful commit (this session): `93a2ce1 Wire Publish button on profile page to op_publish_profile`. If `git status` shows local changes you don't recognise, that's almost certainly OneDrive CRLF noise — `.gitattributes` will normalise.
 6. **If user asks about a feature that "should already work":** check §4 "What's done". If it's marked ✅ and the file mentioned exists locally, the feature is live (modulo GitHub Pages cache; hard-refresh).
 7. **If user reports a bug:** check §7 "Bugs fixed" first — don't reintroduce. If novel: drive Chrome MCP to reproduce (memory `reference_apps_script_deploy.md` has the techniques), use `mcp__Claude_in_Chrome__javascript_tool` to inspect state, fix, push.
-8. **For new work:** respect the design-first feedback (`feedback_design_first.md`) — for non-trivial changes, 
+8. **For new work:** respect the design-first feedback (`feedback_design_first.md`) — for non-trivial changes, sketch the approach in chat first (file paths, function names, data flow) and get a thumbs-up from Kamal before writing code. Save Cowork rounds and avoid mid-stream rewrites.
