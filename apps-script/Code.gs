@@ -62,6 +62,8 @@ const OP_REGISTRY = {
   job_status:            op_not_implemented,  // unused; Phase 2 is synchronous
 
   // Dashboard
+  dashboard_summary:          op_dashboard_summary,
+  dashboard_today_prep:       op_dashboard_today_prep,
   dashboard_tomorrow_prep:    op_dashboard_tomorrow_prep,
   dashboard_status_counts:    op_dashboard_status_counts,
   dashboard_recent_uploads:   op_dashboard_recent_uploads,

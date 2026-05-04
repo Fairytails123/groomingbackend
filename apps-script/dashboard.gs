@@ -5,6 +5,170 @@
  * /admin/dashboard.html page expects. See admin/js/pages/dashboard.js.
  */
 
+// ─── op: dashboard_summary ──────────────────────────────────────────
+//
+// Single round-trip for the redesigned home page + every admin page's
+// sidebar counts. Reads each sheet exactly once and computes:
+//   - counts: { published, needs_review, ready_to_publish, drafts, breeds }
+//   - oldest_drafts (limit=5, oldest updated_at first)
+//   - recently_updated (limit=3, newest updated_at first, non-Archived)
+//
+// "ready_to_publish" reuses the same checks as op_publish_profile (5 core
+// sections present + non-empty, main image with valid crop bounds, valid
+// groom_type, breed has slug). Pre-loads sheets once so the per-Draft
+// readiness check is O(profiles) not O(profiles * sheet-reads).
+
+function op_dashboard_summary(body) {
+  const { rows: breeds } = readSheet_("Breeds");
+  const { rows: profiles } = readSheet_("Groom Profiles");
+  const { rows: sections } = readSheet_("Groom Knowledge");
+  const { rows: images } = readSheet_("Images");
+  const { rows: renders } = readSheet_("Page Renders");
+
+  const breedsById = new Map();
+  for (const b of breeds) {
+    if (b.status === "archived") continue;
+    breedsById.set(b.breed_id, b);
+  }
+
+  const sectionsByProfile = new Map();
+  for (const s of sections) {
+    const arr = sectionsByProfile.get(s.profile_id) ?? [];
+    arr.push(s);
+    sectionsByProfile.set(s.profile_id, arr);
+  }
+
+  const imagesByProfile = new Map();
+  for (const i of images) {
+    const arr = imagesByProfile.get(i.profile_id) ?? [];
+    arr.push(i);
+    imagesByProfile.set(i.profile_id, arr);
+  }
+
+  const rendersById = new Map();
+  for (const r of renders) rendersById.set(r.page_render_id, r);
+
+  let published = 0, needsReview = 0, drafts = 0, readyToPublish = 0;
+  for (const p of profiles) {
+    if (p.status === "Archived") continue;
+    if (p.status === "Published") published++;
+    if (p.status === "Needs Review") needsReview++;
+    if (p.status === "Draft") {
+      drafts++;
+      const breed = breedsById.get(p.breed_id);
+      if (breed && isProfilePublishable_(p, breed, sectionsByProfile, imagesByProfile, rendersById)) {
+        readyToPublish++;
+      }
+    }
+  }
+
+  const projectRow = (p) => ({
+    profile_id: p.profile_id,
+    breed_id: p.breed_id,
+    breed_name: p.breed_name,
+    groom_type: p.groom_type,
+    status: p.status,
+    updated_at: toIso_(p.updated_at) ?? toIso_(p.created_at),
+  });
+
+  const oldestDrafts = profiles
+    .filter((p) => p.status === "Draft" || p.status === "Needs Review")
+    .map(projectRow)
+    .filter((p) => p.updated_at)
+    .sort((a, b) => String(a.updated_at).localeCompare(String(b.updated_at)))
+    .slice(0, 5);
+
+  const recentlyUpdated = profiles
+    .filter((p) => p.status !== "Archived")
+    .map(projectRow)
+    .filter((p) => p.updated_at)
+    .sort((a, b) => String(b.updated_at).localeCompare(String(a.updated_at)))
+    .slice(0, 3);
+
+  return {
+    counts: {
+      published,
+      needs_review: needsReview,
+      ready_to_publish: readyToPublish,
+      drafts,
+      breeds: breedsById.size,
+    },
+    oldest_drafts: oldestDrafts,
+    recently_updated: recentlyUpdated,
+  };
+}
+
+// Mirror of validatePublishable_ but takes pre-loaded maps so it can be
+// called per-profile without re-reading sheets. Returns boolean.
+function isProfilePublishable_(profile, breed, sectionsByProfile, imagesByProfile, rendersById) {
+  if (!VALID_GROOM_TYPES.includes(profile.groom_type)) return false;
+  if (!breed?.slug) return false;
+
+  const sections = sectionsByProfile.get(profile.profile_id) ?? [];
+  const sectionsByName = Object.fromEntries(sections.map((s) => [s.section_name, s]));
+  for (const core of CORE_SECTIONS) {
+    const sec = sectionsByName[core];
+    if (!sec) return false;
+    if (!String(sec.section_text ?? "").trim()) return false;
+  }
+
+  const profileImages = imagesByProfile.get(profile.profile_id) ?? [];
+  const main = profileImages.find((i) => i.image_role === "main");
+  if (!main) return false;
+  if (main.source_page_render_id) {
+    const render = rendersById.get(main.source_page_render_id);
+    if (render) {
+      const x = Number(main.crop_x ?? 0), y = Number(main.crop_y ?? 0);
+      const w = Number(main.crop_w ?? 0), h = Number(main.crop_h ?? 0);
+      const W = Number(render.width_px ?? 0), H = Number(render.height_px ?? 0);
+      if (W > 0 && H > 0 && (x + w > W || y + h > H || w <= 0 || h <= 0)) return false;
+    }
+  }
+  return true;
+}
+
+// ─── op: dashboard_today_prep ───────────────────────────────────────
+//
+// Reads today.json from GitHub Pages (built by op_rebuild_today_json on
+// JotForm bookings). Returns one row per unique matched breed plus
+// appointment time when available. If today.json hasn't been built yet
+// (e.g. Sunday or before the cron has run), returns an empty list.
+
+function op_dashboard_today_prep(body) {
+  const owner = PropertiesService.getScriptProperties().getProperty("GITHUB_OWNER");
+  const repo = PropertiesService.getScriptProperties().getProperty("GITHUB_REPO");
+  if (!owner || !repo) return { breeds: [] };
+  const url = `https://${owner}.github.io/${repo}/public/today.json`;
+  try {
+    const resp = UrlFetchApp.fetch(url, { muteHttpExceptions: true });
+    if (resp.getResponseCode() !== 200) return { breeds: [] };
+    const pack = JSON.parse(resp.getContentText());
+    const bookings = pack.bookings ?? [];
+
+    const seen = new Map();
+    for (const b of bookings) {
+      const key = b.matched ? `breed:${b.breed_id}` : `raw:${b.raw_breed}`;
+      if (seen.has(key)) continue;
+      seen.set(key, {
+        breed_name: b.matched ? findBreedSafeName_(b.breed_id) : b.raw_breed,
+        breed_id: b.breed_id,
+        kb_status: b.matched ? breedKbStatus_(b.breed_id) : "missing",
+        profile_id: b.matched ? findFirstProfileId_(b.breed_id) : null,
+        appointment_time: extractTimeFromIso_(b.appointment_datetime),
+      });
+    }
+    return { breeds: [...seen.values()] };
+  } catch {
+    return { breeds: [] };
+  }
+}
+
+function extractTimeFromIso_(iso) {
+  if (!iso || typeof iso !== "string") return null;
+  const m = iso.match(/T(\d{2}):(\d{2})/);
+  return m ? `${m[1]}:${m[2]}` : null;
+}
+
 // ─── op: dashboard_status_counts ────────────────────────────────────
 
 function op_dashboard_status_counts(body) {
