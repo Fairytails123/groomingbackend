@@ -1,0 +1,131 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-05-04T12:25:30.522Z",
+  "breed_id": "BRD-001",
+  "breed_name": "Miniature Schnauzer",
+  "breed_slug": "miniature-schnauzer",
+  "breed_type": "pure",
+  "parent_breed_ids": [],
+  "default_profile_id": "PRF-001",
+  "profiles": {
+    "PRF-001": {
+      "profile_id": "PRF-001",
+      "groom_type": "Pet Groom",
+      "groom_type_slug": "pet-groom",
+      "version": 3,
+      "published_at": "2026-05-04T12:25:30.487Z",
+      "blade_numbers": [
+        "#7F",
+        "#5F",
+        "#10",
+        "#15",
+        "#40"
+      ],
+      "important_notes": "",
+      "is_default": true,
+      "sections": [
+        {
+          "section_id": "SEC-001",
+          "name": "Body",
+          "order": 1,
+          "text": "(See \"Vision findings — page N\" sections below for AI-extracted detail. Test populate 2026-05-04.)",
+          "blade_numbers": [
+            "#7F",
+            "#5F",
+            "#10",
+            "#15",
+            "#40"
+          ]
+        },
+        {
+          "section_id": "SEC-002",
+          "name": "Throat and chest",
+          "order": 2,
+          "text": "(See \"Vision findings — page N\" sections below for AI-extracted detail. Test populate 2026-05-04.)",
+          "blade_numbers": []
+        },
+        {
+          "section_id": "SEC-003",
+          "name": "Carriage and tail end",
+          "order": 3,
+          "text": "(See \"Vision findings — page N\" sections below for AI-extracted detail. Test populate 2026-05-04.)",
+          "blade_numbers": []
+        },
+        {
+          "section_id": "SEC-004",
+          "name": "Legs and feet",
+          "order": 4,
+          "text": "(See \"Vision findings — page N\" sections below for AI-extracted detail. Test populate 2026-05-04.)",
+          "blade_numbers": []
+        },
+        {
+          "section_id": "SEC-005",
+          "name": "Head/ears/brows",
+          "order": 5,
+          "text": "(See \"Vision findings — page N\" sections below for AI-extracted detail. Test populate 2026-05-04.)",
+          "blade_numbers": []
+        }
+      ],
+      "images": {
+        "main": {
+          "image_id": "IMG-003",
+          "url": "https://Fairytails123.github.io/groomingbackend/public/images/miniature-schnauzer/PRF-001/IMG-003.jpg",
+          "width_px": 1026,
+          "height_px": 1116
+        },
+        "supplementary": [
+          {
+            "image_id": "IMG-001",
+            "role": "supplementary",
+            "url": "https://Fairytails123.github.io/groomingbackend/public/images/miniature-schnauzer/PRF-001/IMG-001.jpg",
+            "width_px": 0,
+            "height_px": 0
+          },
+          {
+            "image_id": "IMG-002",
+            "role": "supplementary",
+            "url": "https://Fairytails123.github.io/groomingbackend/public/images/miniature-schnauzer/PRF-001/IMG-002.jpg",
+            "width_px": 1158,
+            "height_px": 999
+          },
+          {
+            "image_id": "IMG-004",
+            "role": "front",
+            "url": "https://Fairytails123.github.io/groomingbackend/public/images/miniature-schnauzer/PRF-001/IMG-004.jpg",
+            "width_px": 536,
+            "height_px": 583
+          },
+          {
+            "image_id": "IMG-005",
+            "role": "front",
+            "url": "https://Fairytails123.github.io/groomingbackend/public/images/miniature-schnauzer/PRF-001/IMG-005.jpg",
+            "width_px": 536,
+            "height_px": 583
+          },
+          {
+            "image_id": "IMG-006",
+            "role": "head",
+            "url": "https://Fairytails123.github.io/groomingbackend/public/images/miniature-schnauzer/PRF-001/IMG-006.jpg",
+            "width_px": 1070,
+            "height_px": 960
+          },
+          {
+            "image_id": "IMG-007",
+            "role": "head",
+            "url": "https://Fairytails123.github.io/groomingbackend/public/images/miniature-schnauzer/PRF-001/IMG-007.jpg",
+            "width_px": 1070,
+            "height_px": 960
+          }
+        ]
+      },
+      "display": {
+        "image_panel_width": 75,
+        "text_panel_width": 25,
+        "font_size": "medium",
+        "show_blade_box": true,
+        "show_warnings": true,
+        "theme": "default"
+      }
+    }
+  }
+}
