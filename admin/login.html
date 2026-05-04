@@ -9,29 +9,24 @@
   <link rel="stylesheet" href="css/components.css">
 </head>
 <body>
-  <main>
-    <div class="card" style="max-width:400px; margin: var(--space-7) auto;">
-      <h1 style="margin-bottom:var(--space-1);">Fairy Tails Knowledge</h1>
-      <p class="muted" style="margin-bottom:var(--space-5);">Admin sign-in</p>
+  <main class="login">
+    <div class="login__card">
+      <div class="login__logo">FT</div>
+      <h1 class="login__title">Welcome back</h1>
+      <p class="login__sub">Fairy Tails Knowledge admin</p>
 
-      <form id="login-form" class="stack" autocomplete="off">
+      <form id="login-form" class="stack" autocomplete="off" style="text-align:left;">
         <div>
           <label for="password">Password</label>
-          <input
-            id="password"
-            type="password"
-            autocomplete="current-password"
-            required
-            autofocus>
+          <input id="password" type="password" autocomplete="current-password" required autofocus>
         </div>
-        <button class="btn" type="submit" id="login-button">Sign in</button>
+        <button class="btn" type="submit" id="login-button" style="width:100%; justify-content:center;">Sign in</button>
       </form>
 
       <p class="muted" id="login-error" role="alert" style="margin-top:var(--space-3); color:var(--color-error); display:none;"></p>
     </div>
   </main>
   <div class="toast-container" id="toast-container"></div>
-
   <script type="module" src="js/pages/login.js"></script>
 </body>
 </html>

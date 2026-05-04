@@ -3,131 +3,157 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Upload — Fairy Tails Knowledge</title>
+  <title>Add new — Fairy Tails Knowledge</title>
   <link rel="stylesheet" href="css/tokens.css">
   <link rel="stylesheet" href="css/base.css">
   <link rel="stylesheet" href="css/components.css">
   <link rel="stylesheet" href="css/pages/upload.css">
 </head>
 <body>
-  <header class="topbar">
-    <a href="dashboard.html" class="topbar__brand">Fairy Tails Knowledge</a>
-    <nav class="topbar__nav" aria-label="Primary">
-      <a href="dashboard.html" class="topbar__link">Dashboard</a>
-      <a href="library.html"   class="topbar__link">Library</a>
-      <a href="upload.html"    class="topbar__link" aria-current="page">Upload</a>
-      <a href="#"              class="topbar__link" id="logout-link">Sign out</a>
+<div class="app">
+  <aside class="sb">
+    <div class="sb__brand"><div class="sb__logo">FT</div><div><div class="sb__name">Fairy Tails</div><div class="sb__sub">Knowledge admin</div></div></div>
+    <nav class="sb__nav" aria-label="Primary">
+      <a href="dashboard.html" class="sb__link"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12l9-9 9 9v9a2 2 0 0 1-2 2h-4v-7H10v7H6a2 2 0 0 1-2-2v-9z"/></svg>Home</a>
+      <a href="library.html" class="sb__link"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>Breeds <span class="count" data-sb-count="breeds"></span></a>
+      <a href="upload.html" class="sb__link" aria-current="page"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0-12-4 4m4-4 4 4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>Add new</a>
+      <a href="library.html?status=review" class="sb__link"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Needs review <span class="count" data-sb-count="review"></span></a>
+      <div class="sb__group">Manage</div>
+      <a href="publish.html" class="sb__link"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg>Ready to publish <span class="count" data-sb-count="publish"></span></a>
     </nav>
-  </header>
+    <div class="sb__user">
+      <div class="sb__avatar" id="user-initials">·</div>
+      <div class="sb__userinfo"><div class="sb__username" id="user-name">Signed in</div><div class="sb__userrole">Admin</div></div>
+      <a href="#" class="sb__signout" id="logout-link"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg></a>
+    </div>
+  </aside>
 
-  <main class="stack">
-    <h1>Upload</h1>
+  <main class="main">
+    <header class="topbar">
+      <nav class="crumbs"><strong>Add new</strong></nav>
+      <div class="topbar__spacer"></div>
+    </header>
 
-    <nav class="tabs" id="upload-tabs" role="tablist">
-      <button class="tab tab--active" type="button" role="tab" data-tab="pdf"   aria-selected="true">PDF intake</button>
-      <button class="tab"             type="button" role="tab" data-tab="image" aria-selected="false">Image upload</button>
-    </nav>
-
-    <!-- ─── PDF intake panel ─────────────────────────────────────────── -->
-    <section id="tab-pdf-panel" role="tabpanel" aria-labelledby="pdf">
-      <p class="muted">Drop an Adobe Scan PDF; the page renders, text extraction and AI structuring all run in your browser. Keep this tab open until "Done".</p>
-
-      <div class="card stack">
+    <div class="content">
+      <div class="content__head">
         <div>
-          <label for="pdf-breed-select">Breed</label>
-          <select id="pdf-breed-select">
-            <option value="">Loading breeds…</option>
-          </select>
-          <p class="muted" id="pdf-profile-meta" style="font-size:var(--font-size-sm); margin-top:var(--space-1);"></p>
-        </div>
-
-        <div>
-          <label for="pdf-file-input">Source PDF</label>
-          <div class="dropzone" id="pdf-dropzone">
-            <input id="pdf-file-input" type="file" accept="application/pdf" hidden>
-            <p>Drop a PDF here, or <button type="button" class="btn btn--small btn--secondary" id="pdf-browse-button">browse</button></p>
-            <p class="muted" style="font-size:var(--font-size-sm); margin-top:var(--space-2);">Adobe Scan PDFs preferred. Up to ~50 pages, ~50 MB.</p>
-          </div>
-          <p class="muted" id="pdf-file-meta" style="font-size:var(--font-size-sm); margin-top:var(--space-2);"></p>
-        </div>
-
-        <div class="row" style="justify-content:flex-end; gap:var(--space-3);">
-          <button class="btn btn--secondary" id="pdf-reset-button" type="button">Clear</button>
-          <button class="btn"                id="pdf-start-button" type="button" disabled>Start extraction</button>
+          <h1 class="content__title">Add new breed</h1>
+          <p class="content__sub">Drop in a scanned reference and we'll do the rest — read text, find photos, fill the card.</p>
         </div>
       </div>
 
-      <div class="card stack" id="pdf-progress-card" hidden>
-        <div class="card__header"><h2 class="card__title">Progress</h2></div>
-        <p id="pdf-status-text" class="muted">Starting…</p>
-        <ol class="pdf-steps" id="pdf-steps">
-          <li class="pdf-step" data-step="upload"><span class="pdf-step__pill pill">queued</span><span class="pdf-step__label">Upload PDF</span></li>
-          <li class="pdf-step" data-step="render"><span class="pdf-step__pill pill">queued</span><span class="pdf-step__label">Render pages</span></li>
-          <li class="pdf-step" data-step="pages"><span class="pdf-step__pill pill">queued</span><span class="pdf-step__label">Save page renders</span></li>
-          <li class="pdf-step" data-step="extract"><span class="pdf-step__pill pill">queued</span><span class="pdf-step__label">Extract text + structure</span></li>
-          <li class="pdf-step" data-step="vision"><span class="pdf-step__pill pill">queued</span><span class="pdf-step__label">Vision pass</span></li>
-          <li class="pdf-step" data-step="finalize"><span class="pdf-step__pill pill">queued</span><span class="pdf-step__label">Finalize</span></li>
-        </ol>
-        <pre class="pdf-log" id="pdf-log" aria-live="polite"></pre>
-        <p id="pdf-done-actions" hidden>
-          <a class="btn" id="pdf-done-link" href="#">Open profile →</a>
-        </p>
-      </div>
-    </section>
+      <nav class="tabs" id="upload-tabs" role="tablist">
+        <button class="tab tab--active" type="button" role="tab" data-tab="pdf"   aria-selected="true">From a PDF scan</button>
+        <button class="tab"             type="button" role="tab" data-tab="image" aria-selected="false">Just a photo</button>
+      </nav>
 
-    <!-- ─── Image upload panel ──────────────────────────────────────── -->
-    <section id="tab-image-panel" role="tabpanel" aria-labelledby="image" hidden>
-      <p class="muted">Manual upload of pre-cropped diagrams. Use the snipping tool from a profile's Images tab for cropping from a page render.</p>
+      <!-- PDF panel -->
+      <section id="tab-pdf-panel" role="tabpanel" aria-labelledby="pdf">
+        <div class="two-col">
+          <div style="display:flex;flex-direction:column;gap:16px">
+            <div class="card">
+              <div class="card__header"><h2 class="card__title">1. Choose breed</h2></div>
+              <div class="card__body">
+                <label for="pdf-breed-select">Breed</label>
+                <select id="pdf-breed-select"><option value="">Loading breeds…</option></select>
+                <p class="muted" id="pdf-profile-meta" style="font-size:var(--font-size-sm); margin-top:var(--space-2);"></p>
+              </div>
+            </div>
 
-      <div class="card stack">
-        <div>
-          <label for="profile-select">Profile</label>
-          <select id="profile-select">
-            <option value="">Loading profiles…</option>
-          </select>
-          <p class="muted" id="profile-meta" style="font-size:var(--font-size-sm); margin-top:var(--space-1);"></p>
-        </div>
-
-        <div>
-          <label for="image-role">Image role</label>
-          <select id="image-role">
-            <option value="main">Main (largest, hero image)</option>
-            <option value="front">Front view</option>
-            <option value="back">Back view</option>
-            <option value="head">Head detail</option>
-            <option value="supplementary">Supplementary</option>
-          </select>
-        </div>
-
-        <div>
-          <label for="file-input">Image file</label>
-          <div class="dropzone" id="dropzone">
-            <input id="file-input" type="file" accept="image/jpeg,image/png" hidden>
-            <p>Drop an image here, or <button type="button" class="btn btn--small btn--secondary" id="browse-button">browse</button></p>
-            <p class="muted" style="font-size:var(--font-size-sm); margin-top:var(--space-2);">JPEG or PNG, ideally under 5 MB.</p>
+            <div class="card">
+              <div class="card__header"><h2 class="card__title">2. Drop the scan</h2></div>
+              <div class="card__body">
+                <div class="dropzone" id="pdf-dropzone">
+                  <input id="pdf-file-input" type="file" accept="application/pdf" hidden>
+                  <div class="dz__icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M12 18v-6m-3 3 3 3 3-3"/></svg></div>
+                  <p class="dz__title">Drop a PDF here, or <button type="button" class="btn btn--small btn--secondary" id="pdf-browse-button">browse</button></p>
+                  <p class="dz__sub">Adobe Scan PDFs preferred · up to ~50 pages, ~50 MB</p>
+                </div>
+                <p class="muted" id="pdf-file-meta" style="font-size:var(--font-size-sm); margin-top:var(--space-3);"></p>
+                <div class="row" style="justify-content:flex-end; gap:var(--space-2); margin-top:var(--space-3);">
+                  <button class="btn btn--secondary" id="pdf-reset-button" type="button">Clear</button>
+                  <button class="btn"                id="pdf-start-button" type="button" disabled>Start</button>
+                </div>
+              </div>
+            </div>
           </div>
-          <div id="preview-wrap" hidden style="margin-top:var(--space-3);">
-            <img id="preview" alt="Selected image preview" style="max-height:240px; border-radius:var(--radius-md); border:1px solid var(--color-border);">
-            <p class="muted" style="font-size:var(--font-size-sm);" id="file-meta"></p>
+
+          <div class="card" id="pdf-progress-card" hidden>
+            <div class="card__header"><h2 class="card__title">What happens next</h2></div>
+            <div class="card__body">
+              <p id="pdf-status-text" class="muted">Starting…</p>
+              <ol class="pdf-steps" id="pdf-steps">
+                <li class="pdf-step" data-step="upload"><span class="pdf-step__pill pill">queued</span><span class="pdf-step__label">Upload PDF</span></li>
+                <li class="pdf-step" data-step="render"><span class="pdf-step__pill pill">queued</span><span class="pdf-step__label">Render pages</span></li>
+                <li class="pdf-step" data-step="pages"><span class="pdf-step__pill pill">queued</span><span class="pdf-step__label">Save page renders</span></li>
+                <li class="pdf-step" data-step="extract"><span class="pdf-step__pill pill">queued</span><span class="pdf-step__label">Read text + structure</span></li>
+                <li class="pdf-step" data-step="vision"><span class="pdf-step__pill pill">queued</span><span class="pdf-step__label">Find photos</span></li>
+                <li class="pdf-step" data-step="finalize"><span class="pdf-step__pill pill">queued</span><span class="pdf-step__label">Build card</span></li>
+              </ol>
+              <pre class="pdf-log" id="pdf-log" aria-live="polite"></pre>
+              <p id="pdf-done-actions" hidden style="margin-top:var(--space-3);">
+                <a class="btn" id="pdf-done-link" href="#">Open card →</a>
+              </p>
+            </div>
           </div>
         </div>
+      </section>
 
-        <div class="row" style="justify-content:flex-end; gap:var(--space-3);">
-          <button class="btn btn--secondary" id="reset-button" type="button">Clear</button>
-          <button class="btn" id="upload-button" type="button" disabled>Upload</button>
+      <!-- Image panel -->
+      <section id="tab-image-panel" role="tabpanel" aria-labelledby="image" hidden>
+        <p class="muted" style="margin-bottom:var(--space-3);">Manually upload a pre-cropped diagram. To crop from a full page, use the snipping tool from a card's Photos tab.</p>
+
+        <div class="card">
+          <div class="card__body" style="display:flex;flex-direction:column;gap:var(--space-4)">
+            <div>
+              <label for="profile-select">Card</label>
+              <select id="profile-select"><option value="">Loading cards…</option></select>
+              <p class="muted" id="profile-meta" style="font-size:var(--font-size-sm); margin-top:var(--space-2);"></p>
+            </div>
+
+            <div>
+              <label for="image-role">Photo role</label>
+              <select id="image-role">
+                <option value="main">Main (largest, hero photo)</option>
+                <option value="front">Front view</option>
+                <option value="back">Back view</option>
+                <option value="head">Head detail</option>
+                <option value="supplementary">Extra</option>
+              </select>
+            </div>
+
+            <div>
+              <label for="file-input">Photo file</label>
+              <div class="dropzone" id="dropzone">
+                <input id="file-input" type="file" accept="image/jpeg,image/png" hidden>
+                <p>Drop a photo here, or <button type="button" class="btn btn--small btn--secondary" id="browse-button">browse</button></p>
+                <p class="muted" style="font-size:var(--font-size-sm); margin-top:var(--space-2);">JPEG or PNG, ideally under 5 MB.</p>
+              </div>
+              <div id="preview-wrap" hidden style="margin-top:var(--space-3);">
+                <img id="preview" alt="Selected photo preview" style="max-height:240px; border-radius:var(--radius-md); border:1px solid var(--color-border);">
+                <p class="muted" style="font-size:var(--font-size-sm);" id="file-meta"></p>
+              </div>
+            </div>
+
+            <div class="row" style="justify-content:flex-end; gap:var(--space-2);">
+              <button class="btn btn--secondary" id="reset-button" type="button">Clear</button>
+              <button class="btn" id="upload-button" type="button" disabled>Upload</button>
+            </div>
+          </div>
         </div>
-      </div>
 
-      <div class="card">
-        <div class="card__header"><h2 class="card__title">Existing images on this profile</h2></div>
-        <div id="existing-images"><p class="muted">Pick a profile above.</p></div>
-      </div>
-    </section>
+        <div class="card" style="margin-top:var(--space-4);">
+          <div class="card__header"><h2 class="card__title">Photos already on this card</h2></div>
+          <div class="card__body" id="existing-images"><p class="muted">Pick a card above.</p></div>
+        </div>
+      </section>
+    </div>
   </main>
+</div>
 
-  <div id="modal-root"></div>
-  <div class="toast-container" id="toast-container"></div>
+<div id="modal-root"></div>
+<div class="toast-container" id="toast-container"></div>
 
-  <script type="module" src="js/pages/upload.js"></script>
+<script type="module" src="js/pages/upload.js"></script>
 </body>
 </html>

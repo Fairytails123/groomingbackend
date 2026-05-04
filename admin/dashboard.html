@@ -3,79 +3,151 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Dashboard — Fairy Tails Knowledge</title>
+  <title>Home — Fairy Tails Knowledge</title>
   <link rel="stylesheet" href="css/tokens.css">
   <link rel="stylesheet" href="css/base.css">
   <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/pages/dashboard.css">
 </head>
 <body>
-  <header class="topbar">
-    <a href="dashboard.html" class="topbar__brand">Fairy Tails Knowledge</a>
-    <nav class="topbar__nav" aria-label="Primary">
-      <a href="dashboard.html" class="topbar__link" aria-current="page">Dashboard</a>
-      <a href="library.html"   class="topbar__link">Library</a>
-      <a href="upload.html"    class="topbar__link">Upload</a>
-      <a href="#"              class="topbar__link" id="logout-link">Sign out</a>
+<div class="app">
+  <!-- ─── SIDEBAR ─── -->
+  <aside class="sb">
+    <div class="sb__brand">
+      <div class="sb__logo">FT</div>
+      <div>
+        <div class="sb__name">Fairy Tails</div>
+        <div class="sb__sub">Knowledge admin</div>
+      </div>
+    </div>
+    <nav class="sb__nav" aria-label="Primary">
+      <a href="dashboard.html"  class="sb__link" aria-current="page">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12l9-9 9 9v9a2 2 0 0 1-2 2h-4v-7H10v7H6a2 2 0 0 1-2-2v-9z"/></svg>
+        Home
+      </a>
+      <a href="library.html"    class="sb__link">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        Breeds <span class="count" data-sb-count="breeds"></span>
+      </a>
+      <a href="upload.html"     class="sb__link">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0-12-4 4m4-4 4 4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+        Add new
+      </a>
+      <a href="library.html?status=review" class="sb__link">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        Needs review <span class="count" data-sb-count="review"></span>
+      </a>
+      <div class="sb__group">Manage</div>
+      <a href="publish.html"    class="sb__link">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg>
+        Ready to publish <span class="count" data-sb-count="publish"></span>
+      </a>
     </nav>
-  </header>
-
-  <main class="stack">
-    <h1>Dashboard</h1>
-
-    <section class="card quick-add-card">
-      <div class="card__header">
-        <h2 class="card__title">Quick add or update breed</h2>
-        <span class="muted" style="font-size:var(--font-size-sm);">Get ahead of the booking queue</span>
+    <div class="sb__user">
+      <div class="sb__avatar" id="user-initials">·</div>
+      <div class="sb__userinfo">
+        <div class="sb__username" id="user-name">Signed in</div>
+        <div class="sb__userrole">Admin</div>
       </div>
-      <p class="muted" style="margin-bottom:var(--space-3);">Type a breed name to find an existing profile to edit, or create a brand new breed and jump straight into the editor.</p>
-      <div class="quick-add">
-        <input id="quick-add-input" type="search" placeholder="Type a breed name… e.g. Cavapoo" autocomplete="off">
-        <div id="quick-add-results" class="quick-add__results" hidden></div>
-      </div>
-    </section>
+      <a href="#" class="sb__signout" id="logout-link" title="Sign out">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+      </a>
+    </div>
+  </aside>
 
-    <section class="card">
-      <div class="card__header">
-        <h2 class="card__title">Tomorrow's prep</h2>
-        <span class="muted" id="tomorrow-date"></span>
-      </div>
-      <div id="tomorrow-list">
-        <p class="muted">Loading…</p>
-      </div>
-    </section>
+  <!-- ─── MAIN ─── -->
+  <main class="main">
+    <header class="topbar">
+      <nav class="crumbs"><strong>Home</strong></nav>
+      <div class="topbar__spacer"></div>
+      <form class="search" id="topbar-search-form" onsubmit="return false">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <input id="topbar-search" placeholder="Search breeds, cards, pages…" autocomplete="off">
+        <kbd>⌘K</kbd>
+      </form>
+      <a href="upload.html" class="btn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+        New breed card
+      </a>
+    </header>
 
-    <section class="grid-2">
-      <div class="card">
-        <div class="card__header"><h2 class="card__title">Status counts</h2></div>
-        <div id="status-counts"><p class="muted">Loading…</p></div>
+    <div class="content">
+      <div class="content__head">
+        <div>
+          <h1 class="content__title home__greeting" id="home-greeting">Welcome back</h1>
+          <p class="content__sub home__meta" id="home-meta">Today's overview</p>
+        </div>
       </div>
-      <div class="card">
-        <div class="card__header"><h2 class="card__title">Backlog (top 5)</h2></div>
-        <div id="backlog-list"><p class="muted">Loading…</p></div>
+
+      <!-- Quick add -->
+      <div class="quickadd">
+        <div class="quickadd__icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+        </div>
+        <div class="quickadd__body">
+          <h2 class="quickadd__title">Add or update a breed in seconds</h2>
+          <p class="quickadd__sub">Type a name to find an existing card, or create a new one.</p>
+        </div>
+        <div class="quickadd__input">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+          <input id="home-quick-find" placeholder="Try “Cavapoo”, “Cocker”, “Labradoodle”…">
+        </div>
       </div>
-    </section>
 
-    <section class="card">
-      <div class="card__header"><h2 class="card__title">Recent uploads</h2></div>
-      <div id="recent-list"><p class="muted">Loading…</p></div>
-    </section>
-
-    <section class="card">
-      <div class="card__header"><h2 class="card__title">Operational alerts</h2></div>
-      <div id="alerts-list"><p class="muted">Loading…</p></div>
-    </section>
-
-    <section class="card">
-      <div class="card__header">
-        <h2 class="card__title">Backend health</h2>
-        <span class="muted" style="font-size:var(--font-size-sm);">Wiring + AI usage</span>
+      <!-- Stats -->
+      <div class="stats">
+        <div class="stat">
+          <div class="stat__label"><span class="stat__icon" style="background:var(--color-brand)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11V3l-4 4M2 13v8l4-4M22 21l-7-7M2 3l7 7"/></svg></span>Live cards</div>
+          <div class="stat__num" data-stat="live-cards">—</div>
+          <div class="stat__delta" data-stat-delta="live-cards"></div>
+        </div>
+        <div class="stat">
+          <div class="stat__label"><span class="stat__icon" style="background:var(--color-warning)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></span>Need review</div>
+          <div class="stat__num" data-stat="needs-review">—</div>
+          <div class="stat__delta" data-stat-delta="needs-review"></div>
+        </div>
+        <div class="stat">
+          <div class="stat__label"><span class="stat__icon" style="background:var(--color-success)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg></span>Ready to publish</div>
+          <div class="stat__num" data-stat="ready-to-publish">—</div>
+          <div class="stat__delta" data-stat-delta="ready-to-publish"></div>
+        </div>
+        <div class="stat">
+          <div class="stat__label"><span class="stat__icon" style="background:var(--color-purple)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/></svg></span>Drafts</div>
+          <div class="stat__num" data-stat="drafts">—</div>
+          <div class="stat__delta" data-stat-delta="drafts"></div>
+        </div>
       </div>
-      <div id="health-panel"><p class="muted">Loading…</p></div>
-    </section>
+
+      <!-- Two col -->
+      <div class="two-col">
+        <div class="card" id="today-card">
+          <div class="card__hd">
+            <div>
+              <h2 class="card__title">Today's prep</h2>
+              <div class="card__sub">Cards needed for today's bookings (pulled from appointments)</div>
+            </div>
+          </div>
+          <div class="card__body card__body--p0 today" id="today-list"></div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:16px">
+          <div class="card">
+            <div class="card__hd"><h2 class="card__title">Oldest drafts</h2></div>
+            <div class="card__body card__body--p0 blog" id="oldest-drafts"></div>
+          </div>
+          <div class="card">
+            <div class="card__hd"><h2 class="card__title">Recently updated</h2></div>
+            <div class="card__body" id="recently-updated"></div>
+          </div>
+        </div>
+      </div>
+    </div>
   </main>
+</div>
 
-  <div class="toast-container" id="toast-container"></div>
+<div id="modal-root"></div>
+<div class="toast-container" id="toast-container"></div>
 
-  <script type="module" src="js/pages/dashboard.js"></script>
+<script type="module" src="js/pages/dashboard.js"></script>
 </body>
 </html>

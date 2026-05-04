@@ -1,0 +1,17 @@
+/* Home (dashboard) page — bespoke styles */
+/* Most layout primitives live in components.css. This file only
+   contains things specific to the home view. */
+
+.home__greeting   { margin: 0 0 4px; }
+.home__meta       { color: var(--color-secondary); font-size: var(--font-size-base); margin: 0; }
+
+#today-list:empty::before,
+#oldest-drafts:empty::before,
+#recently-updated:empty::before {
+  content: "Nothing here yet.";
+  display: block;
+  padding: 24px 20px;
+  color: var(--color-secondary);
+  font-size: 13px;
+  text-align: center;
+}

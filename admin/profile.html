@@ -3,153 +3,174 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Profile editor — Fairy Tails Knowledge</title>
+  <title>Card editor — Fairy Tails Knowledge</title>
   <link rel="stylesheet" href="css/tokens.css">
   <link rel="stylesheet" href="css/base.css">
   <link rel="stylesheet" href="css/components.css">
   <link rel="stylesheet" href="css/pages/profile.css">
 </head>
 <body>
-  <header class="topbar">
-    <a href="dashboard.html" class="topbar__brand">Fairy Tails Knowledge</a>
-    <nav class="topbar__nav" aria-label="Primary">
-      <a href="dashboard.html" class="topbar__link">Dashboard</a>
-      <a href="library.html"   class="topbar__link">Library</a>
-      <a href="upload.html"    class="topbar__link">Upload</a>
-      <a href="#"              class="topbar__link" id="logout-link">Sign out</a>
+<div class="app">
+  <aside class="sb">
+    <div class="sb__brand"><div class="sb__logo">FT</div><div><div class="sb__name">Fairy Tails</div><div class="sb__sub">Knowledge admin</div></div></div>
+    <nav class="sb__nav" aria-label="Primary">
+      <a href="dashboard.html" class="sb__link"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12l9-9 9 9v9a2 2 0 0 1-2 2h-4v-7H10v7H6a2 2 0 0 1-2-2v-9z"/></svg>Home</a>
+      <a href="library.html" class="sb__link" aria-current="page"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>Breeds <span class="count" data-sb-count="breeds"></span></a>
+      <a href="upload.html" class="sb__link"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0-12-4 4m4-4 4 4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>Add new</a>
+      <a href="library.html?status=review" class="sb__link"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Needs review <span class="count" data-sb-count="review"></span></a>
+      <div class="sb__group">Manage</div>
+      <a href="publish.html" class="sb__link"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg>Ready to publish <span class="count" data-sb-count="publish"></span></a>
     </nav>
-  </header>
-
-  <main class="stack">
-    <div class="row row--space-between" style="flex-wrap:wrap; gap:var(--space-3);">
-      <div>
-        <h1 id="page-title" style="margin-bottom:0;">Loading…</h1>
-        <p class="muted" id="page-subtitle" style="margin-bottom:0;"></p>
-      </div>
-      <div class="row" style="gap:var(--space-3); align-items:center; flex-wrap:wrap;">
-        <span id="status-pill"></span>
-        <span id="save-status" class="muted" style="font-size:var(--font-size-sm);"></span>
-        <button class="btn btn--secondary" id="back-button" type="button">← Library</button>
-        <button class="btn" id="publish-button" type="button" disabled>Publish</button>
-      </div>
+    <div class="sb__user">
+      <div class="sb__avatar" id="user-initials">·</div>
+      <div class="sb__userinfo"><div class="sb__username" id="user-name">Signed in</div><div class="sb__userrole">Admin</div></div>
+      <a href="#" class="sb__signout" id="logout-link"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg></a>
     </div>
+  </aside>
 
-    <nav class="tabs" role="tablist" aria-label="Profile sections">
-      <button role="tab" class="tab tab--active" data-tab="text"    aria-selected="true">Text</button>
-      <button role="tab" class="tab"             data-tab="images"  aria-selected="false">Images</button>
-      <button role="tab" class="tab"             data-tab="display" aria-selected="false">Display</button>
-      <button role="tab" class="tab"             data-tab="history" aria-selected="false">History</button>
-    </nav>
+  <main class="main">
+    <header class="topbar">
+      <nav class="crumbs"><a href="library.html">Breeds</a> <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m9 18 6-6-6-6"/></svg> <strong id="crumb-title">Card editor</strong></nav>
+      <div class="topbar__spacer"></div>
+      <span id="status-pill"></span>
+      <span id="save-status" class="muted" style="font-size:var(--font-size-sm);"></span>
+      <button class="btn btn--secondary" id="back-button" type="button">← Breeds</button>
+      <button class="btn" id="publish-button" type="button" disabled>Publish update</button>
+    </header>
 
-    <!-- TEXT tab -->
-    <section id="tab-text" class="tab-panel" role="tabpanel">
-      <div class="card stack">
-        <div class="card__header">
-          <h2 class="card__title">Sections</h2>
-          <button class="btn btn--small btn--secondary" id="add-section-button" type="button">+ Add section</button>
-        </div>
-        <div id="sections-list">
-          <p class="muted">Loading…</p>
+    <div class="content">
+      <div class="content__head">
+        <div>
+          <h1 class="content__title" id="page-title">Loading…</h1>
+          <p class="content__sub" id="page-subtitle"></p>
         </div>
       </div>
 
-      <div class="card">
-        <div class="card__header"><h2 class="card__title">Important notes</h2></div>
-        <textarea id="important-notes" rows="3" placeholder="Coat-handling notes, owner preferences, hand-strip suitability…"></textarea>
-      </div>
-    </section>
+      <nav class="tabs" role="tablist" aria-label="Card sections">
+        <button role="tab" class="tab tab--active" data-tab="text"    aria-selected="true">Card text</button>
+        <button role="tab" class="tab"             data-tab="images"  aria-selected="false">Photos</button>
+        <button role="tab" class="tab"             data-tab="display" aria-selected="false">How it looks on TV</button>
+        <button role="tab" class="tab"             data-tab="history" aria-selected="false">History</button>
+      </nav>
 
-    <!-- IMAGES tab -->
-    <section id="tab-images" class="tab-panel" hidden role="tabpanel">
-      <div class="card stack">
-        <div class="card__header">
-          <h2 class="card__title">Images</h2>
-          <div class="row" style="gap:var(--space-2); flex-wrap:wrap;">
-            <button class="btn btn--secondary" id="reextract-button" type="button" hidden>Re-extract sections</button>
-            <a class="btn" id="open-snip-link">Open snipping tool →</a>
+      <!-- TEXT -->
+      <section id="tab-text" class="tab-panel" role="tabpanel">
+        <div class="two-col">
+          <div>
+            <div class="card" style="margin-bottom:var(--space-3);">
+              <div class="card__header">
+                <h2 class="card__title">Sections</h2>
+                <button class="btn btn--small btn--secondary" id="add-section-button" type="button">+ Add section</button>
+              </div>
+              <div class="card__body" id="sections-list">
+                <p class="muted">Loading…</p>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card__header"><h2 class="card__title">Important notes</h2></div>
+            <div class="card__body">
+              <textarea id="important-notes" rows="5" placeholder="Coat-handling notes, owner preferences, hand-strip suitability…"></textarea>
+            </div>
           </div>
         </div>
-        <p class="muted">Use the snipping tool to upload page-render JPEGs (e.g. an Adobe Scan PDF saved as separate JPEGs) and snip diagrams from them. Or use the <a href="upload.html">Upload page</a> for already-cropped images with a role dropdown.</p>
+      </section>
 
-        <div>
-          <h3 style="margin:0 0 var(--space-2);">Page renders <span class="muted" id="page-render-count" style="font-weight:normal; font-size:var(--font-size-base);">— loading…</span></h3>
-          <div id="page-renders-list" class="muted">Loading…</div>
-        </div>
+      <!-- PHOTOS -->
+      <section id="tab-images" class="tab-panel" hidden role="tabpanel">
+        <div class="card">
+          <div class="card__header">
+            <h2 class="card__title">Photos</h2>
+            <div class="row" style="gap:var(--space-2); flex-wrap:wrap;">
+              <button class="btn btn--secondary" id="reextract-button" type="button" hidden>Re-read sections</button>
+              <a class="btn" id="open-snip-link">Open snipping tool →</a>
+            </div>
+          </div>
+          <div class="card__body">
+            <p class="muted">Use the snipping tool to upload page-render JPEGs and crop diagrams from them. Or use the <a href="upload.html">Add new</a> page for already-cropped photos with a role selector.</p>
 
-        <div>
-          <h3 style="margin:0 0 var(--space-2);">Cropped images <span class="muted" id="image-count" style="font-weight:normal; font-size:var(--font-size-base);">— loading…</span></h3>
-          <div id="images-list" class="muted">Loading…</div>
-        </div>
-      </div>
+            <div style="margin-top:var(--space-4)">
+              <h3>Page renders <span class="muted" id="page-render-count" style="font-weight:normal; font-size:var(--font-size-base);">— loading…</span></h3>
+              <div id="page-renders-list" class="muted">Loading…</div>
+            </div>
 
-      <div class="card stack" id="pending-headings-card" hidden>
-        <div class="card__header">
-          <h2 class="card__title">Pending heading approvals <span class="muted" id="pending-headings-count" style="font-weight:normal; font-size:var(--font-size-base);"></span></h2>
-        </div>
-        <p class="muted">AI suggested these extra section headings during PDF extraction. Approve to add to the profile, ignore to discard, or edit before adding.</p>
-        <div id="pending-headings-list"></div>
-      </div>
-    </section>
-
-    <!-- DISPLAY tab -->
-    <section id="tab-display" class="tab-panel" hidden role="tabpanel">
-      <div class="card stack">
-        <div class="card__header"><h2 class="card__title">TV layout</h2></div>
-
-        <div>
-          <label for="image-panel-width">Image / text split</label>
-          <div class="row" style="align-items:center; gap:var(--space-3);">
-            <input type="range" id="image-panel-width" min="50" max="90" step="5" value="75" style="flex:1;">
-            <span class="muted" id="split-display">75% / 25%</span>
+            <div style="margin-top:var(--space-5)">
+              <h3>Cropped photos <span class="muted" id="image-count" style="font-weight:normal; font-size:var(--font-size-base);">— loading…</span></h3>
+              <div id="images-list" class="muted">Loading…</div>
+            </div>
           </div>
         </div>
 
-        <div>
-          <label for="font-size">Font size</label>
-          <select id="font-size">
-            <option value="small">Small</option>
-            <option value="medium" selected>Medium</option>
-            <option value="large">Large</option>
-          </select>
+        <div class="card" id="pending-headings-card" hidden style="margin-top:var(--space-4);">
+          <div class="card__header">
+            <h2 class="card__title">Pending heading approvals <span class="muted" id="pending-headings-count" style="font-weight:normal; font-size:var(--font-size-base);"></span></h2>
+          </div>
+          <div class="card__body">
+            <p class="muted">We spotted these extra headings during text-reading. Approve to add to the card, ignore to discard, or edit before adding.</p>
+            <div id="pending-headings-list"></div>
+          </div>
         </div>
+      </section>
 
-        <div>
-          <label for="theme">Theme</label>
-          <select id="theme">
-            <option value="default" selected>Default</option>
-            <option value="high-contrast">High contrast</option>
-          </select>
+      <!-- DISPLAY -->
+      <section id="tab-display" class="tab-panel" hidden role="tabpanel">
+        <div class="card">
+          <div class="card__header"><h2 class="card__title">How it looks on the salon TV</h2></div>
+          <div class="card__body" style="display:flex;flex-direction:column;gap:var(--space-4)">
+            <div>
+              <label for="image-panel-width">Photo / text split</label>
+              <div class="row" style="align-items:center; gap:var(--space-3);">
+                <input type="range" id="image-panel-width" min="50" max="90" step="5" value="75" style="flex:1;">
+                <span class="muted" id="split-display">75% / 25%</span>
+              </div>
+            </div>
+            <div>
+              <label for="font-size">Text size</label>
+              <select id="font-size">
+                <option value="small">Small</option>
+                <option value="medium" selected>Medium</option>
+                <option value="large">Large</option>
+              </select>
+            </div>
+            <div>
+              <label for="theme">Theme</label>
+              <select id="theme">
+                <option value="default" selected>Default</option>
+                <option value="high-contrast">High contrast</option>
+              </select>
+            </div>
+            <div class="row" style="gap:var(--space-5); flex-wrap:wrap;">
+              <label style="display:flex; align-items:center; gap:var(--space-2); margin:0;">
+                <input type="checkbox" id="show-blade-box" checked style="width:auto;">
+                Show blade-number box on TV
+              </label>
+              <label style="display:flex; align-items:center; gap:var(--space-2); margin:0;">
+                <input type="checkbox" id="show-warnings" checked style="width:auto;">
+                Show warnings on TV
+              </label>
+              <label style="display:flex; align-items:center; gap:var(--space-2); margin:0;">
+                <input type="checkbox" id="default-profile" style="width:auto;">
+                Use this card as the breed's default
+              </label>
+            </div>
+          </div>
         </div>
+      </section>
 
-        <div class="row" style="gap:var(--space-5); flex-wrap:wrap;">
-          <label style="display:flex; align-items:center; gap:var(--space-2);">
-            <input type="checkbox" id="show-blade-box" checked style="width:auto;">
-            Show blade-number box on TV
-          </label>
-          <label style="display:flex; align-items:center; gap:var(--space-2);">
-            <input type="checkbox" id="show-warnings" checked style="width:auto;">
-            Show warnings on TV
-          </label>
-          <label style="display:flex; align-items:center; gap:var(--space-2);">
-            <input type="checkbox" id="default-profile" style="width:auto;">
-            Use this profile as the breed's default
-          </label>
+      <!-- HISTORY -->
+      <section id="tab-history" class="tab-panel" hidden role="tabpanel">
+        <div class="card">
+          <div class="card__header"><h2 class="card__title">Version history</h2></div>
+          <div class="card__body" id="history-list"><p class="muted">Loading…</p></div>
         </div>
-      </div>
-    </section>
-
-    <!-- HISTORY tab -->
-    <section id="tab-history" class="tab-panel" hidden role="tabpanel">
-      <div class="card">
-        <div class="card__header"><h2 class="card__title">Version history</h2></div>
-        <div id="history-list"><p class="muted">Loading…</p></div>
-      </div>
-    </section>
+      </section>
+    </div>
   </main>
+</div>
 
-  <div id="modal-root"></div>
-  <div class="toast-container" id="toast-container"></div>
+<div id="modal-root"></div>
+<div class="toast-container" id="toast-container"></div>
 
-  <script type="module" src="js/pages/profile.js"></script>
+<script type="module" src="js/pages/profile.js"></script>
 </body>
 </html>

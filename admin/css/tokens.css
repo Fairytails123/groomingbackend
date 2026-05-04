@@ -1,87 +1,106 @@
-/* Design tokens — brand palette + scales.
-   Decision #21 of v3.6 spec: brand colours are #00B4D8 / #0077B6 / #023E8A.
-   Mobile snipping is supported, so layout tokens accommodate <768px. */
-
+/* Fairy Tails Admin — Design tokens
+ * Apple-inspired: sky blue accent, soft surfaces, generous radii, tabular numerals.
+ */
 :root {
-  /* Brand palette */
-  --color-brand-cyan:   #00B4D8;   /* primary action, focus rings, highlights */
-  --color-brand-blue:   #0077B6;   /* secondary, headers */
-  --color-brand-deep:   #023E8A;   /* deep accent, dark text on light bg */
+  /* Brand */
+  --color-brand:        #00AFF1;
+  --color-brand-dark:   #0090C8;
+  --color-brand-deep:   #006A94;
+  --color-brand-soft:   #E6F7FE;
 
-  /* Functional palette */
-  --color-bg:           #FAFBFC;
+  /* Ink */
+  --color-ink:          #1C1C1E;
+  --color-ink-2:        #3A3A3C;
+  --color-secondary:    #8E8E93;
+  --color-tertiary:     #AEAEB2;
+
+  /* Surfaces */
+  --color-bg:           #F2F2F7;
   --color-surface:      #FFFFFF;
-  --color-surface-alt:  #F1F4F7;
-  --color-border:       #DDE3E8;
-  --color-text:         #1B2733;
-  --color-text-muted:   #5A6B7A;
-  --color-text-inverse: #FFFFFF;
-  --color-success:      #2E7D32;
-  --color-warning:      #B77C00;
-  --color-error:        #C0392B;
-  --color-error-bg:     #FDECEA;
+  --color-surface-2:    #F8F9FB;
 
-  /* Status pills (mapped to spec status enum) */
-  --status-draft-bg:        #F1F4F7;   --status-draft-fg:        #1B2733;
-  --status-processing-bg:   #FFF7E0;   --status-processing-fg:   #B77C00;
-  --status-needs-review-bg: #FFE8D1;   --status-needs-review-fg: #A0470F;
-  --status-published-bg:    #E0F2E9;   --status-published-fg:    #1F6B33;
-  --status-archived-bg:     #ECECEC;   --status-archived-fg:     #5A6B7A;
-  --status-failed-bg:       #FDECEA;   --status-failed-fg:       #C0392B;
+  /* Lines */
+  --color-border:       rgba(60,60,67,.12);
+  --color-border-strong:rgba(60,60,67,.20);
 
-  /* Type scale (modular, base 16) */
-  --font-family-base:   system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --font-family-mono:   ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-  --font-size-xs:       0.75rem;   /* 12px */
-  --font-size-sm:       0.875rem;  /* 14px */
-  --font-size-base:     1rem;      /* 16px */
-  --font-size-lg:       1.125rem;  /* 18px */
-  --font-size-xl:       1.25rem;   /* 20px */
-  --font-size-2xl:      1.5rem;    /* 24px */
-  --font-size-3xl:      2rem;      /* 32px */
-  --font-weight-regular: 400;
-  --font-weight-medium:  500;
-  --font-weight-bold:    700;
-  --line-height-tight:   1.2;
-  --line-height-base:    1.5;
+  /* Status */
+  --color-success:      #34C759;
+  --color-warning:      #FF9500;
+  --color-error:        #FF3B30;
+  --color-info:         #00AFF1;
+  --color-purple:       #AF52DE;
 
-  /* Spacing scale (4-step) */
-  --space-1: 0.25rem;   /* 4 */
-  --space-2: 0.5rem;    /* 8 */
-  --space-3: 0.75rem;   /* 12 */
-  --space-4: 1rem;      /* 16 */
-  --space-5: 1.5rem;    /* 24 */
-  --space-6: 2rem;      /* 32 */
-  --space-7: 3rem;      /* 48 */
-  --space-8: 4rem;      /* 64 */
+  /* Status surfaces */
+  --bg-success:         #E0F7E6;
+  --fg-success:         #1B7A35;
+  --bg-warning:         #FFF1E0;
+  --fg-warning:         #A0470F;
+  --bg-info:            #E6F7FE;
+  --fg-info:            #006A94;
+  --bg-neutral:         #F1F4F7;
+  --fg-neutral:         #5A6B7A;
+  --bg-error:           #FDECEA;
+  --fg-error:           #962D23;
 
-  /* Borders, radii, shadows */
-  --radius-sm: 4px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
-  --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.08);
-  --shadow-lg: 0 8px 24px rgba(15, 23, 42, 0.12);
+  /* Type */
+  --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont,
+               "SF Pro Text", system-ui, sans-serif;
+  --font-size-xs:   11px;
+  --font-size-sm:   12.5px;
+  --font-size-base: 14px;
+  --font-size-md:   15px;
+  --font-size-lg:   17px;
+  --font-size-xl:   22px;
+  --font-size-2xl:  28px;
 
-  /* Focus ring */
-  --focus-ring: 0 0 0 3px rgba(0, 180, 216, 0.4);
+  /* Spacing — 4px grid */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+
+  /* Radii */
+  --radius-sm:  8px;
+  --radius-md:  12px;
+  --radius-lg:  16px;
+  --radius-xl:  20px;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 3px rgba(0,0,0,.06);
+  --shadow-md: 0 2px 8px rgba(0,0,0,.08);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,.12);
+  --shadow-float: 0 4px 16px rgba(0,0,0,.10);
+
+  /* Focus */
+  --ring: 0 0 0 3px rgba(0,175,241,.25);
 
   /* Layout */
-  --layout-max-width: 1200px;
-  --topbar-height: 56px;
-
-  /* Motion */
-  --transition-fast: 120ms ease-out;
-  --transition-base: 200ms ease-out;
+  --sidebar-width: 240px;
+  --topbar-height: 60px;
 }
 
-@media (max-width: 768px) {
-  :root {
-    --font-size-base: 1rem;
-    --font-size-2xl: 1.25rem;
-    --font-size-3xl: 1.5rem;
-    --space-5: 1rem;
-    --space-6: 1.5rem;
-    --topbar-height: 52px;
-  }
+/* ─── Compat aliases ───────────────────────────────────────────
+   Map legacy token names from the pre-redesign palette to current
+   ones, so JS modules that emit inline `var(--old-token)` styles
+   (dashboard.js, profile.js, ui.js) keep rendering correctly
+   without needing to be touched. */
+:root {
+  --color-text:           var(--color-ink);
+  --color-text-muted:     var(--color-secondary);
+  --color-text-inverse:   #FFFFFF;
+  --color-surface-alt:    var(--color-surface-2);
+  --color-brand-cyan:     var(--color-brand);
+  --color-brand-blue:     var(--color-brand-dark);
+  --font-family-base:     var(--font-sans);
+  --font-family-mono:     ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --font-mono:            var(--font-family-mono);
+  --font-weight-regular:  400;
+  --font-weight-medium:   500;
+  --font-weight-bold:     700;
+  --transition-fast:      120ms ease-out;
+  --transition-base:      200ms ease-out;
+  --focus-ring:           var(--ring);
 }

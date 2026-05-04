@@ -1,0 +1,9 @@
+/* Library (breeds) page */
+
+.library__empty   { padding: 56px 24px; text-align: center; color: var(--color-secondary); }
+.library__empty-icon {
+  width: 56px; height: 56px; border-radius: 16px;
+  background: var(--color-surface-2); color: var(--color-tertiary);
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 14px;
+}

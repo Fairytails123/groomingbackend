@@ -3,36 +3,65 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Breed library — Fairy Tails Knowledge</title>
+  <title>Breeds — Fairy Tails Knowledge</title>
   <link rel="stylesheet" href="css/tokens.css">
   <link rel="stylesheet" href="css/base.css">
   <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/pages/library.css">
 </head>
 <body>
-  <header class="topbar">
-    <a href="dashboard.html" class="topbar__brand">Fairy Tails Knowledge</a>
-    <nav class="topbar__nav" aria-label="Primary">
-      <a href="dashboard.html" class="topbar__link">Dashboard</a>
-      <a href="library.html"   class="topbar__link" aria-current="page">Library</a>
-      <a href="upload.html"    class="topbar__link">Upload</a>
-      <a href="#"              class="topbar__link" id="logout-link">Sign out</a>
-    </nav>
-  </header>
-
-  <main class="stack">
-    <div class="row row--space-between">
-      <h1>Breed library</h1>
-      <button class="btn btn--secondary" id="new-breed-button">+ New breed</button>
+<div class="app">
+  <aside class="sb">
+    <div class="sb__brand">
+      <div class="sb__logo">FT</div>
+      <div><div class="sb__name">Fairy Tails</div><div class="sb__sub">Knowledge admin</div></div>
     </div>
+    <nav class="sb__nav" aria-label="Primary">
+      <a href="dashboard.html" class="sb__link"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12l9-9 9 9v9a2 2 0 0 1-2 2h-4v-7H10v7H6a2 2 0 0 1-2-2v-9z"/></svg>Home</a>
+      <a href="library.html" class="sb__link" aria-current="page"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>Breeds <span class="count" data-sb-count="breeds"></span></a>
+      <a href="upload.html" class="sb__link"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0-12-4 4m4-4 4 4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>Add new</a>
+      <a href="library.html?status=review" class="sb__link"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Needs review <span class="count" data-sb-count="review"></span></a>
+      <div class="sb__group">Manage</div>
+      <a href="publish.html" class="sb__link"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg>Ready to publish <span class="count" data-sb-count="publish"></span></a>
+    </nav>
+    <div class="sb__user">
+      <div class="sb__avatar" id="user-initials">·</div>
+      <div class="sb__userinfo"><div class="sb__username" id="user-name">Signed in</div><div class="sb__userrole">Admin</div></div>
+      <a href="#" class="sb__signout" id="logout-link" title="Sign out"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg></a>
+    </div>
+  </aside>
 
-    <div class="card">
-      <div class="row" style="flex-wrap:wrap; gap:var(--space-3);">
-        <div style="flex:1; min-width:200px;">
-          <label class="sr-only" for="search">Search</label>
-          <input id="search" type="search" placeholder="Search breeds…" autocomplete="off">
+  <main class="main">
+    <header class="topbar">
+      <nav class="crumbs"><strong>Breeds</strong></nav>
+      <div class="topbar__spacer"></div>
+      <form class="search" onsubmit="return false">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <input id="topbar-search" placeholder="Search breeds…" autocomplete="off">
+        <kbd>⌘K</kbd>
+      </form>
+    </header>
+
+    <div class="content">
+      <div class="content__head">
+        <div>
+          <h1 class="content__title">Breeds</h1>
+          <p class="content__sub">Find, edit and publish your salon's reference cards.</p>
         </div>
-        <div style="min-width:140px;">
-          <label class="sr-only" for="filter-status">Status</label>
+        <div class="content__actions">
+          <button class="btn" id="new-breed-button">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+            New breed
+          </button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="filters">
+          <div class="field field--search">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+            <input id="search" type="search" placeholder="Search by name…" autocomplete="off">
+          </div>
           <select id="filter-status">
             <option value="">All statuses</option>
             <option>Draft</option>
@@ -42,39 +71,34 @@
             <option>Archived</option>
             <option>Failed</option>
           </select>
-        </div>
-        <div style="min-width:140px;">
-          <label class="sr-only" for="filter-type">Type</label>
           <select id="filter-type">
             <option value="">All types</option>
-            <option value="pure">Pure</option>
-            <option value="cross">Cross</option>
+            <option value="pure">Pure breed</option>
+            <option value="cross">Crossbreed</option>
           </select>
         </div>
+
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Breed</th>
+              <th class="col-hide-sm">Type</th>
+              <th>Cards</th>
+              <th class="col-hide-sm">Last updated</th>
+            </tr>
+          </thead>
+          <tbody id="breed-table-body">
+            <tr><td colspan="4" class="muted center">Loading…</td></tr>
+          </tbody>
+        </table>
       </div>
     </div>
-
-    <div class="card">
-      <table class="table">
-        <thead>
-          <tr>
-            <th>Breed</th>
-            <th class="col-hide-sm">Type</th>
-            <th>Profiles</th>
-            <th class="col-hide-sm">Last updated</th>
-          </tr>
-        </thead>
-        <tbody id="breed-table-body">
-          <tr><td colspan="4" class="muted center">Loading…</td></tr>
-        </tbody>
-      </table>
-    </div>
   </main>
+</div>
 
-  <!-- New breed modal (rendered by library.js when needed) -->
-  <div id="modal-root"></div>
-  <div class="toast-container" id="toast-container"></div>
+<div id="modal-root"></div>
+<div class="toast-container" id="toast-container"></div>
 
-  <script type="module" src="js/pages/library.js"></script>
+<script type="module" src="js/pages/library.js"></script>
 </body>
 </html>
