@@ -117,6 +117,33 @@ function setupTriggers() {
 }
 
 /**
+ * Generate a SERVICE_TOKEN if not already set. The token is a 32-char
+ * base64url string; non-interactive automations (n8n WF-04, future cron
+ * helpers) can include it as `service_token` in the request body to skip
+ * op_login. Rotate by deleting the Property and re-running this function,
+ * or by setting the Property manually.
+ *
+ * Run once from the Apps Script editor; copy the printed value into your
+ * n8n credential / environment variable.
+ */
+function setupServiceToken() {
+  const props = PropertiesService.getScriptProperties();
+  let token = props.getProperty("SERVICE_TOKEN");
+  if (token) {
+    Logger.log("SERVICE_TOKEN already set. To rotate, delete it from Script Properties and re-run.");
+    Logger.log("(Value preview, last 6 chars only): …" + token.slice(-6));
+    return;
+  }
+  // 32 random bytes → base64url
+  const bytes = Utilities.getUuid().replace(/-/g, "") + Utilities.getUuid().replace(/-/g, "");
+  token = bytes.slice(0, 64);
+  props.setProperty("SERVICE_TOKEN", token);
+  Logger.log("=== SERVICE_TOKEN generated ===");
+  Logger.log(token);
+  Logger.log("=== Copy the value above into n8n (and only n8n; never commit). ===");
+}
+
+/**
  * Idempotent trigger management. Currently:
  *   - resetLoginFailCounter: midnight (00:00–01:00 UTC) daily.
  * Add new triggers here; the function is safe to re-run because we look up

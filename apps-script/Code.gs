@@ -101,7 +101,19 @@ function doPost(e) {
 
   try {
     if (!PUBLIC_OPS.has(op)) {
-      const session = verifyToken_(body.auth_token);
+      // Two auth paths:
+      //   1. auth_token — short-lived (12h) HMAC-signed session from op_login. Used by
+      //      the admin website where the user has signed in.
+      //   2. service_token — static value matching Script Property SERVICE_TOKEN. Used
+      //      by n8n WF-04 and other non-interactive automations so they don't need to
+      //      cycle through op_login on every run. Rotate the Property to revoke.
+      let session = verifyToken_(body.auth_token);
+      if (!session && body.service_token) {
+        const stored = PropertiesService.getScriptProperties().getProperty("SERVICE_TOKEN");
+        if (stored && String(body.service_token) === stored) {
+          session = { scope: "service", is_service: true };
+        }
+      }
       if (!session) {
         return jsonResponse_({ ok: false, request_id: requestId, error: { code: "UNAUTHORIZED", message: "Invalid or expired session" } });
       }

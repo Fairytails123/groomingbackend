@@ -1,0 +1,478 @@
+{
+  "name": "Dog Grooming Back End",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            { "field": "cronExpression", "expression": "0 6 * * *" },
+            { "field": "cronExpression", "expression": "30 11 * * *" }
+          ]
+        }
+      },
+      "id": "wf01-cron",
+      "name": "WF-01 Cron 06:00 + 11:30",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [240, 100]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://script.google.com/macros/s/AKfycby5CU8J-xyCn38ruoe_HdDswRBCNcxXLO9O2AyiiHDt781mwsJzWeyyahySfwjpq4ZL/exec",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"op\": \"rebuild_today_json\"\n}",
+        "options": {}
+      },
+      "id": "wf01-http",
+      "name": "WF-01 Apps Script rebuild_today_json",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 100]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            { "field": "cronExpression", "expression": "0 7 * * *" }
+          ]
+        }
+      },
+      "id": "wf02-cron",
+      "name": "WF-02 Cron 07:00",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [240, 240]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://script.google.com/macros/s/AKfycby5CU8J-xyCn38ruoe_HdDswRBCNcxXLO9O2AyiiHDt781mwsJzWeyyahySfwjpq4ZL/exec",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"op\": \"send_tomorrow_prep_alert\"\n}",
+        "options": {}
+      },
+      "id": "wf02-http-alert",
+      "name": "WF-02 Apps Script send_tomorrow_prep_alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 240]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://script.google.com/macros/s/AKfycby5CU8J-xyCn38ruoe_HdDswRBCNcxXLO9O2AyiiHDt781mwsJzWeyyahySfwjpq4ZL/exec",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"op\": \"rebuild_tomorrow_json\"\n}",
+        "options": {}
+      },
+      "id": "wf02-http-rebuild",
+      "name": "WF-02 Apps Script rebuild_tomorrow_json (07:00)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [680, 240]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            { "field": "cronExpression", "expression": "0 19 * * *" }
+          ]
+        }
+      },
+      "id": "wf03-cron",
+      "name": "WF-03 Cron 19:00",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [240, 380]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://script.google.com/macros/s/AKfycby5CU8J-xyCn38ruoe_HdDswRBCNcxXLO9O2AyiiHDt781mwsJzWeyyahySfwjpq4ZL/exec",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"op\": \"rebuild_tomorrow_json\"\n}",
+        "options": {}
+      },
+      "id": "wf03-http",
+      "name": "WF-03 Apps Script rebuild_tomorrow_json (19:00)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 380]
+    },
+
+    {
+      "parameters": {
+        "updates": ["message"],
+        "additionalFields": {}
+      },
+      "id": "wf04-tg-trigger",
+      "name": "Telegram Trigger",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.1,
+      "position": [240, 700],
+      "credentials": {
+        "telegramApi": { "name": "Telegram groomingbackend" }
+      },
+      "webhookId": "wf04-tg-trigger-webhook"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "loose" },
+          "conditions": [
+            {
+              "id": "chat-id-gate",
+              "leftValue": "={{ $json.message.chat.id }}",
+              "rightValue": -5072836532,
+              "operator": { "type": "number", "operation": "equals" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "wf04-chat-gate",
+      "name": "IF: our group chat",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [460, 700]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "loose" },
+          "conditions": [
+            {
+              "id": "is-pdf",
+              "leftValue": "={{ $json.message.document?.mime_type }}",
+              "rightValue": "application/pdf",
+              "operator": { "type": "string", "operation": "equals" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "wf04-route",
+      "name": "IF: PDF document?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [680, 700]
+    },
+
+    {
+      "parameters": {
+        "jsCode": "// PDF branch — stash the file_id under chat_id in workflow static data so\n// a follow-up text message can pick it up. Last-wins per chat (single-user\n// pattern). Static data persists across executions.\n\nconst msg = $json.message ?? {};\nconst chatId = String(msg.chat?.id ?? '');\nconst pendingByChat = $getWorkflowStaticData('global').pendingPdfs ?? {};\npendingByChat[chatId] = {\n  file_id: msg.document?.file_id,\n  file_name: msg.document?.file_name ?? 'telegram.pdf',\n  message_id: msg.message_id,\n  user_first_name: msg.from?.first_name ?? '',\n  received_at: new Date().toISOString(),\n};\n$getWorkflowStaticData('global').pendingPdfs = pendingByChat;\n\nreturn [{\n  json: {\n    chat_id: msg.chat?.id,\n    message_id: msg.message_id,\n    file_name: msg.document?.file_name ?? 'telegram.pdf',\n    user_first_name: msg.from?.first_name ?? '',\n  },\n}];\n"
+      },
+      "id": "wf04-stash",
+      "name": "Stash pending PDF",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [900, 600]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chat_id }}",
+        "text": "=✓ Got the PDF \"{{ $json.file_name }}\".\n\nNow reply with the profile_id to attach it to, like:\n\nPRF-001\n\n(Look up the profile_id at https://fairytails123.github.io/groomingbackend/admin/library.html if you don't know it.)",
+        "additionalFields": {
+          "reply_to_message_id": "={{ $json.message_id }}"
+        }
+      },
+      "id": "wf04-stash-reply",
+      "name": "Telegram: PDF received reply",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [1120, 600],
+      "credentials": {
+        "telegramApi": { "name": "Telegram groomingbackend" }
+      }
+    },
+
+    {
+      "parameters": {
+        "jsCode": "// Text branch — parse PRF-XXX from the message text or caption,\n// look up the stashed PDF for this chat. Three outcomes:\n//   1. Text has PRF-XXX AND we have a stashed PDF → set has_pending = true\n//      and surface file_id, profile_id for the upload chain.\n//   2. Text has PRF-XXX BUT no stashed PDF → has_pending = false, error_kind = 'no_pdf'.\n//   3. Text has no PRF-XXX → has_pending = false, error_kind = 'no_match' (workflow ignores).\n\nconst msg = $json.message ?? {};\nconst chatId = String(msg.chat?.id ?? '');\nconst text = String(msg.text ?? msg.caption ?? '').trim();\nconst profileMatch = text.match(/\\bPRF-\\d{3,}\\b/i);\nconst profileId = profileMatch ? profileMatch[0].toUpperCase() : null;\n\nconst static_ = $getWorkflowStaticData('global');\nconst pendingByChat = static_.pendingPdfs ?? {};\nconst pending = pendingByChat[chatId] ?? null;\n\nlet errorKind = null;\nlet hasPending = false;\nif (!profileId) {\n  errorKind = 'no_match';\n} else if (!pending) {\n  errorKind = 'no_pdf';\n} else {\n  hasPending = true;\n}\n\nreturn [{\n  json: {\n    chat_id: msg.chat?.id,\n    message_id: msg.message_id,\n    text,\n    profile_id: profileId,\n    file_id: pending?.file_id ?? null,\n    file_name: pending?.file_name ?? null,\n    user_first_name: msg.from?.first_name ?? '',\n    has_pending: hasPending,\n    error_kind: errorKind,\n  },\n}];\n"
+      },
+      "id": "wf04-text-parse",
+      "name": "Parse text + look up pending",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [900, 800]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "loose" },
+          "conditions": [
+            {
+              "id": "has-pending",
+              "leftValue": "={{ $json.has_pending }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "true", "singleValue": true }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "wf04-have-pending-gate",
+      "name": "IF: have pending PDF + PRF?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [1120, 800]
+    },
+
+    {
+      "parameters": {
+        "resource": "file",
+        "fileId": "={{ $json.file_id }}"
+      },
+      "id": "wf04-getfile",
+      "name": "Telegram getFile",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [1340, 760],
+      "credentials": {
+        "telegramApi": { "name": "Telegram groomingbackend" }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://script.google.com/macros/s/AKfycby5CU8J-xyCn38ruoe_HdDswRBCNcxXLO9O2AyiiHDt781mwsJzWeyyahySfwjpq4ZL/exec",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"op\": \"login\",\n  \"password\": \"fairytails22\"\n}",
+        "options": {}
+      },
+      "id": "wf04-login",
+      "name": "Apps Script login (get token)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1560, 760]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.telegram.org/file/bot8684875673:AAESXfJ0KxrKjavgwOXLyrY8_VMC4yW9yWA/{{ $('Telegram getFile').item.json.result.file_path }}",
+        "options": {
+          "response": { "response": { "responseFormat": "file" } }
+        }
+      },
+      "id": "wf04-download",
+      "name": "Download PDF binary",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1780, 760]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Build the op_upload_pdf body.\n//\n// Binary handling note: when n8n stores binary data in 'filesystem' mode,\n// $input.item.binary.<name>.data contains a filesystem reference (e.g. 'filesystem-v2'),\n// NOT the actual base64. We MUST use this.helpers.getBinaryDataBuffer() to get the\n// real bytes; that helper works in both memory and filesystem modes.\n\nconst loginItem = $('Apps Script login (get token)').item;\nconst parseItem = $('Parse text + look up pending').item;\nconst downloadItem = $input.item;\n\nconst token = loginItem.json?.data?.token;\nif (!token) {\n  throw new Error('Could not get auth_token from op_login: ' + JSON.stringify(loginItem.json).slice(0, 200));\n}\n\nconst binaryName = Object.keys(downloadItem.binary ?? {})[0];\nif (!binaryName) throw new Error('No binary on Download node output');\n\n// Read the actual bytes via helper, then base64-encode.\nconst buf = await this.helpers.getBinaryDataBuffer(0, binaryName);\nconst base64Data = buf.toString('base64');\n\n// (Note: pending PDF clearing moved to the post-upload Clear-pending node\n// so failed uploads don't lose the staging.)\n\nreturn [{\n  json: {\n    auth_token: token,\n    profile_id: parseItem.json.profile_id,\n    pdf_blob_b64: 'data:application/pdf;base64,' + base64Data,\n    original_filename: parseItem.json.file_name,\n    chat_id: parseItem.json.chat_id,\n    message_id: parseItem.json.message_id,\n    user_first_name: parseItem.json.user_first_name,\n    pdf_size_bytes: buf.length,\n  },\n}];\n"
+      },
+      "id": "wf04-build-payload",
+      "name": "Build upload_pdf payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2000, 760]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://script.google.com/macros/s/AKfycby5CU8J-xyCn38ruoe_HdDswRBCNcxXLO9O2AyiiHDt781mwsJzWeyyahySfwjpq4ZL/exec",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"op\": \"upload_pdf\",\n  \"auth_token\": \"{{ $json.auth_token }}\",\n  \"profile_id\": \"{{ $json.profile_id }}\",\n  \"pdf_blob_b64\": \"{{ $json.pdf_blob_b64 }}\",\n  \"original_filename\": \"{{ $json.original_filename }}\"\n}",
+        "options": { "timeout": 90000 }
+      },
+      "id": "wf04-upload-pdf",
+      "name": "Apps Script op_upload_pdf",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2220, 760]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "loose" },
+          "conditions": [
+            {
+              "id": "upload-ok",
+              "leftValue": "={{ $json.ok }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "true", "singleValue": true }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "wf04-upload-result-gate",
+      "name": "IF: upload_pdf succeeded?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [2440, 760]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Now that op_upload_pdf returned ok:true, clear the pending PDF for this chat.\n// On failure (ok:false branch) we leave it stashed so user can retry by sending PRF-XXX again.\nconst parseItem = $('Parse text + look up pending').item;\nconst chatId = String(parseItem.json.chat_id);\nconst static_ = $getWorkflowStaticData('global');\nif (static_.pendingPdfs && static_.pendingPdfs[chatId]) {\n  delete static_.pendingPdfs[chatId];\n}\nreturn [{ json: { cleared: true, chat_id: parseItem.json.chat_id } }];\n"
+      },
+      "id": "wf04-clear-pending",
+      "name": "Clear pending intake",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2660, 700]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Parse text + look up pending').item.json.chat_id }}",
+        "text": "=✓ PDF \"{{ $('Parse text + look up pending').item.json.file_name }}\" attached to {{ $('Parse text + look up pending').item.json.profile_id }}.\n\n👉 Tap to start AI extraction (one click — keep the page open ~2 min):\n\nhttps://fairytails123.github.io/groomingbackend/admin/upload.html?reextract=1&profile_id={{ $('Parse text + look up pending').item.json.profile_id }}\n\nWhen extraction finishes, the profile will be in 'Needs Review' — click Publish to push to the TV.",
+        "additionalFields": {
+          "reply_to_message_id": "={{ $('Parse text + look up pending').item.json.message_id }}"
+        }
+      },
+      "id": "wf04-success-reply",
+      "name": "Telegram: success reply",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [2880, 700],
+      "credentials": {
+        "telegramApi": { "name": "Telegram groomingbackend" }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Parse text + look up pending').item.json.chat_id }}",
+        "text": "=⚠️ Apps Script rejected the upload for {{ $('Parse text + look up pending').item.json.profile_id }}.\n\nError: {{ $json.error.code ?? 'UNKNOWN' }} — {{ $json.error.message ?? 'no detail' }}\n\nThe PDF \"{{ $('Parse text + look up pending').item.json.file_name }}\" stays stashed; reply with the profile_id again to retry, or send a fresh PDF if this one is corrupted.",
+        "additionalFields": {
+          "reply_to_message_id": "={{ $('Parse text + look up pending').item.json.message_id }}"
+        }
+      },
+      "id": "wf04-error-reply",
+      "name": "Telegram: upload error reply",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [2660, 880],
+      "credentials": {
+        "telegramApi": { "name": "Telegram groomingbackend" }
+      }
+    },
+
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "loose" },
+          "conditions": [
+            {
+              "id": "no-pdf-error",
+              "leftValue": "={{ $json.error_kind }}",
+              "rightValue": "no_pdf",
+              "operator": { "type": "string", "operation": "equals" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "wf04-no-pdf-gate",
+      "name": "IF: PRF text but no PDF stashed?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [1340, 920]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chat_id }}",
+        "text": "=⚠️ I see the profile_id {{ $json.profile_id }} but I don't have a pending PDF for this chat. Send the PDF first, then send the profile_id as a follow-up message.",
+        "additionalFields": {
+          "reply_to_message_id": "={{ $json.message_id }}"
+        }
+      },
+      "id": "wf04-no-pdf-reply",
+      "name": "Telegram: send PDF first reply",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [1560, 920],
+      "credentials": {
+        "telegramApi": { "name": "Telegram groomingbackend" }
+      }
+    }
+  ],
+  "connections": {
+    "WF-01 Cron 06:00 + 11:30": {
+      "main": [[{ "node": "WF-01 Apps Script rebuild_today_json", "type": "main", "index": 0 }]]
+    },
+    "WF-02 Cron 07:00": {
+      "main": [[{ "node": "WF-02 Apps Script send_tomorrow_prep_alert", "type": "main", "index": 0 }]]
+    },
+    "WF-02 Apps Script send_tomorrow_prep_alert": {
+      "main": [[{ "node": "WF-02 Apps Script rebuild_tomorrow_json (07:00)", "type": "main", "index": 0 }]]
+    },
+    "WF-03 Cron 19:00": {
+      "main": [[{ "node": "WF-03 Apps Script rebuild_tomorrow_json (19:00)", "type": "main", "index": 0 }]]
+    },
+
+    "Telegram Trigger": {
+      "main": [[{ "node": "IF: our group chat", "type": "main", "index": 0 }]]
+    },
+    "IF: our group chat": {
+      "main": [
+        [{ "node": "IF: PDF document?", "type": "main", "index": 0 }]
+      ]
+    },
+    "IF: PDF document?": {
+      "main": [
+        [{ "node": "Stash pending PDF", "type": "main", "index": 0 }],
+        [{ "node": "Parse text + look up pending", "type": "main", "index": 0 }]
+      ]
+    },
+    "Stash pending PDF": {
+      "main": [[{ "node": "Telegram: PDF received reply", "type": "main", "index": 0 }]]
+    },
+    "Parse text + look up pending": {
+      "main": [[{ "node": "IF: have pending PDF + PRF?", "type": "main", "index": 0 }]]
+    },
+    "IF: have pending PDF + PRF?": {
+      "main": [
+        [{ "node": "Telegram getFile", "type": "main", "index": 0 }],
+        [{ "node": "IF: PRF text but no PDF stashed?", "type": "main", "index": 0 }]
+      ]
+    },
+    "Telegram getFile": {
+      "main": [[{ "node": "Apps Script login (get token)", "type": "main", "index": 0 }]]
+    },
+    "Apps Script login (get token)": {
+      "main": [[{ "node": "Download PDF binary", "type": "main", "index": 0 }]]
+    },
+    "Download PDF binary": {
+      "main": [[{ "node": "Build upload_pdf payload", "type": "main", "index": 0 }]]
+    },
+    "Build upload_pdf payload": {
+      "main": [[{ "node": "Apps Script op_upload_pdf", "type": "main", "index": 0 }]]
+    },
+    "Apps Script op_upload_pdf": {
+      "main": [[{ "node": "IF: upload_pdf succeeded?", "type": "main", "index": 0 }]]
+    },
+    "IF: upload_pdf succeeded?": {
+      "main": [
+        [{ "node": "Clear pending intake", "type": "main", "index": 0 }],
+        [{ "node": "Telegram: upload error reply", "type": "main", "index": 0 }]
+      ]
+    },
+    "Clear pending intake": {
+      "main": [[{ "node": "Telegram: success reply", "type": "main", "index": 0 }]]
+    },
+    "IF: PRF text but no PDF stashed?": {
+      "main": [
+        [{ "node": "Telegram: send PDF first reply", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {}
+}

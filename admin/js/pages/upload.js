@@ -80,10 +80,20 @@ let pdfSelectedProfileId = null;
 
   pdfBreedSelect.addEventListener("change", onPdfBreedChange);
 
-  // Re-extract auto-trigger from profile.html "Re-extract sections" button.
+  // Re-extract auto-trigger.
+  // Two entry points:
+  //   1. Profile editor's "Re-extract sections" button — stashes PDF in sessionStorage,
+  //      redirects here. tryReextractFromSessionStorage() picks it up.
+  //   2. URL with ?reextract=1&profile_id=PRF-XXX — used by Telegram WF-04's success reply
+  //      and other one-click contexts. tryReextractFromUrl() fetches the stored PDF via
+  //      op_get_source_pdf and fires the same intake pipeline.
   const params = new URLSearchParams(location.search);
   if (params.get("reextract") === "1") {
-    await tryReextractFromSessionStorage();
+    if (sessionStorage.getItem("ft_reextract_pdf_b64")) {
+      await tryReextractFromSessionStorage();
+    } else if (params.get("profile_id")) {
+      await tryReextractFromUrl(params.get("profile_id"));
+    }
   }
 })();
 
@@ -178,6 +188,32 @@ async function tryReextractFromSessionStorage() {
   pdfFileMeta.textContent = `${filename} (re-extract)`;
 
   await runIntakeWithUi({ profileId, pdfB64, originalFilename: filename, skipPageRenders: true });
+}
+
+// One-click re-extract path: URL `?reextract=1&profile_id=PRF-XXX` (no sessionStorage).
+// Used by the Telegram WF-04 success reply so the user clicks the link once and the
+// AI extraction starts immediately. We fetch the stored source PDF via op_get_source_pdf
+// and feed it into the same intake pipeline as the sessionStorage path.
+async function tryReextractFromUrl(profileId) {
+  pdfBreedSelect.disabled = true;
+  pdfProfileMeta.textContent = `Re-extracting profile ${profileId} — fetching source PDF…`;
+  pdfFileMeta.textContent = "";
+
+  let blobB64, filename;
+  try {
+    const result = await api("get_source_pdf", { profile_id: profileId }, { timeoutMs: 60 * 1000 });
+    blobB64 = result.pdf_blob_b64;
+    filename = result.original_filename ?? "source.pdf";
+  } catch (err) {
+    pdfProfileMeta.textContent = `Couldn't fetch source PDF for ${profileId}: ${err?.message ?? err}. Open the profile and try the Re-extract button manually.`;
+    pdfBreedSelect.disabled = false;
+    return;
+  }
+
+  pdfProfileMeta.textContent = `Re-extracting profile ${profileId} from existing source PDF.`;
+  pdfFileMeta.textContent = `${filename} (re-extract via URL)`;
+
+  await runIntakeWithUi({ profileId, pdfB64: blobB64, originalFilename: filename, skipPageRenders: true });
 }
 
 async function runIntakeWithUi({ profileId, pdfFile, pdfB64, originalFilename, skipPageRenders = false }) {

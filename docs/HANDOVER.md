@@ -2,7 +2,7 @@
 
 > **Read this in full before touching anything.** Then the spec at `.md/grooming-knowledge-software-architecture.md` (v3.8). Memory at `<.claude>/projects/.../memory/MEMORY.md` has user/feedback/reference notes that are authoritative for *how* to work on this project.
 >
-> **System state:** Stages 2–5 are live and verified. Stage 3 Phase 2 (browser-orchestrated PDF intake + AI extraction) is **deployed live as Web App Version 10** (`2026-05-04 12:41 UTC`) and **smoke-tested end-to-end on a real PDF** (`min sch.pdf`, Miniature Schnauzer, 5 pages). v9 adds `op_acknowledge_alert` + dashboard Dismiss button. v10 adds `op_health_check` + dashboard Backend health card. Re-extract catches up on missing page renders. Spec bumped to v3.9.
+> **System state:** Stages 2–5 are live and verified. Stage 3 Phase 2 (browser-orchestrated PDF intake + AI extraction) is **deployed live as Web App Version 10** (`2026-05-04 12:41 UTC`) and **smoke-tested end-to-end on a real PDF** (`min sch.pdf`, Miniature Schnauzer, 5 pages). v9 adds `op_acknowledge_alert` + dashboard Dismiss button. v10 adds `op_health_check` + dashboard Backend health card. Re-extract catches up on missing page renders. Spec bumped to v3.9. **GITHUB_PAT wired and publish flow verified end-to-end** (commit `12020ed` on origin written by Apps Script). **WF-04 Telegram intake live** (`n8n/dog-grooming-backend.json`, two-message protocol: PDF first, then PRF-XXX; one-click extract URL in success reply).
 
 **Last updated:** 2026-05-04 — Phase 2 smoke-test session. `.gitattributes` added (commit `5b3a826`) to stop OneDrive CRLF flips. Three live bugs fixed and redeployed as Versions 6, 7, 8 of the Apps Script:
 - v6: `max_tokens` → `max_completion_tokens` for gpt-5/o1/o3 model family (older models keep `max_tokens` + `temperature`).
@@ -10,6 +10,13 @@
 - v8: vision `max_tokens` bumped 1024 → 8192 + `reasoning_effort: "low"` for gpt-5 (reasoning tokens were exhausting the output budget; vision is transcription-grade and doesn't need deep reasoning).
 - v9: `op_acknowledge_alert` added (dashboard Dismiss button on Operational Alerts).
 - v10: `op_health_check` added (dashboard "Backend health" card surfacing wiring state, sheet counts, today's AI spend, last AI call).
+
+After v10:
+- `GITHUB_PAT` Script Property set; verified end-to-end via test publish of PRF-001 → wrote 1 pack JSON + 7 image commits to `Fairytails123/groomingbackend@main`.
+- Apps Script `setupTriggers()` ran; midnight `resetLoginFailCounter` trigger installed.
+- n8n cron HTTP Request URLs pasted into all 3 nodes of "Dog Grooming Back End" workflow.
+- WF-04 Telegram intake workflow built into the same n8n workflow as a 14-node chain (Telegram Trigger → IF chat-id → IF document → stash-or-route → upload chain → success/error replies). Two-message protocol (PDF first, then PRF-XXX as a separate text). State persists across n8n executions via `$getWorkflowStaticData('global').pendingPdfs[chatId]`.
+- `admin/js/pages/upload.js` gains `tryReextractFromUrl(profileId)` — `/admin/upload.html?reextract=1&profile_id=PRF-XXX` now fetches the source PDF via `op_get_source_pdf` and auto-runs the intake pipeline. Used by the WF-04 success reply for one-click extraction from Telegram.
 After v8: PRF-001 (Miniature Schnauzer / Pet Groom) extracted 14 vision findings on page 1, 4 on page 2, more on page 3 with blade numbers `#7F #5F #10 #15 #40` merged into the Body row. Status flipped to `Needs Review`. Re-extract now catches up on missing page renders (bug #25 fix in `admin/js/pdf-intake.js`). Apps Script Web App URL unchanged from prior deployments.
 
 ---
