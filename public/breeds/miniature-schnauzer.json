@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-05-04T12:25:30.522Z",
+  "generated_at": "2026-05-04T19:43:32.917Z",
   "breed_id": "BRD-001",
   "breed_name": "Miniature Schnauzer",
   "breed_slug": "miniature-schnauzer",
@@ -12,8 +12,8 @@
       "profile_id": "PRF-001",
       "groom_type": "Pet Groom",
       "groom_type_slug": "pet-groom",
-      "version": 3,
-      "published_at": "2026-05-04T12:25:30.487Z",
+      "version": 4,
+      "published_at": "2026-05-04T19:43:32.843Z",
       "blade_numbers": [
         "#7F",
         "#5F",
