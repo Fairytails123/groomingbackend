@@ -1,309 +1,185 @@
-// Dashboard page — tomorrow's prep, status counts, recent uploads, backlog.
+// Home page — stat tiles, today's prep, oldest drafts, recently updated, quick-find.
+//
+// Hooks (all defined in admin/dashboard.html):
+//   [data-stat="live-cards|needs-review|ready-to-publish|drafts"]
+//   #home-meta              — page subtitle line
+//   #today-card / #today-list   — today's appointments
+//   #oldest-drafts          — 5 oldest Draft profiles
+//   #recently-updated       — 3 most recently edited profiles
+//   #home-quick-find        — quick-add typeahead
+//
+// Sidebar counts are populated by the shared admin/js/sidebar.js helper so
+// every admin page benefits from one fetch per load.
 
 import { requireSession, wireLogoutLink } from "../auth.js";
 import { api, ApiError } from "../api.js";
-import { formatRelativeTime, formatDate, pluralise } from "../format.js";
-import { statusPill, formDialog, toast, toastError, toastSuccess } from "../ui.js";
+import { formatRelativeTime } from "../format.js";
+import { formDialog, toastError, toastSuccess } from "../ui.js";
+import { populateSidebarCounts } from "../sidebar.js";
 
 if (!requireSession()) throw new Error("redirecting to login");
 wireLogoutLink();
+populateSidebarCounts();
 
-wireQuickAdd();
+setHomeMeta();
+wireQuickFind();
 
-const tomorrowDateEl = document.getElementById("tomorrow-date");
-const tomorrowListEl = document.getElementById("tomorrow-list");
-const statusCountsEl = document.getElementById("status-counts");
-const recentListEl   = document.getElementById("recent-list");
-const backlogListEl  = document.getElementById("backlog-list");
-const alertsListEl   = document.getElementById("alerts-list");
-const healthPanelEl  = document.getElementById("health-panel");
+const todayListEl       = document.getElementById("today-list");
+const oldestDraftsEl    = document.getElementById("oldest-drafts");
+const recentlyUpdatedEl = document.getElementById("recently-updated");
 
-(async () => {
-  // Show tomorrow's date in the panel header.
-  const tomorrow = new Date();
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  tomorrowDateEl.textContent = formatDate(tomorrow.toISOString());
+// Per-panel .catch() so a slow or failing endpoint doesn't take down the rest.
+Promise.all([
+  loadStats().catch(() => clearStats()),
+  loadTodayPrep(),
+  loadOldestDrafts().catch(() => emptyList(oldestDraftsEl)),
+  loadRecentlyUpdated().catch(() => emptyList(recentlyUpdatedEl)),
+]);
 
-  // Fan out reads in parallel. Each panel renders independently so a slow
-  // endpoint doesn't block the rest.
-  await Promise.all([
-    loadTomorrowPrep(),
-    loadStatusCounts(),
-    loadRecentUploads(),
-    loadBacklog(),
-    loadAlerts(),
-    loadHealth(),
-  ]);
-})();
+// ─── Greeting line ──────────────────────────────────────────────────
 
-async function loadAlerts() {
-  try {
-    const data = await api("dashboard_alerts", { limit: 5 }).catch(() => ({ items: [] }));
-    const items = data.items ?? [];
-    if (items.length === 0) {
-      alertsListEl.innerHTML = `<p class="muted">No open alerts. ✓</p>`;
-      return;
-    }
-    alertsListEl.innerHTML = "";
-    for (const a of items) {
-      const row = document.createElement("div");
-      row.className = "row row--space-between";
-      row.style.padding = "var(--space-2) 0";
-      row.style.borderBottom = "1px solid var(--color-border)";
-      const sevColor = a.severity === "critical" ? "var(--color-error)"
-                     : a.severity === "error"    ? "var(--color-error)"
-                     : a.severity === "warning"  ? "var(--color-warning)"
-                     : "var(--color-text-muted)";
-      row.innerHTML = `
-        <div style="flex:1;">
-          <span class="pill" style="background:${sevColor}20; color:${sevColor};">${a.severity}</span>
-          <span style="margin-left:var(--space-2);">${escapeHtml(a.message)}</span>
-        </div>
-        <span class="muted" style="font-size:var(--font-size-sm); margin-right:var(--space-3);">${escapeHtml(a.source)}</span>`;
+function setHomeMeta() {
+  const meta = document.getElementById("home-meta");
+  if (!meta) return;
+  const long = new Date().toLocaleDateString("en-GB", {
+    weekday: "long", day: "numeric", month: "long", year: "numeric",
+  });
+  meta.textContent = `Today's overview · ${long}`;
+}
 
-      const dismissBtn = document.createElement("button");
-      dismissBtn.className = "btn btn--small btn--secondary";
-      dismissBtn.textContent = "Dismiss";
-      dismissBtn.addEventListener("click", async () => {
-        dismissBtn.disabled = true;
-        const original = dismissBtn.textContent;
-        dismissBtn.textContent = "Dismissing…";
-        try {
-          await api("acknowledge_alert", { alert_id: a.alert_id });
-          // Optimistically fade and remove the row.
-          row.style.transition = "opacity 200ms";
-          row.style.opacity = "0.4";
-          setTimeout(() => {
-            row.remove();
-            // If the list is now empty, restore the empty-state message.
-            if (!alertsListEl.querySelector("div")) {
-              alertsListEl.innerHTML = `<p class="muted">No open alerts. ✓</p>`;
-            }
-          }, 200);
-        } catch (err) {
-          dismissBtn.disabled = false;
-          dismissBtn.textContent = original;
-          toastError(err?.message ?? "Could not dismiss alert.");
-        }
-      });
-      row.appendChild(dismissBtn);
+// ─── Stats ──────────────────────────────────────────────────────────
 
-      alertsListEl.appendChild(row);
-    }
-  } catch {
-    alertsListEl.innerHTML = `<p class="muted">Alerts unavailable.</p>`;
+async function loadStats() {
+  const data = await api("dashboard_status_counts");
+  const c = data.counts ?? {};
+  setStat("live-cards",       c.Published ?? 0);
+  setStat("needs-review",     c["Needs Review"] ?? 0);
+  // TODO(api): "ready-to-publish" should be the count of Drafts that have all
+  // required fields/photos. Until a validation op lands, use total Drafts as
+  // a proxy — same number as the Drafts tile and the sidebar publish count.
+  setStat("ready-to-publish", c.Draft ?? 0);
+  setStat("drafts",           c.Draft ?? 0);
+}
+
+function setStat(key, value) {
+  const el = document.querySelector(`[data-stat="${key}"]`);
+  if (el) el.textContent = String(value);
+}
+
+function clearStats() {
+  for (const k of ["live-cards", "needs-review", "ready-to-publish", "drafts"]) {
+    setStat(k, "—");
   }
 }
 
-async function loadTomorrowPrep() {
-  // Until WF-02's tomorrow-prep endpoint is wired (Stage 4), the dashboard
-  // panel reads from a placeholder API op that returns an empty list early in
-  // build. This fetch will surface the empty state cleanly.
-  try {
-    const data = await api("dashboard_tomorrow_prep").catch(() => ({ breeds: [] }));
-    const breeds = data.breeds ?? [];
-    if (breeds.length === 0) {
-      tomorrowListEl.innerHTML = `<p class="muted">No bookings for tomorrow yet, or the prep endpoint isn't deployed yet.</p>`;
-      return;
-    }
-    tomorrowListEl.innerHTML = "";
-    for (const b of breeds) {
-      const row = document.createElement("div");
-      row.className = "row row--space-between";
-      row.style.padding = "var(--space-3) 0";
-      row.style.borderBottom = "1px solid var(--color-border)";
-      const icon = b.kb_status === "published" ? "✅"
-                 : b.kb_status === "draft"     ? "⚠️"
-                 : "❌";
-      row.innerHTML = `
-        <div>
-          <span style="font-size:var(--font-size-lg);">${icon}</span>
-          <strong>${escapeHtml(b.breed_name)}</strong>
-          <span class="muted"> — ${escapeHtml(b.kb_status)}</span>
-        </div>`;
-      const actionLink = document.createElement("a");
-      actionLink.className = "btn btn--small btn--secondary";
-      if (b.kb_status === "published" || b.kb_status === "draft") {
-        actionLink.href = `profile.html?profile_id=${encodeURIComponent(b.profile_id)}`;
-        actionLink.textContent = b.kb_status === "draft" ? "Review & publish" : "Open";
-      } else {
-        actionLink.href = `upload.html?breed_name=${encodeURIComponent(b.breed_name)}`;
-        actionLink.textContent = "Upload PDF";
-      }
-      row.appendChild(actionLink);
-      tomorrowListEl.appendChild(row);
-    }
-  } catch (err) {
-    tomorrowListEl.innerHTML = `<p class="muted">Couldn't load tomorrow's prep.</p>`;
+// ─── Today's prep ───────────────────────────────────────────────────
+
+async function loadTodayPrep() {
+  // TODO(api): wire #today-list when a today_prep op exists. The current
+  // dashboard_tomorrow_prep op pulls *tomorrow's* bookings from tomorrow.json,
+  // but the home card asks for *today's* bookings. The dashboard.css empty
+  // state ":empty::before" renders "Nothing here yet." for us.
+  if (todayListEl) todayListEl.innerHTML = "";
+}
+
+// ─── Oldest drafts ──────────────────────────────────────────────────
+
+async function loadOldestDrafts() {
+  if (!oldestDraftsEl) return;
+  const data = await api("list_drafts");
+  const drafts = (data.drafts ?? []).filter((d) => d.status === "Draft");
+  // list_drafts is sorted updated_at DESC; sort ASC and take 5 to get oldest.
+  const oldest = drafts
+    .slice()
+    .sort((a, b) => String(a.updated_at ?? "").localeCompare(String(b.updated_at ?? "")))
+    .slice(0, 5);
+  oldestDraftsEl.innerHTML = "";
+  for (const d of oldest) {
+    oldestDraftsEl.appendChild(buildBlogRow({
+      label: `${d.breed_name} · ${d.groom_type}`,
+      meta: ageFromIso(d.updated_at),
+      href: `profile.html?profile_id=${encodeURIComponent(d.profile_id)}`,
+    }));
   }
 }
 
-async function loadStatusCounts() {
-  try {
-    const data = await api("dashboard_status_counts").catch(() => ({ counts: {} }));
-    const counts = data.counts ?? {};
-    const labels = ["Published", "Draft", "Needs Review", "Processing", "Failed"];
-    statusCountsEl.innerHTML = "";
-    statusCountsEl.style.display = "flex";
-    statusCountsEl.style.gap = "var(--space-3)";
-    statusCountsEl.style.flexWrap = "wrap";
-    for (const label of labels) {
-      const wrap = document.createElement("div");
-      wrap.style.flex = "1";
-      wrap.style.minWidth = "100px";
-      wrap.innerHTML = `
-        <div style="font-size:var(--font-size-2xl); font-weight:bold; color:var(--color-brand-deep);">${counts[label] ?? 0}</div>
-        <div class="muted" style="font-size:var(--font-size-sm);">${label}</div>`;
-      statusCountsEl.appendChild(wrap);
-    }
-  } catch {
-    statusCountsEl.innerHTML = `<p class="muted">Counts unavailable.</p>`;
+// ─── Recently updated ───────────────────────────────────────────────
+
+async function loadRecentlyUpdated() {
+  if (!recentlyUpdatedEl) return;
+  const data = await api("dashboard_recent_uploads", { limit: 3 });
+  const items = data.items ?? [];
+  recentlyUpdatedEl.innerHTML = "";
+  recentlyUpdatedEl.classList.add("blog");
+  recentlyUpdatedEl.classList.remove("card__body");
+  for (const item of items) {
+    recentlyUpdatedEl.appendChild(buildBlogRow({
+      label: `${item.breed_name} · ${item.groom_type}`,
+      meta: formatRelativeTime(item.updated_at),
+      href: `profile.html?profile_id=${encodeURIComponent(item.profile_id)}`,
+    }));
   }
 }
 
-async function loadRecentUploads() {
-  try {
-    const data = await api("dashboard_recent_uploads", { limit: 5 }).catch(() => ({ items: [] }));
-    const items = data.items ?? [];
-    if (items.length === 0) {
-      recentListEl.innerHTML = `<p class="muted">No recent uploads.</p>`;
-      return;
-    }
-    recentListEl.innerHTML = "";
-    for (const item of items) {
-      const row = document.createElement("div");
-      row.className = "row row--space-between";
-      row.style.padding = "var(--space-2) 0";
-      row.innerHTML = `
-        <div>
-          <a href="profile.html?profile_id=${encodeURIComponent(item.profile_id)}">${escapeHtml(item.breed_name)} / ${escapeHtml(item.groom_type)}</a>
-        </div>`;
-      const right = document.createElement("div");
-      right.className = "row";
-      right.style.gap = "var(--space-3)";
-      right.appendChild(statusPill(item.status));
-      const time = document.createElement("span");
-      time.className = "muted";
-      time.style.fontSize = "var(--font-size-sm)";
-      time.textContent = formatRelativeTime(item.updated_at);
-      right.appendChild(time);
-      row.appendChild(right);
-      recentListEl.appendChild(row);
-    }
-  } catch {
-    recentListEl.innerHTML = `<p class="muted">Recent uploads unavailable.</p>`;
+// ─── Shared helpers ─────────────────────────────────────────────────
+
+function buildBlogRow({ label, meta, href }) {
+  const a = document.createElement("a");
+  a.className = "blog__row";
+  a.href = href;
+  const dot = document.createElement("div");
+  dot.className = "blog__dot";
+  const name = document.createElement("div");
+  name.className = "blog__name";
+  name.textContent = label;
+  const age = document.createElement("div");
+  age.className = "blog__age";
+  age.textContent = meta;
+  a.append(dot, name, age);
+  return a;
+}
+
+function emptyList(el) {
+  if (el) el.innerHTML = "";
+}
+
+function ageFromIso(iso) {
+  if (!iso) return "—";
+  const ms = Date.now() - new Date(iso).getTime();
+  if (Number.isNaN(ms)) return "—";
+  const days = Math.floor(ms / 86400000);
+  if (days < 1) return "today";
+  return `${days}d`;
+}
+
+// ─── Quick find (was #quick-add-input → #home-quick-find) ───────────
+
+function wireQuickFind() {
+  const input = document.getElementById("home-quick-find");
+  if (!input) return;
+
+  // The new HTML doesn't ship a results panel, so synthesise one anchored to
+  // the .quickadd__input wrapper.
+  const anchor = input.closest(".quickadd__input") ?? input.parentElement;
+  if (!anchor) return;
+  if (getComputedStyle(anchor).position === "static") {
+    anchor.style.position = "relative";
   }
-}
-
-async function loadBacklog() {
-  try {
-    const data = await api("dashboard_backlog", { limit: 5 }).catch(() => ({ items: [] }));
-    const items = data.items ?? [];
-    if (items.length === 0) {
-      backlogListEl.innerHTML = `<p class="muted">No unmatched breeds.</p>`;
-      return;
-    }
-    backlogListEl.innerHTML = "";
-    for (const item of items) {
-      const row = document.createElement("div");
-      row.className = "row row--space-between";
-      row.style.padding = "var(--space-2) 0";
-      row.innerHTML = `
-        <div><strong>${escapeHtml(item.raw_breed)}</strong></div>
-        <div class="muted">${pluralise(item.search_count, "hit")}</div>`;
-      backlogListEl.appendChild(row);
-    }
-  } catch {
-    backlogListEl.innerHTML = `<p class="muted">Backlog unavailable.</p>`;
-  }
-}
-
-async function loadHealth() {
-  if (!healthPanelEl) return;
-  try {
-    const data = await api("health_check").catch(() => null);
-    if (!data) {
-      healthPanelEl.innerHTML = `<p class="muted">Health check unavailable.</p>`;
-      return;
-    }
-    const sp = data.script_properties ?? {};
-    const sheetCounts = data.sheet_counts ?? {};
-    const last = data.last_ai_call;
-    const todayGbp = Number(data.openai_today_gbp ?? 0);
-
-    // Group properties: show pending (required + not set) loudly,
-    // then required+set in muted text, then optional ones at the bottom.
-    const required = Object.entries(sp).filter(([_, v]) => v.required);
-    const optional = Object.entries(sp).filter(([_, v]) => !v.required);
-    const missing = required.filter(([_, v]) => !v.set).map(([k]) => k);
-    const setRequired = required.filter(([_, v]) => v.set).map(([k]) => k);
-    const setOptional = optional.filter(([_, v]) => v.set).map(([k]) => k);
-
-    const formatPills = (names, color) => names.map((n) =>
-      `<span class="pill" style="background:${color}20; color:${color}; font-family:var(--font-mono); font-size:var(--font-size-xs);">${escapeHtml(n)}</span>`
-    ).join(" ");
-
-    const lastAiHtml = last
-      ? `<span class="muted">Last AI call:</span> <strong>${escapeHtml(last.source)}</strong> (${escapeHtml(last.model)}) — ${last.success ? "✓ success" : `✗ ${escapeHtml(last.error_code || "failed")}`} <span class="muted">${formatRelativeTime(last.created_at)}</span>`
-      : `<span class="muted">No AI calls yet.</span>`;
-
-    healthPanelEl.innerHTML = `
-      <div class="stack" style="gap:var(--space-3);">
-        ${missing.length ? `
-          <div>
-            <div class="muted" style="font-size:var(--font-size-sm); margin-bottom:var(--space-1);">Required Properties not set (${missing.length}):</div>
-            <div>${formatPills(missing, "var(--color-error)")}</div>
-          </div>` : `
-          <div class="muted" style="font-size:var(--font-size-sm);">All required Script Properties are set ✓</div>`}
-
-        ${setRequired.length ? `
-          <details>
-            <summary class="muted" style="font-size:var(--font-size-sm); cursor:pointer;">${setRequired.length} required Properties set</summary>
-            <div style="margin-top:var(--space-2);">${formatPills(setRequired, "var(--color-text-muted)")}</div>
-          </details>` : ``}
-
-        ${setOptional.length ? `
-          <details>
-            <summary class="muted" style="font-size:var(--font-size-sm); cursor:pointer;">${setOptional.length} optional Properties set</summary>
-            <div style="margin-top:var(--space-2);">${formatPills(setOptional, "var(--color-text-muted)")}</div>
-          </details>` : ``}
-
-        <div class="row" style="gap:var(--space-4); flex-wrap:wrap; padding-top:var(--space-2); border-top:1px solid var(--color-border);">
-          <div>
-            <div class="muted" style="font-size:var(--font-size-xs);">Today's AI spend</div>
-            <div style="font-weight:bold; font-size:var(--font-size-lg);">£${todayGbp.toFixed(2)}</div>
-          </div>
-          ${Object.entries(sheetCounts).filter(([_, v]) => v != null).map(([name, count]) => `
-            <div>
-              <div class="muted" style="font-size:var(--font-size-xs);">${escapeHtml(name)}</div>
-              <div style="font-weight:bold; font-size:var(--font-size-lg);">${count}</div>
-            </div>`).join("")}
-        </div>
-
-        <div style="font-size:var(--font-size-sm); border-top:1px solid var(--color-border); padding-top:var(--space-2);">
-          ${lastAiHtml}
-        </div>
-      </div>
-    `;
-  } catch {
-    healthPanelEl.innerHTML = `<p class="muted">Health check unavailable.</p>`;
-  }
-}
-
-function escapeHtml(s) {
-  return String(s ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
-}
-
-// ─── Quick add or update breed ──────────────────────────────────────
-
-function wireQuickAdd() {
-  const input = document.getElementById("quick-add-input");
-  const results = document.getElementById("quick-add-results");
-  if (!input || !results) return;
+  const results = document.createElement("div");
+  Object.assign(results.style, {
+    position: "absolute",
+    top: "calc(100% + 6px)",
+    left: "0",
+    right: "0",
+    background: "var(--color-surface)",
+    border: "1px solid var(--color-border)",
+    borderRadius: "var(--radius-md)",
+    boxShadow: "var(--shadow-lg)",
+    zIndex: "20",
+    overflow: "hidden",
+  });
+  results.hidden = true;
+  anchor.appendChild(results);
 
   let debounceTimer = null;
   let lastQuery = "";
@@ -319,17 +195,15 @@ function wireQuickAdd() {
     if (input.value.trim()) runSearch(input.value.trim());
   });
 
-  // Close dropdown when clicking outside
   document.addEventListener("click", (e) => {
     if (!input.contains(e.target) && !results.contains(e.target)) hideResults();
   });
 
-  // Esc closes
   input.addEventListener("keydown", (e) => {
     if (e.key === "Escape") { hideResults(); input.blur(); }
     if (e.key === "Enter") {
       e.preventDefault();
-      const first = results.querySelector(".quick-add__row");
+      const first = results.querySelector("[data-quick-row]");
       if (first) first.click();
     }
   });
@@ -348,31 +222,68 @@ function wireQuickAdd() {
   function renderResults(q, matches) {
     results.innerHTML = "";
     for (const m of matches) {
-      const row = document.createElement("div");
-      row.className = "quick-add__row";
-      row.innerHTML = `
-        <div>
-          <strong>${escapeHtml(m.breed_name)}</strong>
-          <span class="quick-add__row-meta"> — ${m.reason === "name" ? "exact" : m.reason.replace("_", " ")}</span>
-        </div>
-        <span class="quick-add__row-meta">Open editor →</span>`;
+      const row = makeRow();
+      const left = document.createElement("div");
+      const strong = document.createElement("strong");
+      strong.textContent = m.breed_name;
+      const why = document.createElement("span");
+      why.style.color = "var(--color-secondary)";
+      why.style.fontSize = "12px";
+      why.style.marginLeft = "6px";
+      why.textContent = "— " + (m.reason === "name" ? "exact" : String(m.reason).replace("_", " "));
+      left.append(strong, why);
+      const right = document.createElement("span");
+      right.style.color = "var(--color-secondary)";
+      right.style.fontSize = "12px";
+      right.textContent = "Open editor →";
+      row.append(left, right);
       row.addEventListener("click", () => {
         location.href = `profile.html?breed_id=${encodeURIComponent(m.breed_id)}`;
       });
       results.appendChild(row);
     }
-    // "Add new" option only if no exact-match (name) match exists
-    const exactName = matches.find((m) => m.reason === "name" && m.breed_name.toLowerCase() === q.toLowerCase());
+
+    // "Add new" entry only if the typed query doesn't exactly match an existing breed.
+    const exactName = matches.find((m) =>
+      m.reason === "name" && String(m.breed_name).toLowerCase() === q.toLowerCase()
+    );
     if (!exactName) {
-      const create = document.createElement("div");
-      create.className = "quick-add__row quick-add__create";
-      create.innerHTML = `
-        <div>+ Add new breed: <strong>"${escapeHtml(q)}"</strong></div>
-        <span class="quick-add__row-meta">Creates a Pet Groom profile and opens the editor</span>`;
-      create.addEventListener("click", () => quickCreate(q, create));
-      results.appendChild(create);
+      const row = makeRow();
+      row.style.borderTop = "1px dashed var(--color-border)";
+      const left = document.createElement("div");
+      const lead = document.createElement("span");
+      lead.textContent = "+ Add new breed: ";
+      const name = document.createElement("strong");
+      name.textContent = `"${q}"`;
+      left.append(lead, name);
+      const right = document.createElement("span");
+      right.style.color = "var(--color-secondary)";
+      right.style.fontSize = "12px";
+      right.textContent = "Creates a Pet Groom profile";
+      row.append(left, right);
+      row.addEventListener("click", () => quickCreate(q, row));
+      results.appendChild(row);
     }
     results.hidden = false;
+  }
+
+  function makeRow() {
+    const row = document.createElement("div");
+    row.dataset.quickRow = "1";
+    Object.assign(row.style, {
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: "12px",
+      padding: "10px 14px",
+      cursor: "pointer",
+      borderBottom: "1px solid var(--color-border)",
+      fontSize: "13.5px",
+      color: "var(--color-ink)",
+    });
+    row.addEventListener("mouseenter", () => row.style.background = "var(--color-surface-2)");
+    row.addEventListener("mouseleave", () => row.style.background = "");
+    return row;
   }
 
   async function quickCreate(name, rowEl) {
@@ -397,10 +308,7 @@ function wireQuickAdd() {
       submitLabel: "Create + open editor",
     });
     if (!choice) return;
-
-    rowEl?.classList.add("quick-add__row--working");
-    rowEl?.querySelector(":nth-child(2)")?.replaceChildren(document.createTextNode("Creating…"));
-
+    rowEl.style.opacity = "0.6";
     try {
       const breed = await api("save_breed", {
         breed: { breed_name: name, breed_type: choice.breed_type },
@@ -413,7 +321,7 @@ function wireQuickAdd() {
       toastSuccess(`Created ${name} (${choice.groom_type}). Opening editor…`);
       location.href = `profile.html?profile_id=${encodeURIComponent(profile.profile_id)}`;
     } catch (err) {
-      rowEl?.classList.remove("quick-add__row--working");
+      rowEl.style.opacity = "";
       if (err instanceof ApiError && err.code === "VALIDATION_FAILED") {
         toastError(err.message);
       }

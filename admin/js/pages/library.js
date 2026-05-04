@@ -4,9 +4,11 @@ import { requireSession, wireLogoutLink } from "../auth.js";
 import { api, ApiError } from "../api.js";
 import { formatBreedType, formatRelativeTime, pluralise } from "../format.js";
 import { formDialog, toast, toastSuccess } from "../ui.js";
+import { populateSidebarCounts } from "../sidebar.js";
 
 if (!requireSession()) throw new Error("redirecting to login");
 wireLogoutLink();
+populateSidebarCounts();
 
 const tableBody    = document.getElementById("breed-table-body");
 const searchInput  = document.getElementById("search");

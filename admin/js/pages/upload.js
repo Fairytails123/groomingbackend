@@ -4,9 +4,11 @@
 import { requireSession, wireLogoutLink } from "../auth.js";
 import { api, ApiError } from "../api.js";
 import { toast, toastSuccess, toastError, confirmDialog } from "../ui.js";
+import { populateSidebarCounts } from "../sidebar.js";
 
 if (!requireSession()) throw new Error("redirecting to login");
 wireLogoutLink();
+populateSidebarCounts();
 
 // ─── Tab switching ──────────────────────────────────────────────────
 

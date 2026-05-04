@@ -4,9 +4,11 @@ import { requireSession, wireLogoutLink } from "../auth.js";
 import { api, ApiError } from "../api.js";
 import { statusPill, toast, toastSuccess, formDialog, confirmDialog } from "../ui.js";
 import { formatRelativeTime } from "../format.js";
+import { populateSidebarCounts } from "../sidebar.js";
 
 if (!requireSession()) throw new Error("redirecting to login");
 wireLogoutLink();
+populateSidebarCounts();
 
 const params  = new URLSearchParams(location.search);
 const breedId = params.get("breed_id");

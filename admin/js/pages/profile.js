@@ -4,11 +4,13 @@ import { requireSession, wireLogoutLink } from "../auth.js";
 import { api, ApiError } from "../api.js";
 import { statusPill, toast, toastError, toastSuccess, confirmDialog, formDialog } from "../ui.js";
 import { formatRelativeTime } from "../format.js";
+import { populateSidebarCounts } from "../sidebar.js";
 
 // `formatRelativeTime` is also used by loadHistory below.
 
 if (!requireSession()) throw new Error("redirecting to login");
 wireLogoutLink();
+populateSidebarCounts();
 
 const params    = new URLSearchParams(location.search);
 const profileId = params.get("profile_id");
