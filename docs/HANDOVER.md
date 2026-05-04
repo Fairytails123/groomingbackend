@@ -2,9 +2,13 @@
 
 > **Read this in full before touching anything.** Then the spec at `.md/grooming-knowledge-software-architecture.md` (v3.8). Memory at `<.claude>/projects/.../memory/MEMORY.md` has user/feedback/reference notes that are authoritative for *how* to work on this project.
 >
-> **System state:** Stages 2–5 are live and verified. Stage 3 Phase 2 (browser-orchestrated PDF intake + AI extraction) is **deployed live as Web App Version 5** (`2026-05-03 22:14 UTC`) but **has not yet been smoke-tested with a real PDF end-to-end** — the very next session should drive that verification.
+> **System state:** Stages 2–5 are live and verified. Stage 3 Phase 2 (browser-orchestrated PDF intake + AI extraction) is **deployed live as Web App Version 8** (`2026-05-04 10:46 UTC`) and **smoke-tested end-to-end on a real PDF** (`min sch.pdf`, Miniature Schnauzer, 5 pages). Three real bugs found and fixed during the smoke test — see §7 entries 8, 9, 10 below.
 
-**Last updated:** 2026-05-03 — end-of-session snapshot. Phase 2 Apps Script files pushed via Chrome MCP (clasp not authenticated locally), `setupAll()` ran cleanly creating `AI Call Log` sheet and adding `suggested_text` column to `Extra Heading Approvals`. Web App URL unchanged from prior deployments.
+**Last updated:** 2026-05-04 — Phase 2 smoke-test session. `.gitattributes` added (commit `5b3a826`) to stop OneDrive CRLF flips. Three live bugs fixed and redeployed as Versions 6, 7, 8 of the Apps Script:
+- v6: `max_tokens` → `max_completion_tokens` for gpt-5/o1/o3 model family (older models keep `max_tokens` + `temperature`).
+- v7: vision user_content text now includes the word "JSON" — required by OpenAI when `response_format: { type: "json_object" }` is set.
+- v8: vision `max_tokens` bumped 1024 → 8192 + `reasoning_effort: "low"` for gpt-5 (reasoning tokens were exhausting the output budget; vision is transcription-grade and doesn't need deep reasoning).
+After v8: PRF-001 (Miniature Schnauzer / Pet Groom) extracted 14 vision findings on page 1, 4 on page 2, more on page 3 with blade numbers `#7F #5F #10 #15 #40` merged into the Body row. Status flipped to `Needs Review`. Apps Script Web App URL unchanged from prior deployments.
 
 ---
 
@@ -243,6 +247,16 @@ In chronological order; only the ones that left a trap if you're not careful.
 6. **Apps Script "Authorization required" popup unclickable from Chrome MCP** — first-run OAuth consent opens in a separate Chrome window outside the MCP tab group. Lesson: any first-run Apps Script function that touches Drive/Sheets needs Kamal to click through the consent dialog once.
 
 7. **clasp not installed locally during Phase 2 deploy session (2026-05-03)** — terminal had no `clasp`. Solution adopted: install via `npm install -g @google/clasp`, but `clasp login` still needed. Pivoted to Chrome MCP + Monaco's exposed `setValue` API to push files directly, then "Manage deployments → edit pencil → New version" UI flow to redeploy in place. See memory `reference_apps_script_deploy.md` for the full technique. Lesson: don't assume CLI tools are wired; ask before halting on a tooling gap.
+8. **OpenAI gpt-5 chat completions reject `max_tokens` (2026-05-04 smoke test).** First Phase 2 vision pass against `min sch.pdf` failed 4/4 pages with `OpenAI HTTP 400: "Unsupported parameter: 'max_tokens' is not supported with this model. Use 'max_completion_tokens' instead."`. Older models (gpt-3.5/4/4o/4o-mini) accept `max_tokens`; reasoning-class models (gpt-5*, o1*, o3*) require `max_completion_tokens` and reject custom `temperature`. `callOpenAI_` in `apps-script/ai.gs` now branches on `/^(gpt-5|o1|o3)/i.test(model)` and shapes the payload accordingly. Deployed Apps Script v6.
+
+9. **OpenAI `response_format: json_object` requires the literal word "json" in messages (2026-05-04 smoke test).** With bug #8 fixed, vision call returned `OpenAI HTTP 400: "'messages' must contain the word 'json' in some form, to use 'response_format' of type 'json_object'."`. The `WF08_SYSTEM_PROMPT` showed JSON syntax in the example but never used the word "JSON" in prose, and the user_content text was just `Page N of the source PDF.`. Fix: `op_run_vision_pass_page` now passes `Return JSON findings for page ${pageIndex} of the source PDF.` Lesson: when using `response_format: json_object`, ensure the system *or* user message contains the literal substring "json"; OpenAI rejects messages that don't. Deployed Apps Script v7.
+
+10. **gpt-5 reasoning tokens exhaust `max_completion_tokens` budget (2026-05-04 smoke test).** With bugs #8 and #9 fixed, vision returned 200 OK but `message.content` was empty/non-JSON because gpt-5's reasoning tokens consumed the entire 1024-token budget before any visible output. Two-part fix: (a) bumped `op_run_vision_pass_page` `max_tokens` from 1024 → 8192; (b) added `payload.reasoning_effort = "low"` inside the gpt-5 branch in `callOpenAI_` since vision transcription doesn't need deep reasoning. After v8: PRF-001 vision pass produced 14 + 0 + 4 + N findings on the four page renders, with blade numbers `#7F #5F #10 #15 #40` merged into the Body row. Lesson: reasoning models budget reasoning + output from the same `max_completion_tokens` pool — reasoning-light tasks should set `reasoning_effort: "low"` and keep generous max budgets. Deployed Apps Script v8.
+
+11. **OneDrive Files-On-Demand dehydrates `.git` objects (2026-05-04 cold-start session).** Fresh Cowork session reported `fatal: loose object 5bbb205... is corrupt` and 138 of 311 files showed `Blocks: 0` from the Linux mount. Files weren't really corrupt — OneDrive had freed up disk by replacing them with cloud-only placeholders, but the Linux WSL mount can't trigger hydration. Fix: right-click the repo folder → "Always keep on this device" rehydrates everything. Recommended long-term fix: move the repo out of OneDrive entirely (git + GitHub is already the source of truth and off-machine backup; OneDrive on top is redundant and dangerous). Same session also found a CRLF/LF flip across 9 files (no `.gitattributes`); fixed by adding `.gitattributes` with `* text=auto eol=lf` (commit `5b3a826`). Lesson: do not put git repos under OneDrive without `.gitattributes` and "Always keep on this device" pinned.
+
+12. **Edit tool truncates files when the working file lives in OneDrive (2026-05-04).** During the Phase 2 fix session, two separate `Edit` tool calls on `apps-script/ai.gs` produced files that were truncated mid-function (e.g. `section_order: maxOrder +` ending mid-expression). The targeted change had landed near the top, but the bottom of the file lost ~28 lines. Workaround: backup before edit, do edits via `mcp__workspace__bash` `sed -i` (atomic in-place writes), and verify line count + tail + `node --check` immediately after. Lesson: when editing a file inside OneDrive, prefer bash sed over Edit tool for any change beyond a couple of lines. Better long-term: move repo out of OneDrive (see bug #11).
+
 
 ---
 
@@ -255,17 +269,4 @@ In chronological order; only the ones that left a trap if you're not careful.
 5. **Check git state:** `git log --oneline -10`. The Phase 2 work is in the local working tree but **not yet committed** as of this session — see `git status`. Consider creating a single commit for the Phase 2 ship before doing anything else, with a message like `Stage 3 Phase 2 ship: browser-orchestrated PDF intake + AI extraction (deployed v5)`.
 6. **If user asks about a feature that "should already work":** check §4 "What's done". If it's marked ✅ and the file mentioned exists locally, the feature is live (modulo GitHub Pages cache; hard-refresh).
 7. **If user reports a bug:** check §7 "Bugs fixed" first — don't reintroduce. If novel: drive Chrome MCP to reproduce (memory `reference_apps_script_deploy.md` has the techniques), use `mcp__Claude_in_Chrome__javascript_tool` to inspect state, fix, push.
-8. **For new work:** respect the design-first feedback (`feedback_design_first.md`) — for non-trivial changes, sketch a plan via `ExitPlanMode` before writing code, fold the design decisions back into the spec.
-
----
-
-## 9. Update protocol for this file
-
-Keep this file the operational source of truth:
-
-- After every meaningful chunk of work, update §4 ("What's done") and §5 ("Next-task priorities").
-- When a bug is fixed, append to §7 with chronological position.
-- When a Property / credential / external state changes, update §2.
-- When a stage milestone completes, update the header status.
-- When the spec amendments grow >3 new entries, bump the spec version (v3.8 → v3.9) and reset §0a.
-- Aim for ≤500 lines. Push deeper detail to `docs/api.md`, `docs/workflows.md`, the spec, or a stage-specific doc.
+8. **For new work:** respect the design-first feedback (`feedback_design_first.md`) — for non-trivial changes, 

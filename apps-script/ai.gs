@@ -142,13 +142,30 @@ function callOpenAI_(opts) {
     { role: "user", content: user_content ?? user_text ?? "" },
   ];
 
+  // Reasoning-class models (gpt-5*, o1*, o3*) use the newer parameter names
+  // and reject custom `temperature`. Older chat models (gpt-4*, gpt-4o*,
+  // gpt-3.5*) still take `max_tokens` + `temperature`. Detect by model id
+  // prefix and shape the payload accordingly. Bug found 2026-05-04 during
+  // Phase 2 smoke test: vision calls to gpt-5 returned HTTP 400
+  // "Unsupported parameter: 'max_tokens' is not supported with this model.
+  //  Use 'max_completion_tokens' instead."
+  const usesNewParams = /^(gpt-5|o1|o3)/i.test(String(model));
+
   const payload = {
     model,
     messages,
     response_format,
-    max_tokens,
-    temperature,
   };
+  if (usesNewParams) {
+    payload.max_completion_tokens = max_tokens;
+    // Vision/extract here is transcription-grade; keep reasoning minimal so the
+    // budget goes to the JSON findings, not internal deliberation.
+    payload.reasoning_effort = "low";
+    // Reasoning models reject any non-default temperature — leave unset.
+  } else {
+    payload.max_tokens = max_tokens;
+    payload.temperature = temperature;
+  }
 
   const startedAt = Date.now();
   let response;
@@ -466,11 +483,13 @@ function op_run_vision_pass_page(body) {
       model: OPENAI_MODELS.vision,
       system: WF08_SYSTEM_PROMPT,
       user_content: [
-        { type: "text", text: `Page ${pageIndex} of the source PDF.` },
+        // Must include the word "json" in messages when response_format is json_object —
+        // OpenAI rejects with a 400 otherwise. Bug found 2026-05-04 smoke test.
+        { type: "text", text: `Return JSON findings for page ${pageIndex} of the source PDF.` },
         { type: "image_url", image_url: { url: dataUrl, detail: "high" } },
       ],
       response_format: { type: "json_object" },
-      max_tokens: 1024,
+      max_tokens: 8192,  // gpt-5 reasoning eats this budget; need headroom for the JSON findings
       profile_id: profileId,
       source: "vision_page",
     });
