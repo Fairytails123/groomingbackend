@@ -4,70 +4,167 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Snipping tool — Fairy Tails Knowledge</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap">
   <link rel="stylesheet" href="css/tokens.css">
   <link rel="stylesheet" href="css/base.css">
   <link rel="stylesheet" href="css/components.css">
   <link rel="stylesheet" href="../vendor/cropperjs/cropper.min.css">
   <link rel="stylesheet" href="css/pages/snip.css">
 </head>
-<body>
+<body class="snip-page">
   <header class="topbar">
     <a href="dashboard.html" class="topbar__brand">Fairy Tails Knowledge</a>
     <nav class="topbar__nav" aria-label="Primary">
       <a href="dashboard.html" class="topbar__link">Dashboard</a>
-      <a href="library.html"   class="topbar__link">Library</a>
+      <a href="library.html"   class="topbar__link" aria-current="page">Library</a>
       <a href="upload.html"    class="topbar__link">Upload</a>
       <a href="#"              class="topbar__link" id="logout-link">Sign out</a>
     </nav>
   </header>
 
-  <main class="snip-main">
-    <div class="row row--space-between" style="flex-wrap:wrap; padding:var(--space-4); border-bottom:1px solid var(--color-border);">
-      <div>
-        <a id="back-link" class="muted" style="font-size:var(--font-size-sm);" href="library.html">← Back</a>
-        <h1 id="page-title" style="margin:0;">Snipping tool</h1>
+  <div class="snip-app">
+    <!-- ─── Page header ─────────────────────────────────────────── -->
+    <div class="snip-pageheader">
+      <a id="back-link" href="library.html" class="snip-pageheader__back" aria-label="Back to profile">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor"
+             stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M10 12L6 8l4-4"/>
+        </svg>
+        Back
+      </a>
+      <div class="snip-pageheader__title">
+        <span class="snip-pageheader__crumbs" id="page-crumbs">Loading…</span>
+        <h1 class="snip-pageheader__name" id="page-title">Snipping tool</h1>
       </div>
-      <div class="row" style="gap:var(--space-3);">
-        <button class="btn btn--secondary" type="button" id="add-page-button">+ Add page render</button>
-        <input id="page-file-input" type="file" accept="image/jpeg,image/png" hidden>
-        <span id="status" class="muted" style="font-size:var(--font-size-sm); align-self:center;"></span>
+      <div class="snip-pageheader__spacer"></div>
+
+      <div class="snip-pageheader__progress" id="progress-pill">
+        <span><strong id="progress-done">0</strong> of <strong id="progress-total">4</strong> required roles captured</span>
       </div>
+
+      <span id="status" class="muted" style="font-size: 13px;"></span>
+
+      <button class="snip-btn snip-btn--ghost" id="add-page-button" type="button">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor"
+             stroke-width="2" stroke-linecap="round" aria-hidden="true">
+          <path d="M8 3v10M3 8h10"/>
+        </svg>
+        Add page
+      </button>
+      <input id="page-file-input" type="file" accept="image/jpeg,image/png" hidden>
     </div>
 
+    <!-- ─── 3-pane layout ──────────────────────────────────────── -->
     <div class="snip-layout">
-      <aside class="snip-filmstrip" id="filmstrip">
-        <p class="muted center" style="padding:var(--space-4);">No page renders yet. Click "+ Add page render" to upload one.</p>
+
+      <!-- Filmstrip (left) -->
+      <aside class="snip-filmstrip" aria-label="Page renders">
+        <div class="snip-pane-head">
+          <span class="snip-pane-head__title">Pages</span>
+          <span class="snip-pane-head__count" id="page-count">0</span>
+        </div>
+        <div class="snip-filmstrip__list" id="filmstrip">
+          <p class="muted center" style="padding: 12px;">No pages yet.</p>
+        </div>
       </aside>
 
-      <section class="snip-canvas-wrap">
-        <div class="snip-empty" id="canvas-empty">
-          <p class="muted center">Pick a page from the filmstrip, or add one to get started.</p>
+      <!-- Stage (centre) -->
+      <section class="snip-stage" aria-label="Crop stage">
+        <div class="snip-stage__hint" id="stage-hint">
+          <span>Drag on the page to make a crop, then press
+            <kbd>M</kbd> <kbd>F</kbd> <kbd>B</kbd> <kbd>H</kbd> <kbd>S</kbd>
+            to save</span>
         </div>
-        <div class="snip-canvas-area" id="canvas-area" hidden>
-          <div class="snip-coords" id="coords">x: 0, y: 0, w: 0, h: 0</div>
-          <div class="snip-img-wrap">
-            <img id="snip-img" alt="Page render" crossorigin="anonymous">
+
+        <div class="snip-stage__canvas" id="canvas-area">
+          <!-- Page render: Cropper.js mounts on this <img>. -->
+          <div class="snip-stage__page" id="snip-img-wrap" hidden>
+            <img id="snip-img" alt="Page render"
+                 crossorigin="anonymous" referrerpolicy="no-referrer">
           </div>
-          <div class="snip-toolbar">
-            <span class="muted" style="font-size:var(--font-size-sm);">Save crop as:</span>
-            <button class="btn btn--small" type="button" data-role="main">Main (M)</button>
-            <button class="btn btn--small btn--secondary" type="button" data-role="front">Front (F)</button>
-            <button class="btn btn--small btn--secondary" type="button" data-role="back">Back (B)</button>
-            <button class="btn btn--small btn--secondary" type="button" data-role="head">Head (H)</button>
-            <button class="btn btn--small btn--secondary" type="button" data-role="supplementary">Supplementary (S)</button>
+
+          <!-- Empty state -->
+          <div class="snip-stage__empty" id="canvas-empty">
+            <div class="snip-stage__empty-icon">
+              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                   stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="3" y="3" width="18" height="18" rx="3"/>
+                <path d="M3 15l5-5 4 4 3-3 6 6"/>
+                <circle cx="9" cy="9" r="1.5"/>
+              </svg>
+            </div>
+            <h2>Add a page render to begin</h2>
+            <p>Upload a JPG or PNG of the breed-card page. You'll then drag rectangles to crop the photos for each role.</p>
+            <button class="snip-btn" id="empty-add-btn" type="button">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor"
+                   stroke-width="2.2" stroke-linecap="round" aria-hidden="true">
+                <path d="M8 3v10M3 8h10"/>
+              </svg>
+              Add first page
+            </button>
           </div>
-          <div id="existing-on-page" class="muted" style="font-size:var(--font-size-sm); padding:0 var(--space-4) var(--space-4);"></div>
-        </section>
+        </div>
+
+        <!-- Floating action bar -->
+        <div class="snip-actionbar is-hidden" id="actionbar"
+             role="toolbar" aria-label="Save crop as role">
+          <span class="snip-actionbar__label">Save as</span>
+          <button class="snip-role-btn snip-role-btn--primary"
+                  data-role="main" style="--swatch: var(--role-main)" type="button">
+            <span class="snip-role-btn__swatch"></span> Main
+            <span class="snip-role-btn__key">M</span>
+          </button>
+          <button class="snip-role-btn"
+                  data-role="front" style="--swatch: var(--role-front)" type="button">
+            <span class="snip-role-btn__swatch"></span> Front
+            <span class="snip-role-btn__key">F</span>
+          </button>
+          <button class="snip-role-btn"
+                  data-role="back" style="--swatch: var(--role-back)" type="button">
+            <span class="snip-role-btn__swatch"></span> Back
+            <span class="snip-role-btn__key">B</span>
+          </button>
+          <button class="snip-role-btn"
+                  data-role="head" style="--swatch: var(--role-head)" type="button">
+            <span class="snip-role-btn__swatch"></span> Head
+            <span class="snip-role-btn__key">H</span>
+          </button>
+          <button class="snip-role-btn"
+                  data-role="supplementary" style="--swatch: var(--role-supp)" type="button">
+            <span class="snip-role-btn__swatch"></span> Extra
+            <span class="snip-role-btn__key">S</span>
+          </button>
+          <span class="snip-actionbar__divider"></span>
+          <button class="snip-btn-icon" id="reset-crop"
+                  title="Clear crop (Esc)" aria-label="Clear crop" type="button">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor"
+                 stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 4l8 8M12 4l-8 8"/>
+            </svg>
+          </button>
+        </div>
       </section>
 
-      <aside class="snip-summary" id="all-crops">
-        <h3>All crops</h3>
-        <div id="all-crops-list">
-          <p class="muted">No crops yet.</p>
+      <!-- Summary (right) -->
+      <aside class="snip-summary" aria-label="Saved crops">
+        <div class="snip-pane-head">
+          <span class="snip-pane-head__title">Saved crops</span>
+          <span class="snip-pane-head__count" id="crop-count">0</span>
+        </div>
+        <div class="snip-summary__list" id="all-crops-list">
+          <p class="muted center" style="padding: 16px; font-size: 13px;">No crops yet.</p>
+        </div>
+
+        <div class="snip-roles-checklist">
+          <div class="snip-roles-checklist__title">Required roles</div>
+          <div class="snip-roles-checklist__list" id="role-checklist"></div>
         </div>
       </aside>
+
     </div>
-  </main>
+  </div>
 
   <div id="modal-root"></div>
   <div class="toast-container" id="toast-container"></div>
