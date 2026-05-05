@@ -31,14 +31,38 @@ actual TV (Hisense 40" 40E4QTUK FHD, 1920×1080, Vidaa browser).
   publish/unpublish; manual `rebuildPublicIndex()` helper in the editor for
   on-demand backfills. Schema: `{ schema_version, generated_at, breeds: [{ breed_id, breed_name, breed_slug, breed_type, parent_breed_ids }] }`.
 - #42 **TV typography scaled for 1080p TV viewing distance, not desktop.**
-  Body 28 px, breed names 56-64 px, blade-number pills 38 px monospace. Hit
-  targets 96 px min, focus rings 6 px wide. Mirrors the admin's `#00AFF1`
-  sky-blue palette + Plus Jakarta Sans for visual continuity. Avoids `:has()`,
-  subgrid, container queries — Vidaa-browser CSS support is conservative.
+  First-cut tokens: body 28 px, breed names 56-64 px, blade-number pills
+  38 px monospace, hit targets 96 px min, focus rings 6 px wide. Mirrors
+  the admin's `#00AFF1` sky-blue palette + Plus Jakarta Sans for visual
+  continuity. Avoids `:has()`, subgrid, container queries — Vidaa-browser
+  CSS support is conservative. **Superseded by #44 for the breed page.**
 - #43 **Service worker / offline cache deferred.** Vidaa PWA support unverified;
   build the page first, confirm rendering on the actual TV, then add caching.
   Until then the TV depends on salon wifi; Refresh button + AM/PM cron
   rebuilds make the latency acceptable (no real-time requirement).
+- #44 **Breed page redesigned to an Apple-inspired layout (2026-05-05 evening).**
+  Designed by Claude Design and shipped as a drop-in handoff (commit
+  `85fbe79`). Soft-white canvas (`#F5F5F7`), floating white cards with
+  two-step shadows, translucent topbar with backdrop-filter blur, generous
+  radii (14/22/30/38 px), Plus Jakarta Sans + JetBrains Mono on blade
+  numerals. Pet/Show toggle becomes an iOS-style segmented control;
+  section pager turns into 60 px rounded pills with monospace `01..05`
+  numerals. Main image card has a floating role chip; **bottom thumbnail
+  strip is now interactive** — clicking a thumb cross-fades it (180 ms) into
+  the main display. Index 0 of the image set is `images.main`; 1..n are
+  `images.supplementary` in role order. Text pane gains an eyebrow
+  ("Section · 2 of 5") above the section name; first blade pill uses
+  brand-accent. Warning strip slimmed to 64 px with pill tag + 2-line clamp.
+  CSS namespacing: redesign tokens (`--brand`, `--ink`, `--bg`, `--surface`,
+  `--shadow-1/2`, `--r-sm/md/lg/xl`) live in a `:root` block at the top
+  of `css/breed.css` so they don't collide with `tokens.css` and the start
+  page is unaffected. Optional new field on the data contract:
+  `images.supplementary[].label` (used as role-chip text if present;
+  humanized `role` if absent). All previous behaviour preserved —
+  `display.image_panel_width` clamp, `show_warnings` gate, vision-section
+  hide, 404 / network empty states. Search modal styling left as-is on
+  `base.css` for now (functional but visually inherits the older
+  pre-redesign aesthetic; flagged as a follow-up).
 
 **Deployment state (2026-05-05):**
 - TV display: `https://fairytails123.github.io/groomingtv/` — initial commit

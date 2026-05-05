@@ -4,7 +4,7 @@
 >
 > **System state — Stage 1 TV display LIVE.** Full architecture-spec loop now closed end-to-end: TV at `https://fairytails123.github.io/groomingtv/` (Stage 1) reads from the back end at `https://fairytails123.github.io/groomingbackend/` (Stages 2–5 + Phase 2). Apps Script Web App at Version 10 (`2026-05-04 12:41 UTC`). Spec at v3.10.
 
-**Last updated:** 2026-05-05 — TV display ship session. Back-end commit `e249143`, TV repo initial commit `345d03c`.
+**Last updated:** 2026-05-05 (evening) — TV display ship session + breed-page Apple-inspired redesign. Back-end commit `e249143`, TV repo commits `345d03c` (initial) → `124316f` (single-screen pass) → `85fbe79` (Claude Design redesign drop-in).
 
 Earlier same-day work folded in:
 - v6: `max_tokens` → `max_completion_tokens` for gpt-5/o1/o3 model family (older models keep `max_tokens` + `temperature`).
@@ -238,10 +238,14 @@ Steps:
 
 ### P5 — TV display ✅ DONE (2026-05-05)
 
-Shipped as a separate repo at `https://github.com/Fairytails123/groomingtv` (initial commit `345d03c`). Live at `https://fairytails123.github.io/groomingtv/`. Vanilla HTML / ES modules / no build step; tokens scaled for the salon's actual TV (Hisense 40" 40E4QTUK FHD, 1920×1080, Vidaa browser). Reads `today.json` + `breeds/{slug}.json` + `index.json` from the back-end's GitHub Pages.
+Shipped as a separate repo at `https://github.com/Fairytails123/groomingtv` (initial commit `345d03c`, breed-page redesign `85fbe79`). Live at `https://fairytails123.github.io/groomingtv/`. Vanilla HTML / ES modules / no build step.
+
+The breed working screen was redesigned same-day to an Apple-inspired layout via a Claude Design drop-in handoff (`~/Downloads/groomingtv-redesign`): translucent topbar, floating white cards on a soft-white canvas, iOS-style segmented Pet/Show toggle, 60 px rounded section-pager pills with monospace `01..05` numerals, floating role chip on the main image, and an **interactive bottom thumbnail strip** — clicking a thumb cross-fades it into the main display. Spec §0a #44 captures the locked decisions; CSS tokens namespaced (`--brand`, `--ink`, etc.) so they don't collide with `tokens.css` and the start page is unaffected.
 
 **Open follow-ups:**
-- **Live verification on the actual Hisense TV.** Desktop Chrome rendering passed; Vidaa is the load-bearing test. Plug a Fire TV Stick at the same URL if Vidaa is too quirky.
+- **Live verification on the actual Hisense TV.** Desktop Chrome rendering passed; Vidaa is the load-bearing test. Plug a Fire TV Stick at the same URL if Vidaa is too quirky. Specifically check the topbar's `backdrop-filter` (Vidaa supports it but degrades to flat translucent white if not — already styled to fall back gracefully).
+- **Search modal restyle.** `js/search.js` + `.tv-modal-*` rules in `css/base.css` were left untouched by the redesign handoff. The modal still works but visually carries the older sky-blue aesthetic. Promote or restyle once the salon Vidaa pass confirms the rest of the breed page renders cleanly.
+- **Start-page restyle (optional).** Spec §0a #44 only covers the breed working screen. The start page (today's bookings) still uses the v1 tokens. Decide whether to promote the redesign tokens up to `tokens.css` for consistency, or keep the start page on the simpler v1 chrome.
 - **Apps Script redeploy** so `writePublicIndex_()` (in `apps-script/publish.gs`, commit `e249143`) fires on every future publish. Until then `public/index.json` is maintained manually (currently has BRD-001 Miniature Schnauzer; rerun `rebuildPublicIndex()` from the editor after redeploy to refresh, or hand-edit on the next breed publish).
 - **Service worker / offline cache + PWA manifest** — deferred until Vidaa rendering is confirmed (spec §0a #43).
 
