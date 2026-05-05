@@ -1,10 +1,10 @@
 # HANDOVER — Fairy Tails Grooming Knowledge Software
 
-> **Read this in full before touching anything.** Then the spec at `.md/grooming-knowledge-software-architecture.md` (v3.9). Memory at `<.claude>/projects/.../memory/MEMORY.md` has user/feedback/reference notes that are authoritative for *how* to work on this project.
+> **Read this in full before touching anything.** Then the spec at `.md/grooming-knowledge-software-architecture.md` (v3.10). Memory at `<.claude>/projects/.../memory/MEMORY.md` has user/feedback/reference notes that are authoritative for *how* to work on this project.
 >
-> **System state — Stage 3 Phase 2 fully verified end-to-end on real PDF.** Stages 2–5 live. Apps Script Web App at Version 10 (`2026-05-04 12:41 UTC`). WF-04 Telegram intake live in n8n (`n8n/dog-grooming-backend.json`, two-message protocol). Publish button on profile page wired up and verified — commit `906d0756 Publish Miniature Schnauzer / Pet Groom v15` on `main` confirms the click → save → publish chain works. Spec at v3.9.
+> **System state — Stage 1 TV display LIVE.** Full architecture-spec loop now closed end-to-end: TV at `https://fairytails123.github.io/groomingtv/` (Stage 1) reads from the back end at `https://fairytails123.github.io/groomingbackend/` (Stages 2–5 + Phase 2). Apps Script Web App at Version 10 (`2026-05-04 12:41 UTC`). Spec at v3.10.
 
-**Last updated:** 2026-05-04 (evening) — Publish-button fix session. Commit `93a2ce1`.
+**Last updated:** 2026-05-05 — TV display ship session. Back-end commit `e249143`, TV repo initial commit `345d03c`.
 
 Earlier same-day work folded in:
 - v6: `max_tokens` → `max_completion_tokens` for gpt-5/o1/o3 model family (older models keep `max_tokens` + `temperature`).
@@ -55,9 +55,11 @@ Everything below is live unless flagged ⏳ pending or 🟡 not-yet-verified.
 
 | What | Where |
 |---|---|
-| GitHub repo | https://github.com/Fairytails123/groomingbackend |
-| GitHub Pages site | https://fairytails123.github.io/groomingbackend/ |
+| Back-end GitHub repo | https://github.com/Fairytails123/groomingbackend |
+| Back-end GitHub Pages site | https://fairytails123.github.io/groomingbackend/ |
 | Admin website (login) | https://fairytails123.github.io/groomingbackend/admin/login.html |
+| **TV display GitHub repo** | https://github.com/Fairytails123/groomingtv |
+| **TV display live URL** | https://fairytails123.github.io/groomingtv/ — open on the salon Hisense 40" 40E4QTUK Vidaa browser. Reads `today.json` + `breeds/{slug}.json` + `index.json` from the back-end Pages site. Local working copy at `C:\Users\FT Manager\OneDrive\Business\CODING\groomingtv\` |
 | Apps Script project | https://script.google.com/home/projects/1sxgzOrmd2OEmuJmMeoW15Vbb1GkbO1GIhs3h0afmOafcgOb1tDErvIA1/edit (project ID `1sxgzOrmd2OEmuJmMeoW15Vbb1GkbO1GIhs3h0afmOafcgOb1tDErvIA1`) |
 | Apps Script Web App URL | `https://script.google.com/macros/s/AKfycby5CU8J-xyCn38ruoe_HdDswRBCNcxXLO9O2AyiiHDt781mwsJzWeyyahySfwjpq4ZL/exec` (deployment Version 10, persistent — same URL across all v1→v10 redeploys) |
 | n8n workflow | https://ftmanager.app.n8n.cloud/workflow/6xHWEX3f9zrWtDDa ("Dog Grooming Back End") |
@@ -234,9 +236,14 @@ Steps:
 - **Auto-extract trigger on `?reextract=1` URLs** — eliminate the one-click "Start extraction" step on `upload.html?reextract=1&pid=PRF-XXX` so the Telegram → publish loop is fully hands-off after the user snips diagrams. Currently `tryReextractFromUrl()` populates the breed select and PDF blob; we just need to also call `runIntakeWithUi()` immediately when `auto=1` is in the URL.
 - **Cost guard rails for n8n path** — if WF-06/07/08 ever revive (they're deprecated for Phase 2 but kept as fallback), they should call `op_extract_sections` / `op_run_vision_pass_page` rather than calling OpenAI themselves, so the Apps Script `AI Call Log` + cost cap stays single-source-of-truth.
 
-### P5 — TV display
+### P5 — TV display ✅ DONE (2026-05-05)
 
-Out of scope for this repo. When ready: new repo `Fairytails123/grooming-display`, vanilla HTML/JS PWA, reads `public/today.json` + `public/breeds/*.json` from this repo's GitHub Pages.
+Shipped as a separate repo at `https://github.com/Fairytails123/groomingtv` (initial commit `345d03c`). Live at `https://fairytails123.github.io/groomingtv/`. Vanilla HTML / ES modules / no build step; tokens scaled for the salon's actual TV (Hisense 40" 40E4QTUK FHD, 1920×1080, Vidaa browser). Reads `today.json` + `breeds/{slug}.json` + `index.json` from the back-end's GitHub Pages.
+
+**Open follow-ups:**
+- **Live verification on the actual Hisense TV.** Desktop Chrome rendering passed; Vidaa is the load-bearing test. Plug a Fire TV Stick at the same URL if Vidaa is too quirky.
+- **Apps Script redeploy** so `writePublicIndex_()` (in `apps-script/publish.gs`, commit `e249143`) fires on every future publish. Until then `public/index.json` is maintained manually (currently has BRD-001 Miniature Schnauzer; rerun `rebuildPublicIndex()` from the editor after redeploy to refresh, or hand-edit on the next breed publish).
+- **Service worker / offline cache + PWA manifest** — deferred until Vidaa rendering is confirmed (spec §0a #43).
 
 ---
 

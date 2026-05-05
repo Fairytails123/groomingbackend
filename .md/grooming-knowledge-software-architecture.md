@@ -1,12 +1,65 @@
 # Fairy Tails Grooming Knowledge Software — Architecture & Build Plan
 
 **Owner:** Kamal (Fairy Tails K9 Centre)
-**Status:** Working spec, v3.9 (Stage 3 Phase 2 smoke-tested and live as Web App v9 on 2026-05-04; vision-call shape decisions captured below).
-**Last updated:** 4 May 2026
+**Status:** Working spec, v3.10 (Stage 1 TV display live on 2026-05-05 at `https://fairytails123.github.io/groomingtv/`; full system loop now closed end-to-end).
+**Last updated:** 5 May 2026
 
 ---
 
-## 0a. Amendments since v3.8 (smoke-test fixes, dashboard polish)
+## 0a. Amendments since v3.9 (Stage 1 TV display ship)
+
+The TV display deferred from day one finally shipped on 2026-05-05. New repo
+`Fairytails123/groomingtv` (separate from the back-end), GitHub Pages live at
+`https://fairytails123.github.io/groomingtv/`. Vanilla HTML / ES modules / no
+build step — same tech philosophy as the admin. Designed for the salon's
+actual TV (Hisense 40" 40E4QTUK FHD, 1920×1080, Vidaa browser).
+
+**Decisions added since v3.9:**
+- #39 **TV display lives in its own repo (`groomingtv`).** Separate from
+  `groomingbackend` because it's a different deploy target and a different
+  trust boundary (TV = open / no auth, admin = password-gated). Cross-origin
+  fetches against the back-end's GitHub Pages work natively (Pages serves
+  `Access-Control-Allow-Origin: *`).
+- #40 **TV is read-only against the back end** with one exception: the
+  manual-search modal calls the existing public op `log_backlog_hit` after
+  ~1.2 s of unmatched typing so unmet breed lookups surface as Backlog
+  Signals on the admin dashboard. No other TV-side writes.
+- #41 **`public/index.json` is the TV's autocomplete index.** GitHub Pages
+  doesn't expose directory listings, so the TV needs a flat list of every
+  breed-with-at-least-one-Published-profile to drive search. Written by
+  `writePublicIndex_()` in `apps-script/publish.gs` after every successful
+  publish/unpublish; manual `rebuildPublicIndex()` helper in the editor for
+  on-demand backfills. Schema: `{ schema_version, generated_at, breeds: [{ breed_id, breed_name, breed_slug, breed_type, parent_breed_ids }] }`.
+- #42 **TV typography scaled for 1080p TV viewing distance, not desktop.**
+  Body 28 px, breed names 56-64 px, blade-number pills 38 px monospace. Hit
+  targets 96 px min, focus rings 6 px wide. Mirrors the admin's `#00AFF1`
+  sky-blue palette + Plus Jakarta Sans for visual continuity. Avoids `:has()`,
+  subgrid, container queries — Vidaa-browser CSS support is conservative.
+- #43 **Service worker / offline cache deferred.** Vidaa PWA support unverified;
+  build the page first, confirm rendering on the actual TV, then add caching.
+  Until then the TV depends on salon wifi; Refresh button + AM/PM cron
+  rebuilds make the latency acceptable (no real-time requirement).
+
+**Deployment state (2026-05-05):**
+- TV display: `https://fairytails123.github.io/groomingtv/` — initial commit
+  `345d03c`. Pages enabled from `main` / root.
+- Back-end: commit `e249143` adds `writePublicIndex_()` + the seed
+  `public/index.json` (one entry, BRD-001 Miniature Schnauzer). Apps Script
+  Web App still on Version 10; redeploy needed for `writePublicIndex_` to
+  fire on future publishes (until then the seed is maintained manually if
+  another breed publishes).
+
+**What's still pending after v3.10 ship:**
+- Live verification on the actual Hisense 40E4QTUK Vidaa browser (the
+  load-bearing test for Stage 1 — desktop Chrome rendering is not a
+  guarantee). Plug in a Fire TV Stick if Vidaa proves unreliable.
+- Apps Script redeploy so `writePublicIndex_` fires automatically on
+  subsequent publishes.
+- Optional: PWA manifest + service worker once Vidaa support is confirmed.
+
+---
+
+## 0b. Amendments since v3.8 (smoke-test fixes, dashboard polish)
 
 The Phase 2 real-PDF smoke test ran on 2026-05-04 against `min sch.pdf` (Miniature Schnauzer, 5 pages, Adobe Scan). Three live bugs were found and fixed in `apps-script/ai.gs`, each redeployed to the same persistent Apps Script deployment in turn (v6 → v7 → v8). One small auxiliary bug in the Re-extract path was caught the same day. A new operational op was added to clear dashboard alerts. The v3.8 backup is preserved at `grooming-knowledge-software-architecture.v3.8.backup.md`. Operational truth (URLs, current Web App version, what's wired) lives in `docs/HANDOVER.md`.
 
@@ -37,7 +90,7 @@ The Phase 2 real-PDF smoke test ran on 2026-05-04 against `min sch.pdf` (Miniatu
 
 ---
 
-## 0b. Amendments since v3.7 (Stage 3 Phase 2 ship)
+## 0c. Amendments since v3.7 (Stage 3 Phase 2 ship)
 
 The Phase 2 design and deployment landed on 2026-05-03. The plan that drove the build is at `<.claude>/plans/read-analyse-and-get-iterative-pond.md`. Operational truth (URLs, pending items, verification status) lives in `docs/HANDOVER.md`.
 
@@ -80,7 +133,7 @@ The Phase 2 design and deployment landed on 2026-05-03. The plan that drove the 
 
 ---
 
-## 0c. Amendments since v3.6 (live deployment + bug fixes)
+## 0d. Amendments since v3.6 (live deployment + bug fixes)
 
 Captured here for fast diffing. The v3.6 backup is preserved at `grooming-knowledge-software-architecture.v3.6.backup.md`. Operational truth (URLs, IDs, what's wired, next steps) is in `docs/HANDOVER.md`.
 
