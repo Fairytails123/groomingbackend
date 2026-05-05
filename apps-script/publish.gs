@@ -109,6 +109,10 @@ function op_publish_profile(body) {
     // with a UrlFetchApp call to the n8n webhook.
     enqueueSessionPackRebuildIfBooked_(breed.breed_id);
 
+    // Refresh public/index.json so the TV's manual-search modal sees the new
+    // breed within one publish cycle. Best-effort — failure does not abort.
+    try { writePublicIndex_(); } catch (err) { Logger.log("[publish] writePublicIndex_ failed: " + err); }
+
     return {
       profile_id: profileId,
       published_pack_url: publishedPackUrl,
@@ -159,6 +163,7 @@ function op_unpublish_profile(body) {
     });
 
     enqueueSessionPackRebuildIfBooked_(breed.breed_id);
+    try { writePublicIndex_(); } catch (err) { Logger.log("[publish] writePublicIndex_ failed: " + err); }
     return { profile_id: profileId, status: "Draft" };
   });
 }
@@ -371,6 +376,52 @@ function readImageBlob_(imageId) {
     Logger.log(`[publish] could not read image ${imageId}: ${err}`);
     return null;
   }
+}
+
+// ─── public/index.json — TV manual-search index ─────────────────────
+
+/**
+ * Writes public/index.json — flat list of every breed that has at least
+ * one Published profile. Consumed by the TV display's manual-search modal
+ * (which needs an autocomplete index but cannot list a GitHub Pages
+ * directory). Idempotent — overwrites the file on every call.
+ *
+ * Called from op_publish_profile / op_unpublish_profile. Run
+ * rebuildPublicIndex() manually from the editor to backfill on demand.
+ */
+function writePublicIndex_() {
+  const { rows: profiles } = readSheet_("Groom Profiles");
+  const { rows: breeds }   = readSheet_("Breeds");
+
+  const publishedBreedIds = new Set(
+    profiles.filter((p) => p.status === "Published").map((p) => p.breed_id)
+  );
+
+  const entries = breeds
+    .filter((b) => publishedBreedIds.has(b.breed_id) && b.slug)
+    .map((b) => ({
+      breed_id: b.breed_id,
+      breed_name: b.breed_name,
+      breed_slug: b.slug,
+      breed_type: b.breed_type ?? "pure",
+      parent_breed_ids: parseJsonArray_(b.parent_breeds),
+    }))
+    .sort((a, b) => a.breed_name.localeCompare(b.breed_name, "en"));
+
+  const index = {
+    schema_version: 1,
+    generated_at: nowIso_(),
+    breeds: entries,
+  };
+
+  ghPutFile_("public/index.json", JSON.stringify(index, null, 2),
+    `Update public/index.json — ${entries.length} breed(s)`);
+  return { count: entries.length };
+}
+
+/** Manual one-shot from the Apps Script editor. */
+function rebuildPublicIndex() {
+  return writePublicIndex_();
 }
 
 // ─── Session pack rebuild stub ──────────────────────────────────────

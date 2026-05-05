@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-05-05T06:45:00.000Z",
+  "breeds": [
+    {
+      "breed_id": "BRD-001",
+      "breed_name": "Miniature Schnauzer",
+      "breed_slug": "miniature-schnauzer",
+      "breed_type": "pure",
+      "parent_breed_ids": []
+    }
+  ]
+}
