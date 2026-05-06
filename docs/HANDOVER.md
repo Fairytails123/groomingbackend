@@ -4,7 +4,7 @@
 >
 > **System state — Stage 1 TV display LIVE.** Full architecture-spec loop now closed end-to-end: TV at `https://fairytails123.github.io/groomingtv/` (Stage 1) reads from the back end at `https://fairytails123.github.io/groomingbackend/` (Stages 2–5 + Phase 2). Apps Script Web App at Version 10 (`2026-05-04 12:41 UTC`). Spec at v3.10.
 
-**Last updated:** 2026-05-05 (evening) — TV display ship session + breed-page Apple-inspired redesign. Back-end commit `e249143`, TV repo commits `345d03c` (initial) → `124316f` (single-screen pass) → `85fbe79` (Claude Design redesign drop-in).
+**Last updated:** 2026-05-06 — handover pass over both repo's docs after Stage 1 ship. Back-end commits `e249143` (writePublicIndex_ + index.json seed) → `dd9c488` (spec v3.10 + HANDOVER P5). TV repo commits `345d03c` (initial scaffold) → `124316f` (single-screen / no-scroll pass) → `85fbe79` (Claude Design Apple-inspired redesign drop-in).
 
 Earlier same-day work folded in:
 - v6: `max_tokens` → `max_completion_tokens` for gpt-5/o1/o3 model family (older models keep `max_tokens` + `temperature`).
@@ -29,13 +29,33 @@ After v8: PRF-001 (Miniature Schnauzer / Pet Groom) extracted 14 vision findings
 ## 0. For a fresh Claude / Cowork session — first 5 minutes
 
 1. **Read this file end-to-end.**
-2. **Skim memory:** `<.claude>/projects/.../memory/MEMORY.md` (six entries, all short).
-3. **Open the spec:** `.md/grooming-knowledge-software-architecture.md` v3.9, §0a "v3.9 amendments" block at the top is the diff-from-current-truth. Don't read the whole thing unless you need a specific section.
-4. **Sanity check the live system:** `curl -s -o /dev/null -w "%{http_code}\n" https://fairytails123.github.io/groomingbackend/admin/login.html` should print `200`. Login URL + password in §"Live deployment state" below.
-5. **Check git state:** `git log --oneline -10`. Last meaningful commit (this session): `93a2ce1 Wire Publish button on profile page to op_publish_profile`. Earlier in same day: `35229b4 WF-04 Telegram-safe URL param`, `364b67c WF-04 Telegram intake live + service-token`. Any newer commits should match what this file describes.
-6. **Pick a task** from §"Recommended next-task priorities" — items are ranked by what unblocks the most.
+2. **Read the TV-side handover too** —
+   [`Fairytails123/groomingtv/README.md`](https://github.com/Fairytails123/groomingtv/blob/main/README.md)
+   is the operational truth for the salon TV display. Local clone is at
+   `C:\Users\FT Manager\OneDrive\Business\CODING\groomingtv\`. Skip this
+   step only if the work is purely back-end (Apps Script / Sheets / n8n).
+3. **Skim memory:** `<.claude>/projects/.../memory/MEMORY.md` (entries are short).
+4. **Open the spec:** `.md/grooming-knowledge-software-architecture.md` v3.10, §0a "v3.10 amendments" block at the top is the diff-from-current-truth. Decisions #39–#44 cover the TV display. Don't read the whole spec unless touching a specific section.
+5. **Sanity check the live system** — both halves:
+   ```bash
+   curl -s -o /dev/null -w "admin login:  %{http_code}\n" \
+     https://fairytails123.github.io/groomingbackend/admin/login.html
+   curl -s -o /dev/null -w "tv root:      %{http_code}\n" \
+     https://fairytails123.github.io/groomingtv/
+   curl -s -o /dev/null -w "tv breed:     %{http_code}\n" \
+     "https://fairytails123.github.io/groomingtv/breed.html?slug=miniature-schnauzer"
+   curl -s -o /dev/null -w "today.json:   %{http_code}\n" \
+     https://fairytails123.github.io/groomingbackend/public/today.json
+   curl -s -o /dev/null -w "index.json:   %{http_code}\n" \
+     https://fairytails123.github.io/groomingbackend/public/index.json
+   ```
+   All five should print `200`. Login URL + password in §"Live deployment state" below.
+6. **Check git state:** `git log --oneline -10`. Latest as of 2026-05-06 — back-end: `dd9c488 Spec §0a #44 + HANDOVER` (or newer cron rebuilds); TV repo: `85fbe79 Breed page redesign — Apple-inspired`. Any newer commits should match what this file describes.
+7. **Pick a task** from §"Recommended next-task priorities" — items are ranked by what unblocks the most.
 
-**The single biggest pending item:** ✅ DONE — Phase 2 smoke-tested end-to-end with `min sch.pdf` (Miniature Schnauzer). Publish chain verified via commit `906d0756`. Next biggest item: pick from §5 priorities (recommended: P0 = move repo out of OneDrive).
+**The single biggest pending item:** Live Vidaa-browser verification of the
+TV display at the salon (HANDOVER P5 follow-up #1, TV README §5 P0). Desktop
+Chrome rendering passes; the Hisense 40E4QTUK is the load-bearing device.
 
 ---
 
@@ -185,6 +205,17 @@ Every row links the relevant commit so a `git show` brings up the diff.
 - ✅ **One-click re-extract URL** in the success reply: `https://fairytails123.github.io/groomingbackend/admin/upload.html?reextract=1&pid=PRF-XXX`. Uses `pid=` (no underscores) because Telegram silently interprets `_` in plain text as italic markers and strips them — see bug #13.
 - ✅ **`tryReextractFromUrl()`** in `admin/js/pages/upload.js` accepts `profile_id`, `profileid`, OR `pid` URL params (defensive — survives Telegram mangling either way).
 
+### Stage 1 — TV display (separate repo, shipped 2026-05-05)
+
+- ✅ **Repo created** at `https://github.com/Fairytails123/groomingtv` (initial commit `345d03c`). Local clone at `C:\Users\FT Manager\OneDrive\Business\CODING\groomingtv\`. GitHub Pages enabled from `main` / root via `gh api repos/.../pages -X POST` (no manual UI step needed).
+- ✅ **Live URL** at `https://fairytails123.github.io/groomingtv/` — open on the salon Hisense 40" 40E4QTUK Vidaa browser. Reads `today.json`, `breeds/{slug}.json`, and `index.json` from the back-end's GitHub Pages. CORS is permissive on Pages so cross-origin fetches work natively.
+- ✅ **Single-screen, no-scroll layout** (`124316f`) — start screen is a 3×3 grid capped at 9 bookings with a "+N more" Search prompt; breed page is one section at a time via a section pager + interactive thumbnail strip. `body { overflow: hidden }` on both pages.
+- ✅ **Apple-inspired breed redesign** (`85fbe79`) — Claude Design drop-in: translucent topbar with `backdrop-filter`, floating white cards on a soft-white canvas (`#F5F5F7`), iOS-style segmented Pet/Show toggle, 60 px section-pager pills with monospace `01..05` numerals, floating role chip on the main image, **interactive bottom thumbnail strip** that cross-fades thumbs into the main display (180 ms). CSS tokens namespaced (`--brand`, `--ink`, `--bg`) inside `css/breed.css` so they don't collide with `tokens.css`; the start page is unaffected.
+- ✅ **`writePublicIndex_()` in back-end's `apps-script/publish.gs`** (`e249143`) — writes a flat `public/index.json` listing every Published breed for the TV's manual-search autocomplete. Called from `op_publish_profile` and `op_unpublish_profile`; manual `rebuildPublicIndex()` helper for editor-side backfill.
+- ✅ **Hand-written `public/index.json` seed** (`e249143`) — single entry for BRD-001 Miniature Schnauzer, so the TV's search works immediately. Auto-rewritten on the next publish once Apps Script is redeployed (currently still on Web App v10 — `writePublicIndex_` is dormant until that redeploy).
+- ✅ **Read-only-with-one-exception:** TV calls Apps Script's existing public op `log_backlog_hit` after ~1.2 s of unmatched typing in the search modal so unmet breeds surface as Backlog Signals on the admin dashboard.
+- See [TV repo `README.md`](https://github.com/Fairytails123/groomingtv/blob/main/README.md) for the file structure, full data contract, verification cheat-sheet, bugs-fixed log, and follow-up list specific to the TV side.
+
 ### Service-token Apps Script branch
 
 - ✅ `apps-script/Code.gs` doPost accepts `body.service_token` matching the `SERVICE_TOKEN` Script Property as an alternative to a HMAC session token. n8n holds the secret in an HTTP Header Auth credential and forwards it on every call. Means n8n doesn't need an admin login session and Kamal's password rotations don't break the bot.
@@ -255,12 +286,17 @@ The breed working screen was redesigned same-day to an Apple-inspired layout via
 
 | Check | Command / step | Expected |
 |---|---|---|
-| GitHub Pages alive | `curl -s -o /dev/null -w "%{http_code}\n" https://fairytails123.github.io/groomingbackend/admin/login.html` | `200` |
+| Admin Pages alive | `curl -s -o /dev/null -w "%{http_code}\n" https://fairytails123.github.io/groomingbackend/admin/login.html` | `200` |
+| TV root alive | `curl -s -o /dev/null -w "%{http_code}\n" https://fairytails123.github.io/groomingtv/` | `200` |
+| TV breed page alive | `curl -s -o /dev/null -w "%{http_code}\n" "https://fairytails123.github.io/groomingtv/breed.html?slug=miniature-schnauzer"` | `200` |
+| Today/Tomorrow JSON live | `curl -s https://fairytails123.github.io/groomingbackend/public/today.json \| jq '.session_date'` | Today's ISO date in `"YYYY-MM-DD"` |
+| Index.json live (TV search) | `curl -s https://fairytails123.github.io/groomingbackend/public/index.json \| jq '.breeds \| length'` | At least `1` |
 | Apps Script Web App reachable | The Web App URL serves a 302 to a `script.googleusercontent.com` echo URL on plain GET — that's normal Google interstitial behaviour. Easiest dispatcher check: log in via the admin site → DevTools Network tab → any successful op (e.g. `list_breeds`) shows `ok:true`. |
 | Login works | Visit login URL, password `fairytails22` | Lands on dashboard |
 | Sheets accessible | Open the Sheets workbook URL | 14 sheets visible (last sheet should be `AI Call Log`) |
 | Drive root accessible | Open Drive root folder URL | One subfolder per breed digitised so far |
 | Phase 2 ops registered | Admin site → DevTools Console → `(await fetch("https://script.google.com/macros/s/AKfycby5CU8J-xyCn38ruoe_HdDswRBCNcxXLO9O2AyiiHDt781mwsJzWeyyahySfwjpq4ZL/exec",{method:"POST",headers:{"Content-Type":"text/plain"},body:'{"op":"extract_sections"}'})).json()` | `{ok:false, error:{code:"UNAUTHORIZED",…}}` — op exists, no auth_token. NOT `code:"NOT_FOUND"` (which would mean the OP_REGISTRY isn't picking up the new op). |
+| Public op `log_backlog_hit` reachable | Same console snippet but `body:'{"op":"log_backlog_hit","raw_breed":""}'` | `{ok:false, error:{code:"VALIDATION_FAILED",…}}` — op exists and is public; empty `raw_breed` triggers the validation. NOT `UNAUTHORIZED` (would mean it's not in the public set) and NOT `NOT_FOUND`. |
 
 ---
 
@@ -305,10 +341,16 @@ In chronological order; only the ones that left a trap if you're not careful.
 ## 8. How a fresh session should pick up cold
 
 1. **Read this file in full** (you just did).
-2. **Read memory:** `<.claude>/projects/.../memory/MEMORY.md` index, then any of the six entries that look relevant.
-3. **Spec read:** §0a "v3.9 amendments" at the top of `.md/grooming-knowledge-software-architecture.md`. Don't read the whole spec unless you need a specific section.
-4. **Verify alive:** the cheat-sheet in §6 above.
-5. **Check git state:** `git log --oneline -10`. Last meaningful commit (this session): `93a2ce1 Wire Publish button on profile page to op_publish_profile`. If `git status` shows local changes you don't recognise, that's almost certainly OneDrive CRLF noise — `.gitattributes` will normalise.
-6. **If user asks about a feature that "should already work":** check §4 "What's done". If it's marked ✅ and the file mentioned exists locally, the feature is live (modulo GitHub Pages cache; hard-refresh).
-7. **If user reports a bug:** check §7 "Bugs fixed" first — don't reintroduce. If novel: drive Chrome MCP to reproduce (memory `reference_apps_script_deploy.md` has the techniques), use `mcp__Claude_in_Chrome__javascript_tool` to inspect state, fix, push.
-8. **For new work:** respect the design-first feedback (`feedback_design_first.md`) — for non-trivial changes, sketch the approach in chat first (file paths, function names, data flow) and get a thumbs-up from Kamal before writing code. Save Cowork rounds and avoid mid-stream rewrites.
+2. **Read the TV-side handover too** if the work touches the salon TV —
+   [`Fairytails123/groomingtv/README.md`](https://github.com/Fairytails123/groomingtv/blob/main/README.md).
+   Local clone at `C:\Users\FT Manager\OneDrive\Business\CODING\groomingtv\`.
+   It has its own §6 verification cheat-sheet and §7 bugs-fixed list
+   specific to the TV.
+3. **Read memory:** `<.claude>/projects/.../memory/MEMORY.md` index, then any of the entries that look relevant.
+4. **Spec read:** §0a "v3.10 amendments" at the top of `.md/grooming-knowledge-software-architecture.md`. Decisions #39–#44 cover the TV display. Don't read the whole spec unless touching a specific section.
+5. **Verify alive:** the cheat-sheet in §6 above (covers both repos in one block of curls).
+6. **Check git state:** `git log --oneline -10`. Latest as of 2026-05-06 — back-end: `dd9c488 Spec §0a #44 + HANDOVER` (or newer cron rebuilds). TV repo: `85fbe79 Breed page redesign — Apple-inspired`. If `git status` shows local changes you don't recognise, that's almost certainly OneDrive CRLF noise — `.gitattributes` will normalise.
+7. **If the work is TV-side:** prefer pushing to `Fairytails123/groomingtv@main` directly (small repo, no auth-protected paths). The back-end repo has cron rebuilds running daily, so always `git fetch origin main` + rebase before pushing back-end commits.
+8. **If user asks about a feature that "should already work":** check §4 "What's done". If it's marked ✅ and the file mentioned exists locally, the feature is live (modulo GitHub Pages cache; hard-refresh).
+9. **If user reports a bug:** check §7 "Bugs fixed" first (and the TV README's §7 if it's a TV bug) — don't reintroduce. If novel: drive Chrome MCP to reproduce (memory `reference_apps_script_deploy.md` has the techniques), use `mcp__Claude_in_Chrome__javascript_tool` to inspect state, fix, push.
+10. **For new work:** respect the design-first feedback (`feedback_design_first.md`) — for non-trivial changes, sketch the approach in chat first (file paths, function names, data flow) and get a thumbs-up from Kamal before writing code. Save Cowork rounds and avoid mid-stream rewrites.
