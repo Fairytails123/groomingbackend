@@ -202,6 +202,61 @@ function makeFilePublicForServing_(file) {
 }
 
 /**
+ * Maintenance op: walk the Images + Page Renders sheets and move every Drive
+ * blob that should be deleted (Images.approved=FALSE / Page Renders.deleted_at
+ * set) but is still live in Drive to Drive trash via setTrashed(true). Used as
+ * a one-shot fix-up for rows soft-deleted before the Drive-trash behaviour
+ * landed (Web App v14, 2026-05-17).
+ *
+ * Supports body.dry_run=true to preview without making any changes.
+ *
+ * Idempotent: files already trashed are skipped (counted under
+ * already_trashed); files that no longer exist are counted under missing.
+ */
+function op_purge_orphaned_drive_files(body) {
+  const dryRun = body.dry_run === true || body.dry_run === "true";
+  const result = {
+    dry_run: dryRun,
+    images:        { scanned: 0, trashed: 0, already_trashed: 0, missing: 0, errored: 0 },
+    page_renders:  { scanned: 0, trashed: 0, already_trashed: 0, missing: 0, errored: 0 },
+    errors: [],
+  };
+
+  function processFile_(driveId, label, bucket) {
+    if (!driveId) return;
+    bucket.scanned++;
+    try {
+      const file = DriveApp.getFileById(driveId);
+      if (file.isTrashed()) { bucket.already_trashed++; return; }
+      if (!dryRun) file.setTrashed(true);
+      bucket.trashed++;
+    } catch (err) {
+      const msg = String(err && err.message ? err.message : err);
+      if (/(not found|notFound|File not found)/i.test(msg)) {
+        bucket.missing++;
+      } else {
+        bucket.errored++;
+        result.errors.push(`${label} (${driveId}): ${msg}`);
+      }
+    }
+  }
+
+  const { rows: images } = readSheet_("Images");
+  for (const i of images) {
+    if (i.approved === true || i.approved === "TRUE") continue;
+    processFile_(String(i.drive_file_id ?? "").trim(), `IMG ${i.image_id}`, result.images);
+  }
+
+  const { rows: renders } = readSheet_("Page Renders");
+  for (const r of renders) {
+    if (!r.deleted_at) continue;
+    processFile_(String(r.drive_file_id ?? "").trim(), `PGR ${r.page_render_id}`, result.page_renders);
+  }
+
+  return result;
+}
+
+/**
  * One-shot fix-up: walk Page Renders + Images sheets, set every referenced
  * Drive file to ANYONE_WITH_LINK / VIEW. Run once after deploying this code
  * to retro-fit images uploaded before the sharing change landed.
