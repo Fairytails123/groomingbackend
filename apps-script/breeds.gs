@@ -267,6 +267,19 @@ function writeRow_(sheet, headers, rowIndex, patch) {
   range.setValues([next]);
 }
 
+/**
+ * Idempotently append a column to a sheet if it isn't already there. Used by
+ * code that depends on a column added in a later schema bump, so the feature
+ * still works without a separate setupAll() run after deploy.
+ */
+function ensureColumn_(sheet, columnName) {
+  const lastCol = Math.max(1, sheet.getLastColumn());
+  const headers = sheet.getRange(1, 1, 1, lastCol).getValues()[0].map(String);
+  if (headers.includes(columnName)) return false;
+  sheet.getRange(1, lastCol + 1).setValue(columnName);
+  return true;
+}
+
 function parseJsonArray_(s) {
   if (Array.isArray(s)) return s;
   if (!s) return [];

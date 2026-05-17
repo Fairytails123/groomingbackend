@@ -264,6 +264,10 @@ function op_delete_page_render(body) {
   if (!renderId) throw apiError_("VALIDATION_FAILED", "page_render_id required");
 
   const renderSheet = getDb_().getSheetByName("Page Renders");
+  // Self-heal: if the deleted_at column hasn't been added yet (e.g. setupAll
+  // wasn't re-run after the schema bump), add it inline. No-op on subsequent
+  // calls. Cheaper than gating on a full setup.gs run.
+  ensureColumn_(renderSheet, "deleted_at");
   const rendersRead = readSheet_("Page Renders");
   const render = rendersRead.rows.find((r) => r.page_render_id === renderId);
   if (!render) throw apiError_("NOT_FOUND", `page render '${renderId}' not found`);
