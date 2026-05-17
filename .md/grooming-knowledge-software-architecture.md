@@ -63,6 +63,24 @@ actual TV (Hisense 40" 40E4QTUK FHD, 1920×1080, Vidaa browser).
   hide, 404 / network empty states. Search modal styling left as-is on
   `base.css` for now (functional but visually inherits the older
   pre-redesign aesthetic; flagged as a follow-up).
+- #45 **Delete affordances on profile editor IMAGES tab (2026-05-17).**
+  Cropped images and page renders both gain a small `×` button in the
+  top-right of their tile in the IMAGES tab on `profile.html`. Both are
+  soft deletes — Drive blobs are kept so version-history rows that
+  reference old image IDs stay intact. New op `op_delete_page_render`
+  stamps `Page Renders.deleted_at` (new column on Sheet 4b; auto-added
+  on next `setupAll()` run) and **cascade-soft-deletes** every
+  `Images` row whose `source_page_render_id` matches (sets
+  `approved=FALSE`, `display_position=-1` — same shape as
+  `op_delete_image`). Existing `op_delete_image` is now wrapped in
+  `withProfileLock_` to match the other mutating ops and is idempotent
+  on already-deleted rows. The UI confirm dialog for deleting the
+  currently-published `main` image (i.e. when `last_publish_succeeded_at`
+  is set on the profile) carries an extra warning that the TV keeps
+  showing the old main until the next publish, and that publish will
+  fail validation until a replacement main exists — but the delete is
+  not blocked. No hard-purge / Drive-trash flow shipped; soft-deleted
+  rows can be restored manually via Sheets if ever needed.
 
 **Deployment state (2026-05-05):**
 - TV display: `https://fairytails123.github.io/groomingtv/` — initial commit

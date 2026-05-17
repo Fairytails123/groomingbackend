@@ -112,20 +112,32 @@ function op_delete_image(body) {
   const imageId = String(body.image_id ?? "").trim();
   if (!imageId) throw apiError_("VALIDATION_FAILED", "image_id required");
 
-  const sheet = getDb_().getSheetByName("Images");
-  const { headers, rows } = readSheet_("Images");
-  const row = rows.find((i) => i.image_id === imageId);
-  if (!row) throw apiError_("NOT_FOUND", `image '${imageId}' not found`);
+  const initialRead = readSheet_("Images");
+  const initialRow = initialRead.rows.find((i) => i.image_id === imageId);
+  if (!initialRow) throw apiError_("NOT_FOUND", `image '${imageId}' not found`);
+  const profileId = initialRow.profile_id;
 
-  // Soft-delete: keep the Drive blob (referenced by version history),
-  // but remove the row from active records by setting display_position = -1
-  // and approved = FALSE. The publish flow only includes approved=TRUE images.
-  writeRow_(sheet, headers, row._rowIndex, {
-    approved: "FALSE",
-    display_position: -1,
-    last_recropped_date: nowIso_(),
+  return withProfileLock_(profileId, 30000, () => {
+    // Re-read inside the lock so we see any in-flight writes (e.g. a parallel
+    // save_crop that just demoted a different image's role).
+    const sheet = getDb_().getSheetByName("Images");
+    const { headers, rows } = readSheet_("Images");
+    const row = rows.find((i) => i.image_id === imageId);
+    if (!row) throw apiError_("NOT_FOUND", `image '${imageId}' not found`);
+    if (row.approved !== true && row.approved !== "TRUE") {
+      return { image_id: imageId, deleted: true, already_deleted: true };
+    }
+
+    // Soft-delete: keep the Drive blob (referenced by version history),
+    // but remove the row from active records by setting display_position = -1
+    // and approved = FALSE. The publish flow only includes approved=TRUE images.
+    writeRow_(sheet, headers, row._rowIndex, {
+      approved: "FALSE",
+      display_position: -1,
+      last_recropped_date: nowIso_(),
+    });
+    return { image_id: imageId, deleted: true };
   });
-  return { image_id: imageId, deleted: true };
 }
 
 // ─── op: list_drafts (for publish page) ─────────────────────────────

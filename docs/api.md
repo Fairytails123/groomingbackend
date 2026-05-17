@@ -116,11 +116,17 @@ Distilled from the data + API design agent output (2026-05-03 design pass) and t
 
 #### `op: "delete_image"`
 **Request:** `{ op: "delete_image", auth_token, image_id, expected_version }`
-**Behaviour:** soft-delete. Removes from `display_settings.supplementary_order`. JPEG remains in Drive (referenced by version history).
+**Response:** `{ image_id, deleted: true, already_deleted?: true }`.
+**Behaviour:** soft-delete. Marks the Images row `approved=FALSE`, `display_position=-1`. The publish flow filters by `approved=TRUE` so the image drops out of the next publish; previously-published versions remain intact because the Drive blob is kept (version history references the file ID). Wrapped in `withProfileLock_` to serialise against in-flight `save_crop` / `save_image_record` on the same profile. Idempotent — re-deleting an already-deleted row returns `already_deleted: true` without error.
 
 #### `op: "list_page_renders"`
 **Request:** `{ op: "list_page_renders", auth_token, profile_id }`
-**Response:** `{ page_renders: [ { page_render_id, page_index, url, width_px, height_px } ] }`. `url` is the Apps Script image-proxy URL.
+**Response:** `{ page_renders: [ { page_render_id, page_index, url, width_px, height_px } ] }`. `url` is the Apps Script image-proxy URL. Soft-deleted renders (`deleted_at` set) are filtered out.
+
+#### `op: "delete_page_render"`
+**Request:** `{ op: "delete_page_render", auth_token, page_render_id, profile_id? }`
+**Response:** `{ page_render_id, deleted: true, cascaded_image_ids: [<image_id>, …], already_deleted?: true }`.
+**Behaviour:** soft-delete the page render (stamps `Page Renders.deleted_at`), then cascade-soft-delete every Images row whose `source_page_render_id === page_render_id` and `approved === TRUE` (sets `approved=FALSE`, `display_position=-1`). Drive files are kept for both the page render and the cropped images. Wrapped in `withProfileLock_`. Idempotent — re-deleting returns `already_deleted: true` with an empty cascade list.
 
 ### PDF intake (Stage 3 Phase 2 — browser-orchestrated)
 

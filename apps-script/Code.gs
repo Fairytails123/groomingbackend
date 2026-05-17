@@ -42,6 +42,7 @@ const OP_REGISTRY = {
   save_page_render:      op_save_page_render,
   save_crop:             op_save_crop,
   list_crops_for_render: op_list_crops_for_render,
+  delete_page_render:    op_delete_page_render,
 
   // Stage 4 — cron handlers
   rebuild_today_json:        op_rebuild_today_json,

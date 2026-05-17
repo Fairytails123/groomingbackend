@@ -18,7 +18,7 @@ function op_list_page_renders(body) {
   if (!profileId) throw apiError_("VALIDATION_FAILED", "profile_id required");
   const { rows } = readSheet_("Page Renders");
   const items = rows
-    .filter((r) => r.profile_id === profileId)
+    .filter((r) => r.profile_id === profileId && !r.deleted_at)
     .map((r) => ({
       page_render_id: r.page_render_id,
       page_index: Number(r.page_index ?? 0),
@@ -249,4 +249,55 @@ function op_list_crops_for_render(body) {
       drive_file_id: i.drive_file_id,
     }));
   return { crops: items };
+}
+
+// ─── op: delete_page_render ─────────────────────────────────────────
+//
+// Soft-delete a page render and cascade soft-delete every crop snipped
+// from it (Images rows whose source_page_render_id matches). Drive blobs
+// for both are kept — Page Renders gains a `deleted_at` stamp, Images
+// rows get approved=FALSE + display_position=-1 (same shape as
+// op_delete_image). The publish flow already filters approved=TRUE.
+
+function op_delete_page_render(body) {
+  const renderId = String(body.page_render_id ?? "").trim();
+  if (!renderId) throw apiError_("VALIDATION_FAILED", "page_render_id required");
+
+  const renderSheet = getDb_().getSheetByName("Page Renders");
+  const rendersRead = readSheet_("Page Renders");
+  const render = rendersRead.rows.find((r) => r.page_render_id === renderId);
+  if (!render) throw apiError_("NOT_FOUND", `page render '${renderId}' not found`);
+  if (render.deleted_at) {
+    return { page_render_id: renderId, deleted: true, cascaded_image_ids: [], already_deleted: true };
+  }
+  const profileId = render.profile_id;
+
+  return withProfileLock_(profileId, 30000, () => {
+    // Re-read inside the lock so we see any in-flight writes.
+    const renders2 = readSheet_("Page Renders");
+    const render2 = renders2.rows.find((r) => r.page_render_id === renderId);
+    if (!render2 || render2.deleted_at) {
+      return { page_render_id: renderId, deleted: true, cascaded_image_ids: [], already_deleted: true };
+    }
+
+    const imagesSheet = getDb_().getSheetByName("Images");
+    const imagesRead = readSheet_("Images");
+    const cascadedImageIds = [];
+    for (const img of imagesRead.rows) {
+      if (img.source_page_render_id !== renderId) continue;
+      if (img.approved !== true && img.approved !== "TRUE") continue;
+      writeRow_(imagesSheet, imagesRead.headers, img._rowIndex, {
+        approved: "FALSE",
+        display_position: -1,
+        last_recropped_date: nowIso_(),
+      });
+      cascadedImageIds.push(img.image_id);
+    }
+
+    writeRow_(renderSheet, renders2.headers, render2._rowIndex, {
+      deleted_at: nowIso_(),
+    });
+
+    return { page_render_id: renderId, deleted: true, cascaded_image_ids: cascadedImageIds };
+  });
 }

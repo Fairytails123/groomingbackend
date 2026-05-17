@@ -45,7 +45,7 @@ const SHEET_SCHEMAS = {
   ],
   "Page Renders": [
     "page_render_id", "profile_id", "page_index", "drive_file_id",
-    "width_px", "height_px", "dpi", "created_at"
+    "width_px", "height_px", "dpi", "created_at", "deleted_at"
   ],
   "Display Settings": [
     "profile_id", "image_panel_width", "text_panel_width", "main_image_id",

@@ -110,11 +110,27 @@ async function loadImagesTab() {
       pageEl.style.flexWrap = "wrap";
       pageEl.style.gap = "var(--space-2)";
       pageEl.innerHTML = "";
+      const cropsByRender = new Map();
+      for (const i of imgs) {
+        if (!i.source_page_render_id) continue;
+        cropsByRender.set(i.source_page_render_id, (cropsByRender.get(i.source_page_render_id) ?? 0) + 1);
+      }
       for (const r of renders) {
-        const tile = document.createElement("a");
-        tile.href = `snip.html?profile_id=${encodeURIComponent(state.profile.profile_id)}`;
-        tile.style.cssText = "display:inline-block; text-decoration:none; border:1px solid var(--color-border); border-radius:var(--radius-md); padding:var(--space-2); background:var(--color-surface); color:var(--color-text);";
-        tile.innerHTML = `<div style="font-size:var(--font-size-xs); color:var(--color-text-muted);">Page ${r.page_index}</div><div style="font-size:var(--font-size-xs); font-family:var(--font-family-mono); color:var(--color-text-muted);">${r.width_px}×${r.height_px}</div>`;
+        const tile = document.createElement("div");
+        tile.style.cssText = "position:relative; display:inline-block; border:1px solid var(--color-border); border-radius:var(--radius-md); background:var(--color-surface);";
+        const cropCount = cropsByRender.get(r.page_render_id) ?? 0;
+        tile.innerHTML = `
+          <a href="snip.html?profile_id=${escapeAttr(state.profile.profile_id)}" style="display:block; padding:var(--space-2); padding-right:28px; text-decoration:none; color:var(--color-text);">
+            <div style="font-size:var(--font-size-xs); color:var(--color-text-muted);">Page ${escapeText(r.page_index)}</div>
+            <div style="font-size:var(--font-size-xs); font-family:var(--font-family-mono); color:var(--color-text-muted);">${escapeText(r.width_px)}×${escapeText(r.height_px)}</div>
+          </a>
+          <button type="button" class="tile-delete" aria-label="Delete page ${escapeAttr(r.page_index)}" title="Delete page render"
+            style="position:absolute; top:4px; right:4px; width:22px; height:22px; padding:0; line-height:18px; font-size:14px; border:none; background:transparent; color:var(--color-text-muted); cursor:pointer; border-radius:4px;">×</button>`;
+        tile.querySelector(".tile-delete").addEventListener("click", (ev) => {
+          ev.preventDefault();
+          ev.stopPropagation();
+          deletePageRender(r, cropCount);
+        });
         pageEl.appendChild(tile);
       }
     }
@@ -129,10 +145,13 @@ async function loadImagesTab() {
       imagesEl.innerHTML = "";
       for (const img of imgs) {
         const tile = document.createElement("div");
-        tile.style.cssText = "display:inline-block; border:1px solid var(--color-border); border-radius:var(--radius-md); padding:var(--space-2); background:var(--color-surface); min-width:120px;";
+        tile.style.cssText = "position:relative; display:inline-block; border:1px solid var(--color-border); border-radius:var(--radius-md); padding:var(--space-2); padding-right:28px; background:var(--color-surface); min-width:120px;";
         tile.innerHTML = `
           <div style="font-size:var(--font-size-xs); color:var(--color-brand-blue); font-weight:bold; text-transform:capitalize;">${escapeText(img.image_role)}</div>
-          <div style="font-size:var(--font-size-xs); color:var(--color-text-muted); font-family:var(--font-family-mono);">${img.image_id}</div>`;
+          <div style="font-size:var(--font-size-xs); color:var(--color-text-muted); font-family:var(--font-family-mono);">${escapeText(img.image_id)}</div>
+          <button type="button" class="tile-delete" aria-label="Delete ${escapeAttr(img.image_role)} image" title="Delete image"
+            style="position:absolute; top:4px; right:4px; width:22px; height:22px; padding:0; line-height:18px; font-size:14px; border:none; background:transparent; color:var(--color-text-muted); cursor:pointer; border-radius:4px;">×</button>`;
+        tile.querySelector(".tile-delete").addEventListener("click", () => deleteImage(img));
         imagesEl.appendChild(tile);
       }
     }
@@ -142,6 +161,55 @@ async function loadImagesTab() {
   }
 
   await loadPendingHeadings();
+}
+
+async function deleteImage(img) {
+  const role = img.image_role || "image";
+  const isPublishedMain = role === "main" && Boolean(state.profile?.last_publish_succeeded_at);
+  const body = isPublishedMain
+    ? `This is the published main image. The TV will keep showing it until you publish again, and the next publish will fail validation unless you snip a replacement main first. Delete anyway?`
+    : `Delete this ${role} image? It will be hidden from the profile and dropped from the next publish. The Drive file is kept so previously-published versions stay intact.`;
+  const ok = await confirmDialog({
+    title: isPublishedMain ? "Delete published main image?" : `Delete ${role} image?`,
+    body,
+    confirmLabel: "Delete",
+    danger: true,
+  });
+  if (!ok) return;
+  try {
+    await api("delete_image", { image_id: img.image_id });
+    toastSuccess(`Deleted ${role} image.`);
+    await loadImagesTab();
+  } catch (err) {
+    if (!(err instanceof ApiError)) toastError("Couldn't delete image.");
+  }
+}
+
+async function deletePageRender(render, cropCount) {
+  const pageLabel = `page ${render.page_index}`;
+  const body = cropCount > 0
+    ? `Delete ${pageLabel}? This will also remove the ${cropCount} crop${cropCount === 1 ? "" : "s"} snipped from it. The Drive files are kept so previously-published versions stay intact.`
+    : `Delete ${pageLabel}? The Drive file is kept; the row is hidden from the profile.`;
+  const ok = await confirmDialog({
+    title: `Delete ${pageLabel}?`,
+    body,
+    confirmLabel: "Delete",
+    danger: true,
+  });
+  if (!ok) return;
+  try {
+    const result = await api("delete_page_render", {
+      page_render_id: render.page_render_id,
+      profile_id: state.profile.profile_id,
+    });
+    const cascaded = (result?.cascaded_image_ids ?? []).length;
+    toastSuccess(cascaded > 0
+      ? `Deleted ${pageLabel} (and ${cascaded} cropped image${cascaded === 1 ? "" : "s"}).`
+      : `Deleted ${pageLabel}.`);
+    await loadImagesTab();
+  } catch (err) {
+    if (!(err instanceof ApiError)) toastError("Couldn't delete page render.");
+  }
 }
 
 async function loadPendingHeadings() {
