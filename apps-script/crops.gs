@@ -290,6 +290,12 @@ function op_delete_page_render(body) {
     for (const img of imagesRead.rows) {
       if (img.source_page_render_id !== renderId) continue;
       if (img.approved !== true && img.approved !== "TRUE") continue;
+      // Best-effort trash the crop's Drive file before flipping the row.
+      const cropFileId = String(img.drive_file_id ?? "").trim();
+      if (cropFileId) {
+        try { DriveApp.getFileById(cropFileId).setTrashed(true); }
+        catch (err) { Logger.log(`[op_delete_page_render] could not trash crop file ${cropFileId}: ${err}`); }
+      }
       writeRow_(imagesSheet, imagesRead.headers, img._rowIndex, {
         approved: "FALSE",
         display_position: -1,
@@ -298,10 +304,22 @@ function op_delete_page_render(body) {
       cascadedImageIds.push(img.image_id);
     }
 
+    // Trash the page render's own Drive file. Same best-effort pattern.
+    const renderFileId = String(render2.drive_file_id ?? "").trim();
+    let driveDeleted = false;
+    if (renderFileId) {
+      try {
+        DriveApp.getFileById(renderFileId).setTrashed(true);
+        driveDeleted = true;
+      } catch (err) {
+        Logger.log(`[op_delete_page_render] could not trash render file ${renderFileId}: ${err}`);
+      }
+    }
+
     writeRow_(renderSheet, renders2.headers, render2._rowIndex, {
       deleted_at: nowIso_(),
     });
 
-    return { page_render_id: renderId, deleted: true, cascaded_image_ids: cascadedImageIds };
+    return { page_render_id: renderId, deleted: true, cascaded_image_ids: cascadedImageIds, drive_deleted: driveDeleted };
   });
 }

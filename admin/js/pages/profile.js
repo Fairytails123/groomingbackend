@@ -167,8 +167,8 @@ async function deleteImage(img) {
   const role = img.image_role || "image";
   const isPublishedMain = role === "main" && Boolean(state.profile?.last_publish_succeeded_at);
   const body = isPublishedMain
-    ? `This is the published main image. The TV will keep showing it until you publish again, and the next publish will fail validation unless you snip a replacement main first. Delete anyway?`
-    : `Delete this ${role} image? It will be hidden from the profile and dropped from the next publish. The Drive file is kept so previously-published versions stay intact.`;
+    ? `This is the published main image. The TV will keep showing it until you publish again, and the next publish will fail validation unless you snip a replacement main first. The Drive file will be moved to Drive trash (recoverable for 30 days). Delete anyway?`
+    : `Delete this ${role} image? It will be dropped from the next publish and the Drive file moved to Drive trash (recoverable for 30 days).`;
   const ok = await confirmDialog({
     title: isPublishedMain ? "Delete published main image?" : `Delete ${role} image?`,
     body,
@@ -188,8 +188,8 @@ async function deleteImage(img) {
 async function deletePageRender(render, cropCount) {
   const pageLabel = `page ${render.page_index}`;
   const body = cropCount > 0
-    ? `Delete ${pageLabel}? This will also remove the ${cropCount} crop${cropCount === 1 ? "" : "s"} snipped from it. The Drive files are kept so previously-published versions stay intact.`
-    : `Delete ${pageLabel}? The Drive file is kept; the row is hidden from the profile.`;
+    ? `Delete ${pageLabel}? This will also remove the ${cropCount} crop${cropCount === 1 ? "" : "s"} snipped from it. All ${cropCount + 1} Drive files go to Drive trash (recoverable for 30 days).`
+    : `Delete ${pageLabel}? The Drive file goes to Drive trash (recoverable for 30 days).`;
   const ok = await confirmDialog({
     title: `Delete ${pageLabel}?`,
     body,

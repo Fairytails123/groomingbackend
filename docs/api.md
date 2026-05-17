@@ -116,8 +116,8 @@ Distilled from the data + API design agent output (2026-05-03 design pass) and t
 
 #### `op: "delete_image"`
 **Request:** `{ op: "delete_image", auth_token, image_id, expected_version }`
-**Response:** `{ image_id, deleted: true, already_deleted?: true }`.
-**Behaviour:** soft-delete. Marks the Images row `approved=FALSE`, `display_position=-1`. The publish flow filters by `approved=TRUE` so the image drops out of the next publish; previously-published versions remain intact because the Drive blob is kept (version history references the file ID). Wrapped in `withProfileLock_` to serialise against in-flight `save_crop` / `save_image_record` on the same profile. Idempotent — re-deleting an already-deleted row returns `already_deleted: true` without error.
+**Response:** `{ image_id, deleted: true, drive_deleted: boolean, already_deleted?: true }`.
+**Behaviour:** marks the Images row `approved=FALSE`, `display_position=-1` AND moves the Drive blob to Drive trash via `File.setTrashed(true)` (best-effort — if the Drive file is already gone the op still succeeds and returns `drive_deleted: false`). The Sheet row is kept so Version-History references to `image_id` still make sense as an audit trail; the bytes are recoverable from Drive trash for 30 days, after which Drive auto-purges. The publish flow filters by `approved=TRUE` so the image drops out of the next publish. Wrapped in `withProfileLock_` to serialise against in-flight `save_crop` / `save_image_record` on the same profile. Idempotent — re-deleting an already-deleted row returns `already_deleted: true` without error and skips the Drive call.
 
 #### `op: "list_page_renders"`
 **Request:** `{ op: "list_page_renders", auth_token, profile_id }`
@@ -125,8 +125,8 @@ Distilled from the data + API design agent output (2026-05-03 design pass) and t
 
 #### `op: "delete_page_render"`
 **Request:** `{ op: "delete_page_render", auth_token, page_render_id, profile_id? }`
-**Response:** `{ page_render_id, deleted: true, cascaded_image_ids: [<image_id>, …], already_deleted?: true }`.
-**Behaviour:** soft-delete the page render (stamps `Page Renders.deleted_at`), then cascade-soft-delete every Images row whose `source_page_render_id === page_render_id` and `approved === TRUE` (sets `approved=FALSE`, `display_position=-1`). Drive files are kept for both the page render and the cropped images. Wrapped in `withProfileLock_`. Idempotent — re-deleting returns `already_deleted: true` with an empty cascade list.
+**Response:** `{ page_render_id, deleted: true, cascaded_image_ids: [<image_id>, …], drive_deleted: boolean, already_deleted?: true }`.
+**Behaviour:** stamps `Page Renders.deleted_at`, cascade-soft-deletes every Images row whose `source_page_render_id === page_render_id` and `approved === TRUE` (sets `approved=FALSE`, `display_position=-1`), and moves the Drive blob for both the page render AND every cascaded crop to Drive trash via `File.setTrashed(true)` (best-effort per file). The Sheet rows are kept for the audit trail; the bytes are recoverable from Drive trash for 30 days, after which Drive auto-purges. Wrapped in `withProfileLock_`. Idempotent — re-deleting returns `already_deleted: true` with an empty cascade list and no Drive calls.
 
 ### PDF intake (Stage 3 Phase 2 — browser-orchestrated)
 

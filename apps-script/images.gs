@@ -93,7 +93,7 @@ function op_list_images(body) {
   if (!profileId) throw apiError_("VALIDATION_FAILED", "profile_id required");
   const { rows } = readSheet_("Images");
   const items = rows
-    .filter((i) => i.profile_id === profileId)
+    .filter((i) => i.profile_id === profileId && (i.approved === true || i.approved === "TRUE"))
     .map((i) => ({
       image_id: i.image_id,
       image_role: i.image_role,
@@ -128,15 +128,28 @@ function op_delete_image(body) {
       return { image_id: imageId, deleted: true, already_deleted: true };
     }
 
-    // Soft-delete: keep the Drive blob (referenced by version history),
-    // but remove the row from active records by setting display_position = -1
-    // and approved = FALSE. The publish flow only includes approved=TRUE images.
+    // Hard-delete the Drive blob (best-effort — never fail the op if the file
+    // was already trashed manually). The Sheets row stays around with
+    // approved=FALSE so Version History rows that reference image_id still
+    // make sense as an audit trail, but the bytes go to Drive trash (Drive
+    // auto-purges after 30 days; user can restore in the meantime).
+    const driveFileId = String(row.drive_file_id ?? "").trim();
+    let driveDeleted = false;
+    if (driveFileId) {
+      try {
+        DriveApp.getFileById(driveFileId).setTrashed(true);
+        driveDeleted = true;
+      } catch (err) {
+        Logger.log(`[op_delete_image] could not trash drive file ${driveFileId}: ${err}`);
+      }
+    }
+
     writeRow_(sheet, headers, row._rowIndex, {
       approved: "FALSE",
       display_position: -1,
       last_recropped_date: nowIso_(),
     });
-    return { image_id: imageId, deleted: true };
+    return { image_id: imageId, deleted: true, drive_deleted: driveDeleted };
   });
 }
 
