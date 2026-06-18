@@ -1,7 +1,22 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-06-17T10:30:03.935Z",
-  "session_date": "2026-06-17",
+  "generated_at": "2026-06-18T05:00:06.084Z",
+  "session_date": "2026-06-18",
   "saturday_open": false,
-  "bookings": []
+  "bookings": [
+    {
+      "booking_id": "JF-6573464732519701541",
+      "appointment_datetime": "2026-06-18 08:00T00:00:00",
+      "appointment_type": "unknown",
+      "raw_breed": "Cavapoo",
+      "matched": false,
+      "breed_id": null,
+      "breed_slug": null,
+      "breed_pack_url": null,
+      "fallback": {
+        "reason": "not_in_kb",
+        "suggested_breed_ids": []
+      }
+    }
+  ]
 }
