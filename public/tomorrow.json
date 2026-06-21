@@ -1,7 +1,22 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-06-20T18:00:04.306Z",
-  "session_date": "2026-06-21",
+  "generated_at": "2026-06-21T06:00:13.228Z",
+  "session_date": "2026-06-22",
   "saturday_open": false,
-  "bookings": []
+  "bookings": [
+    {
+      "booking_id": "JF-6573501566517585429",
+      "appointment_datetime": "2026-06-22 08:15T00:00:00",
+      "appointment_type": "unknown",
+      "raw_breed": "Cockapoo",
+      "matched": false,
+      "breed_id": null,
+      "breed_slug": null,
+      "breed_pack_url": null,
+      "fallback": {
+        "reason": "not_in_kb",
+        "suggested_breed_ids": []
+      }
+    }
+  ]
 }
