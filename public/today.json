@@ -1,14 +1,56 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-06-23T10:30:09.029Z",
-  "session_date": "2026-06-23",
+  "generated_at": "2026-06-24T05:00:10.400Z",
+  "session_date": "2026-06-24",
   "saturday_open": false,
   "bookings": [
     {
-      "booking_id": "JF-6575271057283407351",
-      "appointment_datetime": "2026-06-23 04:00T00:00:00",
+      "booking_id": "JF-6580107572308700341",
+      "appointment_datetime": "2026-06-24 08:15T00:00:00",
       "appointment_type": "unknown",
-      "raw_breed": "Cockpoo",
+      "raw_breed": "Cockerpoo",
+      "matched": false,
+      "breed_id": null,
+      "breed_slug": null,
+      "breed_pack_url": null,
+      "fallback": {
+        "reason": "not_in_kb",
+        "suggested_breed_ids": []
+      }
+    },
+    {
+      "booking_id": "JF-6580080461816492009",
+      "appointment_datetime": "2026-06-24 08:00T00:00:00",
+      "appointment_type": "unknown",
+      "raw_breed": "Collie cross breed",
+      "matched": false,
+      "breed_id": null,
+      "breed_slug": null,
+      "breed_pack_url": null,
+      "fallback": {
+        "reason": "not_in_kb",
+        "suggested_breed_ids": []
+      }
+    },
+    {
+      "booking_id": "JF-6579350748658630079",
+      "appointment_datetime": "2026-06-24 04:30T00:00:00",
+      "appointment_type": "unknown",
+      "raw_breed": "Labradoodle",
+      "matched": false,
+      "breed_id": null,
+      "breed_slug": null,
+      "breed_pack_url": null,
+      "fallback": {
+        "reason": "not_in_kb",
+        "suggested_breed_ids": []
+      }
+    },
+    {
+      "booking_id": "JF-6578833151327790824",
+      "appointment_datetime": "2026-06-24 04:15T00:00:00",
+      "appointment_type": "unknown",
+      "raw_breed": "Cavapoo",
       "matched": false,
       "breed_id": null,
       "breed_slug": null,
