@@ -1,56 +1,14 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-06-25T10:30:08.974Z",
-  "session_date": "2026-06-25",
+  "generated_at": "2026-06-26T05:00:07.931Z",
+  "session_date": "2026-06-26",
   "saturday_open": false,
   "bookings": [
     {
-      "booking_id": "JF-6580140178655075702",
-      "appointment_datetime": "2026-06-25 08:00T00:00:00",
+      "booking_id": "JF-6580374932301026813",
+      "appointment_datetime": "2026-06-26 04:15T00:00:00",
       "appointment_type": "unknown",
-      "raw_breed": "Maltese",
-      "matched": false,
-      "breed_id": null,
-      "breed_slug": null,
-      "breed_pack_url": null,
-      "fallback": {
-        "reason": "not_in_kb",
-        "suggested_breed_ids": []
-      }
-    },
-    {
-      "booking_id": "JF-6579404208659298157",
-      "appointment_datetime": "2026-06-25 04:30T00:00:00",
-      "appointment_type": "unknown",
-      "raw_breed": "Goldendoodle",
-      "matched": false,
-      "breed_id": null,
-      "breed_slug": null,
-      "breed_pack_url": null,
-      "fallback": {
-        "reason": "not_in_kb",
-        "suggested_breed_ids": []
-      }
-    },
-    {
-      "booking_id": "JF-6575926180012410798",
-      "appointment_datetime": "2026-06-25 04:00T00:00:00",
-      "appointment_type": "unknown",
-      "raw_breed": "Toy poodle",
-      "matched": false,
-      "breed_id": null,
-      "breed_slug": null,
-      "breed_pack_url": null,
-      "fallback": {
-        "reason": "not_in_kb",
-        "suggested_breed_ids": []
-      }
-    },
-    {
-      "booking_id": "JF-6575779553715329598",
-      "appointment_datetime": "2026-06-25 08:15T00:00:00",
-      "appointment_type": "unknown",
-      "raw_breed": "Rottweiler",
+      "raw_breed": "Jack Russel/Mongrel",
       "matched": false,
       "breed_id": null,
       "breed_slug": null,
