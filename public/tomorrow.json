@@ -1,7 +1,50 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-06-27T18:00:03.352Z",
-  "session_date": "2026-06-28",
+  "generated_at": "2026-06-28T06:00:17.003Z",
+  "session_date": "2026-06-29",
   "saturday_open": false,
-  "bookings": []
+  "bookings": [
+    {
+      "booking_id": "JF-6582662058011915263",
+      "appointment_datetime": "2026-06-29 08:15T00:00:00",
+      "appointment_type": "unknown",
+      "raw_breed": "Sheepadoodle",
+      "matched": false,
+      "breed_id": null,
+      "breed_slug": null,
+      "breed_pack_url": null,
+      "fallback": {
+        "reason": "not_in_kb",
+        "suggested_breed_ids": []
+      }
+    },
+    {
+      "booking_id": "JF-6581464132611825074",
+      "appointment_datetime": "2026-06-29 04:30T00:00:00",
+      "appointment_type": "unknown",
+      "raw_breed": "Lhasa Poodle",
+      "matched": false,
+      "breed_id": null,
+      "breed_slug": null,
+      "breed_pack_url": null,
+      "fallback": {
+        "reason": "not_in_kb",
+        "suggested_breed_ids": []
+      }
+    },
+    {
+      "booking_id": "JF-6580148798659021863",
+      "appointment_datetime": "2026-06-29 08:00T00:00:00",
+      "appointment_type": "unknown",
+      "raw_breed": "JRT x Chi",
+      "matched": false,
+      "breed_id": null,
+      "breed_slug": null,
+      "breed_pack_url": null,
+      "fallback": {
+        "reason": "not_in_kb",
+        "suggested_breed_ids": []
+      }
+    }
+  ]
 }
