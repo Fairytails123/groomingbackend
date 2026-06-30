@@ -1,14 +1,14 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-06-29T18:00:17.385Z",
-  "session_date": "2026-06-30",
+  "generated_at": "2026-06-30T06:00:21.672Z",
+  "session_date": "2026-07-01",
   "saturday_open": false,
   "bookings": [
     {
-      "booking_id": "JF-6582750062607333982",
-      "appointment_datetime": "2026-06-30 08:15T00:00:00",
+      "booking_id": "JF-6585235475015165331",
+      "appointment_datetime": "2026-07-01 08:00T00:00:00",
       "appointment_type": "unknown",
-      "raw_breed": "toy cockerpoo",
+      "raw_breed": "Labradoodle",
       "matched": false,
       "breed_id": null,
       "breed_slug": null,
@@ -19,38 +19,38 @@
       }
     },
     {
-      "booking_id": "JF-6581954612607539102",
-      "appointment_datetime": "2026-06-30 08:00T00:00:00",
+      "booking_id": "JF-6582894431521950911",
+      "appointment_datetime": "2026-07-01 03:45T00:00:00",
+      "appointment_type": "unknown",
+      "raw_breed": "Border terrier",
+      "matched": false,
+      "breed_id": null,
+      "breed_slug": null,
+      "breed_pack_url": null,
+      "fallback": {
+        "reason": "not_in_kb",
+        "suggested_breed_ids": []
+      }
+    },
+    {
+      "booking_id": "JF-6582746272606895619",
+      "appointment_datetime": "2026-07-01 04:00T00:00:00",
+      "appointment_type": "unknown",
+      "raw_breed": "Shih tzu cross",
+      "matched": false,
+      "breed_id": null,
+      "breed_slug": null,
+      "breed_pack_url": null,
+      "fallback": {
+        "reason": "not_in_kb",
+        "suggested_breed_ids": []
+      }
+    },
+    {
+      "booking_id": "JF-6580240188654724976",
+      "appointment_datetime": "2026-07-01 08:15T00:00:00",
       "appointment_type": "unknown",
       "raw_breed": "Spaniel",
-      "matched": false,
-      "breed_id": null,
-      "breed_slug": null,
-      "breed_pack_url": null,
-      "fallback": {
-        "reason": "not_in_kb",
-        "suggested_breed_ids": []
-      }
-    },
-    {
-      "booking_id": "JF-6580986168657323123",
-      "appointment_datetime": "2026-06-30 04:00T00:00:00",
-      "appointment_type": "unknown",
-      "raw_breed": "Cockerpoo",
-      "matched": false,
-      "breed_id": null,
-      "breed_slug": null,
-      "breed_pack_url": null,
-      "fallback": {
-        "reason": "not_in_kb",
-        "suggested_breed_ids": []
-      }
-    },
-    {
-      "booking_id": "JF-6580896126699807028",
-      "appointment_datetime": "2026-06-30 03:45T00:00:00",
-      "appointment_type": "unknown",
-      "raw_breed": "Labrador doodle",
       "matched": false,
       "breed_id": null,
       "breed_slug": null,
