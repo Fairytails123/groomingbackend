@@ -1,56 +1,14 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-07-01T10:30:18.109Z",
-  "session_date": "2026-07-01",
+  "generated_at": "2026-07-02T05:00:08.345Z",
+  "session_date": "2026-07-02",
   "saturday_open": false,
   "bookings": [
     {
-      "booking_id": "JF-6585235475015165331",
-      "appointment_datetime": "2026-07-01 08:00T00:00:00",
+      "booking_id": "JF-6585545002306941376",
+      "appointment_datetime": "2026-07-02 08:15T00:00:00",
       "appointment_type": "unknown",
-      "raw_breed": "Labradoodle",
-      "matched": false,
-      "breed_id": null,
-      "breed_slug": null,
-      "breed_pack_url": null,
-      "fallback": {
-        "reason": "not_in_kb",
-        "suggested_breed_ids": []
-      }
-    },
-    {
-      "booking_id": "JF-6582894431521950911",
-      "appointment_datetime": "2026-07-01 03:45T00:00:00",
-      "appointment_type": "unknown",
-      "raw_breed": "Border terrier",
-      "matched": false,
-      "breed_id": null,
-      "breed_slug": null,
-      "breed_pack_url": null,
-      "fallback": {
-        "reason": "not_in_kb",
-        "suggested_breed_ids": []
-      }
-    },
-    {
-      "booking_id": "JF-6582746272606895619",
-      "appointment_datetime": "2026-07-01 04:00T00:00:00",
-      "appointment_type": "unknown",
-      "raw_breed": "Shih tzu cross",
-      "matched": false,
-      "breed_id": null,
-      "breed_slug": null,
-      "breed_pack_url": null,
-      "fallback": {
-        "reason": "not_in_kb",
-        "suggested_breed_ids": []
-      }
-    },
-    {
-      "booking_id": "JF-6580240188654724976",
-      "appointment_datetime": "2026-07-01 08:15T00:00:00",
-      "appointment_type": "unknown",
-      "raw_breed": "Spaniel",
+      "raw_breed": "Doxie",
       "matched": false,
       "breed_id": null,
       "breed_slug": null,
