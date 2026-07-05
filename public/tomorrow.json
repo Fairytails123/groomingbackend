@@ -1,7 +1,50 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-07-04T18:00:07.632Z",
-  "session_date": "2026-07-05",
+  "generated_at": "2026-07-05T06:00:31.806Z",
+  "session_date": "2026-07-06",
   "saturday_open": false,
-  "bookings": []
+  "bookings": [
+    {
+      "booking_id": "JF-6587977039114688205",
+      "appointment_datetime": "2026-07-06 08:15T00:00:00",
+      "appointment_type": "unknown",
+      "raw_breed": "Pomeranian",
+      "matched": false,
+      "breed_id": null,
+      "breed_slug": null,
+      "breed_pack_url": null,
+      "fallback": {
+        "reason": "not_in_kb",
+        "suggested_breed_ids": []
+      }
+    },
+    {
+      "booking_id": "JF-6586292282609714903",
+      "appointment_datetime": "2026-07-06 08:00T00:00:00",
+      "appointment_type": "unknown",
+      "raw_breed": "Cockerpoo",
+      "matched": false,
+      "breed_id": null,
+      "breed_slug": null,
+      "breed_pack_url": null,
+      "fallback": {
+        "reason": "not_in_kb",
+        "suggested_breed_ids": []
+      }
+    },
+    {
+      "booking_id": "JF-6586223742608402521",
+      "appointment_datetime": "2026-07-06 04:00T00:00:00",
+      "appointment_type": "unknown",
+      "raw_breed": "Cockerpoo",
+      "matched": false,
+      "breed_id": null,
+      "breed_slug": null,
+      "breed_pack_url": null,
+      "fallback": {
+        "reason": "not_in_kb",
+        "suggested_breed_ids": []
+      }
+    }
+  ]
 }
