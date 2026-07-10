@@ -1,14 +1,14 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-07-09T10:30:13.553Z",
-  "session_date": "2026-07-09",
+  "generated_at": "2026-07-10T05:00:20.235Z",
+  "session_date": "2026-07-10",
   "saturday_open": false,
   "bookings": [
     {
-      "booking_id": "JF-6593205187866967354",
-      "appointment_datetime": "2026-07-09 04:30T00:00:00",
+      "booking_id": "JF-6592193582301899342",
+      "appointment_datetime": "2026-07-10 08:00T00:00:00",
       "appointment_type": "unknown",
-      "raw_breed": "Cockerpoo",
+      "raw_breed": "Shih tzu",
       "matched": false,
       "breed_id": null,
       "breed_slug": null,
@@ -19,10 +19,10 @@
       }
     },
     {
-      "booking_id": "JF-6591490609477501690",
-      "appointment_datetime": "2026-07-09 04:15T00:00:00",
+      "booking_id": "JF-6591424617888211887",
+      "appointment_datetime": "2026-07-10 04:15T00:00:00",
       "appointment_type": "unknown",
-      "raw_breed": "cockerpoo",
+      "raw_breed": "Cavalier",
       "matched": false,
       "breed_id": null,
       "breed_slug": null,
@@ -33,24 +33,10 @@
       }
     },
     {
-      "booking_id": "JF-6590858056358787476",
-      "appointment_datetime": "2026-07-09 08:15T00:00:00",
+      "booking_id": "JF-6588291207418105457",
+      "appointment_datetime": "2026-07-10 04:30T00:00:00",
       "appointment_type": "unknown",
-      "raw_breed": "Cavachon",
-      "matched": false,
-      "breed_id": null,
-      "breed_slug": null,
-      "breed_pack_url": null,
-      "fallback": {
-        "reason": "not_in_kb",
-        "suggested_breed_ids": []
-      }
-    },
-    {
-      "booking_id": "JF-6590855006357929835",
-      "appointment_datetime": "2026-07-09 08:00T00:00:00",
-      "appointment_type": "unknown",
-      "raw_breed": "Shorkie",
+      "raw_breed": "Cocker Spaniel",
       "matched": false,
       "breed_id": null,
       "breed_slug": null,
