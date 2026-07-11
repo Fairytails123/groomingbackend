@@ -82,7 +82,7 @@ Everything below is live unless flagged ⏳ pending or 🟡 not-yet-verified.
 | **TV display live URL** | https://fairytails123.github.io/groomingtv/ — open on the salon Hisense 40" 40E4QTUK Vidaa browser. Reads `today.json` + `breeds/{slug}.json` + `index.json` from the back-end Pages site. Local working copy at `C:\Users\FT Manager\OneDrive\Business\CODING\groomingtv\` |
 | Apps Script project | https://script.google.com/home/projects/1sxgzOrmd2OEmuJmMeoW15Vbb1GkbO1GIhs3h0afmOafcgOb1tDErvIA1/edit (project ID `1sxgzOrmd2OEmuJmMeoW15Vbb1GkbO1GIhs3h0afmOafcgOb1tDErvIA1`) |
 | Apps Script Web App URL | `https://script.google.com/macros/s/AKfycby5CU8J-xyCn38ruoe_HdDswRBCNcxXLO9O2AyiiHDt781mwsJzWeyyahySfwjpq4ZL/exec` (deployment Version 10, persistent — same URL across all v1→v10 redeploys) |
-| n8n workflow | https://ftmanager.app.n8n.cloud/workflow/6xHWEX3f9zrWtDDa ("Dog Grooming Back End") |
+| n8n workflow | https://auto.thefairytails.co.uk/workflow/6xHWEX3f9zrWtDDa ("Dog Grooming Back End") — self-hosted n8n on the Hostinger VPS; migrated off n8n Cloud 2026-07-05 |
 
 ### Data + storage
 
@@ -201,7 +201,7 @@ Every row links the relevant commit so a `git show` brings up the diff.
 
 - ✅ **Two-message protocol.** Telegram mobile doesn't expose a caption field on document send, so the original "send PDF with `PRF-XXX` caption" design doesn't work. The shipping flow is: send the PDF → bot replies "got it, now send `PRF-XXX`" → user sends `PRF-XXX` as plain text → bot uploads PDF + replies with one-click reextract URL.
 - ✅ **State correlation** via `$getWorkflowStaticData('global').pendingPdfs[chatId]`. Stash on PDF arrival, drain on `PRF-XXX` arrival, clear after successful upload.
-- ✅ **Binary handling.** Uses `await this.helpers.getBinaryDataBuffer(0, binaryName)` not `binary.data` (n8n cloud uses `filesystem-v2` storage; the literal string `'filesystem-v2'` is what `binary.data` holds, not the bytes).
+- ✅ **Binary handling.** Uses `await this.helpers.getBinaryDataBuffer(0, binaryName)` not `binary.data` (the retired n8n Cloud instance used `filesystem-v2` storage, where `binary.data` holds the literal string `'filesystem-v2'`, not the bytes; `getBinaryDataBuffer` is correct on every binary-data mode, so keep using it on the VPS).
 - ✅ **One-click re-extract URL** in the success reply: `https://fairytails123.github.io/groomingbackend/admin/upload.html?reextract=1&pid=PRF-XXX`. Uses `pid=` (no underscores) because Telegram silently interprets `_` in plain text as italic markers and strips them — see bug #13.
 - ✅ **`tryReextractFromUrl()`** in `admin/js/pages/upload.js` accepts `profile_id`, `profileid`, OR `pid` URL params (defensive — survives Telegram mangling either way).
 

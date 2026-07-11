@@ -1,5 +1,32 @@
 # CLAUDE.md
 
+<!-- n8n-vps-brief:v2 -->
+## ⚠️ n8n platform: self-hosted VPS — NOT n8n Cloud (since 2026-07-04)
+
+The business's n8n has moved from n8n Cloud (`ftmanager.app.n8n.cloud`) to a **self-hosted n8n on a Hostinger VPS**. All work in this project assumes n8n lives on the VPS.
+
+- **n8n editor / API / webhook base: `https://auto.thefairytails.co.uk`** (webhooks: `https://auto.thefairytails.co.uk/webhook/<path>`; workflow IDs and webhook paths were preserved from cloud).
+- **Cutover status: MIGRATION COMPLETE (2026-07-05) — all 32 production workflows are live on the VPS; n8n Cloud is fully inactive (0 of 47 active)** and its subscription is pending cancellation (Phase F5). Every external caller is repointed and every Telegram bot verified.
+- **Never reactivate anything on the cloud instance** — a cloud Telegram-trigger activation steals the bot webhook back from the VPS instantly, and schedule triggers double-fire. If a bot flip is ever redone: unpublish cloud FIRST, then activate on VPS (cloud deactivation deletes the bot webhook and can clobber a fresh VPS registration).
+- **All work targets the VPS.** Build, change, and amend workflows — and any code that calls n8n — against `auto.thefairytails.co.uk`. The cloud copies are retired snapshots; never edit, import to, or activate them.
+- **n8n MCP deploys:** before creating/updating workflows via an n8n MCP, verify the MCP targets the VPS instance. If it still points at n8n Cloud, ask Kam to reconnect it to `https://auto.thefairytails.co.uk` first.
+
+**Source of truth for the migration** (VPS specs, SSH access details, credential + data-table ID maps, cutover record, live status): `C:/Users/Kam/OneDrive/Business/CODING/Hostinger_n8n/n8n-vps-migration-handover.md` — a private OneDrive folder outside this repo. **This repo is public (GitHub Pages)** — server access details (IPs, SSH targets, key names, server paths) stay in that private doc and must never be written into files here.
+
+**Self-hosting benefits — design for them:**
+- No cloud plan limits: no execution-time caps and no per-execution/active-workflow billing pressure — long-running, heavy, or chatty workflows are fine; split logic into as many workflows as is clean.
+- Full server control: root SSH and the `docker exec` n8n CLI (bulk import/export, upserts by workflow ID), container logs, compose + env — connection details and paths are in the private handover doc above.
+- Community nodes can be installed if a task needs them (cloud didn't allow this).
+- Static egress IP usable for third-party API allowlists (value in the private handover doc).
+
+**Caveats:**
+- Credential IDs and data-table IDs are DIFFERENT on the VPS vs cloud (maps: `C:/Users/Kam/OneDrive/Business/CODING/Hostinger_n8n/cloud-export-2026-07-04/cred-id-map-batch*.json`). Data Table nodes reference tables BY ID — never copy cloud IDs into VPS workflows.
+- Any caller (web page, script, form, bot, dashboard) found still pointing at `ftmanager.app.n8n.cloud` is a bug — repoint it to `https://auto.thefairytails.co.uk` immediately, and never write anything new against the cloud URL.
+
+### n8n cloud references in this repo (repointed 2026-07-11)
+
+All live docs were repointed to the VPS on 2026-07-11: `docs/workflows.md`, `docs/RUNBOOK.md` (steps 3–5), `docs/HANDOVER.md` (key links + WF-04 notes), `README.md`, `n8n/README.md`, the canonical spec (§4.2 + §0a amendment #46), and the gitignored `.secrets/telegram-token.md`. Any remaining `ftmanager.app.n8n.cloud` matches in this checkout are historical copies only — dated spec/HANDOVER backups and untracked duplicate checkouts under `.claude/worktrees/` — and are intentionally left as-is. If a *live* doc or code path mentions the cloud URL (or generic "n8n cloud" as the current platform), treat it as a bug: repoint it immediately and re-grep `ftmanager.app.n8n.cloud` to confirm nothing else regressed.
+
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Read these first
@@ -27,7 +54,7 @@ Three deployment targets glued together by a single Apps Script Web App. There i
 └─────────────────────┘                       DB of record)   folders)
                                                     ▲          ▲
 ┌─────────────────────┐  POST {service_token,...}   │          │
-│ n8n cloud (cron +   │ ────────────────────────────┘          │
+│ n8n on VPS (cron +  │ ────────────────────────────┘          │
 │ Telegram bot WF-04) │                                        │
 └─────────────────────┘   publish flow writes ─────────────────┘
                           public/*.json + breeds/{slug}.json
@@ -52,7 +79,7 @@ Key invariants to keep in mind when editing:
 - `apps-script/ai.gs` — OpenAI wrapper `callOpenAI_` (branches on `gpt-5|o1|o3` for `max_completion_tokens` + `reasoning_effort`), `op_extract_sections` (gpt-4o-mini text), `op_run_vision_pass_page` (gpt-5 vision), daily cost cap via `assertCostCapNotExceeded_`, `AI Call Log` sheet writes.
 - `apps-script/publish.gs` — atomic publish; `writePublicIndex_()` emits `public/index.json` for the TV's autocomplete.
 - `apps-script/setup.gs` — `setupAll()` bootstrapper (idempotent: creates Sheets workbook, populates 14 sheet schemas, generates SESSION_SECRET + ADMIN_PASSWORD_SALT, hashes the seeded password and deletes the plaintext property). Re-run after spec/schema bumps.
-- `n8n/dog-grooming-backend.json` — exported workflow JSON. Edit on n8n cloud, export, replace the file.
+- `n8n/dog-grooming-backend.json` — exported workflow JSON. Edit on the VPS n8n (`auto.thefairytails.co.uk`), export, replace the file.
 
 ## Common commands
 

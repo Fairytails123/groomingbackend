@@ -14,7 +14,7 @@ Admin website + Apps Script API + n8n workflow exports for the Fairy Tails K9 Ce
 .md/                  Architecture spec (canonical, v3.6) + previous-version backups
 admin/                Admin website — vanilla JS, multi-page, served by GitHub Pages
 apps-script/          Apps Script source — deployed via clasp
-n8n/                  Exported n8n workflow JSON (re-imported on n8n cloud)
+n8n/                  Exported n8n workflow JSON (re-imported on the VPS n8n)
 public/               TV-facing JSON + image artefacts (written by WF-11 publish)
 vendor/               Cropper.js, Fuse.js — vendored, not CDN
 docs/                 Reference docs (HANDOVER, api, workflows, agent designs)
@@ -130,7 +130,7 @@ Edit `admin/js/config.js` (created when this scaffolding is finished) and set `A
    - `JOTFORM_FIELD_DATE_FG_PRT` — qid for the date when type = Full Groom + parent
 
 **n8n credentials** (Stage 4+):
-In `ftmanager.app.n8n.cloud` create credentials for:
+In `auto.thefairytails.co.uk` (self-hosted VPS n8n) create credentials for:
 - Google Sheets (OAuth2)
 - Google Drive (OAuth2)
 - HTTP Header Auth for GitHub (PAT from step 3)
@@ -168,7 +168,7 @@ Each deploy gets a new URL. To keep the same URL across iterations, deploy once 
 
 ### n8n workflows
 Workflows are exported as JSON under `n8n/`. To edit:
-1. Open the workflow on `ftmanager.app.n8n.cloud`.
+1. Open the workflow on `auto.thefairytails.co.uk` (self-hosted VPS n8n).
 2. Make changes.
 3. Click Settings → Download (export JSON).
 4. Replace the file in `n8n/` and commit.

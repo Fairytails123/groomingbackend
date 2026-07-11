@@ -1,7 +1,8 @@
 # n8n Workflow Reference
 
 This folder is the source of truth for n8n workflow design. It is **not** the
-runtime — workflows live on `ftmanager.app.n8n.cloud`. Use this README to
+runtime — workflows live on `auto.thefairytails.co.uk` (self-hosted n8n on
+the Hostinger VPS; migrated off n8n Cloud 2026-07-05). Use this README to
 build / repair / version-control workflows; export the JSON from n8n into
 this folder once a workflow is finalised, and commit alongside other
 backend changes.
@@ -12,7 +13,7 @@ backend changes.
 
 | ID                | Name                  | n8n URL                                                                |
 |-------------------|-----------------------|------------------------------------------------------------------------|
-| `6xHWEX3f9zrWtDDa` | Dog Grooming Back End | https://ftmanager.app.n8n.cloud/workflow/6xHWEX3f9zrWtDDa              |
+| `6xHWEX3f9zrWtDDa` | Dog Grooming Back End | https://auto.thefairytails.co.uk/workflow/6xHWEX3f9zrWtDDa              |
 
 Populated as Phase 1 with sticky-noted architecture and four entry points
 (cron 06:00 + 11:30, cron 07:00, cron 19:00, Telegram intake stub, crop
@@ -57,8 +58,10 @@ side `JSON.parse`s the body). No auth header — these ops are in `PUBLIC_OPS`.
 
 ## n8n credentials
 
-Create these on `ftmanager.app.n8n.cloud` → Credentials. Each is shared
-across multiple workflows:
+Create these on `auto.thefairytails.co.uk` (VPS n8n) → Credentials. Each is
+shared across multiple workflows. VPS credential IDs differ from the old
+cloud ones — workflow JSON references credentials by ID, so re-bind
+credentials after importing any export:
 
 | Credential               | Type                 | Used in                        |
 |--------------------------|----------------------|--------------------------------|

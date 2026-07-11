@@ -139,7 +139,7 @@ resetLoginFailCounter — Time-driven — Day timer — Midnight to 1am
 ## 3. Paste the Apps Script URL into n8n's existing workflow (~3 min)
 
 The "Dog Grooming Back End" workflow at
-https://ftmanager.app.n8n.cloud/workflow/6xHWEX3f9zrWtDDa has three HTTP
+https://auto.thefairytails.co.uk/workflow/6xHWEX3f9zrWtDDa has three HTTP
 Request nodes that hit Apps Script crons. Their URL field is currently a
 placeholder.
 
@@ -165,7 +165,7 @@ the Sheets workbook.
 
 ## 4. Wire n8n credentials (~10 min — one-time)
 
-Create on `ftmanager.app.n8n.cloud` → Credentials. Each credential is
+Create on `auto.thefairytails.co.uk` (VPS n8n) → Credentials. Each credential is
 shared across all workflows that need that connection.
 
 | Credential name             | Type                | What it's for                                  |
@@ -196,7 +196,7 @@ last-minute bookings appear on the TV without waiting for the next cron.
    for **Webhooks**.
 4. Add a webhook URL:
    ```
-   https://ftmanager.app.n8n.cloud/webhook/<your-WF-01-webhook-path>
+   https://auto.thefairytails.co.uk/webhook/<your-WF-01-webhook-path>
    ```
    (Get the exact path by opening WF-01 in n8n and copying the webhook
    node's production URL.)

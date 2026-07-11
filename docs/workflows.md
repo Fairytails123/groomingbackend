@@ -1,6 +1,6 @@
 # n8n Workflow Reference
 
-Twelve workflows on `ftmanager.app.n8n.cloud`. Each is named `WF-NN-name`. Workflow JSON exports are committed under `n8n/` for source-control and re-imported on the n8n cloud instance.
+Twelve workflows on `auto.thefairytails.co.uk` (self-hosted n8n on the Hostinger VPS; migrated off n8n Cloud 2026-07-05). Each is named `WF-NN-name`. Workflow JSON exports are committed under `n8n/` for source-control and re-imported on the VPS instance.
 
 Distilled from the admin + workflows design agent output (2026-05-03 design pass) and v3.6 spec §4.2.
 

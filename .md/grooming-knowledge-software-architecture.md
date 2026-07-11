@@ -2,7 +2,7 @@
 
 **Owner:** Kamal (Fairy Tails K9 Centre)
 **Status:** Working spec, v3.10 (Stage 1 TV display live on 2026-05-05 at `https://fairytails123.github.io/groomingtv/`; full system loop now closed end-to-end).
-**Last updated:** 5 May 2026
+**Last updated:** 11 July 2026
 
 ---
 
@@ -81,6 +81,24 @@ actual TV (Hisense 40" 40E4QTUK FHD, 1920×1080, Vidaa browser).
   fail validation until a replacement main exists — but the delete is
   not blocked. No hard-purge / Drive-trash flow shipped; soft-deleted
   rows can be restored manually via Sheets if ever needed.
+- #46 **n8n platform moved to a self-hosted Hostinger VPS (2026-07-05).**
+  The business's n8n migrated off n8n Cloud (`ftmanager.app.n8n.cloud`)
+  to a self-hosted instance at `https://auto.thefairytails.co.uk`. All 32
+  production workflows (business-wide) are live on the VPS; the cloud
+  instance is fully inactive (0 of 47 active) and pending cancellation.
+  Workflow IDs and webhook paths were preserved, so editor + webhook URLs
+  change host only. Credential IDs and data-table IDs are DIFFERENT on
+  the VPS — never copy cloud IDs into VPS workflows. Never reactivate
+  anything on the cloud instance: a cloud Telegram-trigger activation
+  steals the bot webhook back from the VPS instantly, and schedule
+  triggers double-fire; if a bot flip is ever redone, unpublish cloud
+  FIRST, then activate on VPS. §4.2 header updated to the VPS URL, and
+  all repo docs repointed 2026-07-11. Self-hosting removes cloud plan
+  limits (no execution-time caps) and allows community nodes. Migration
+  source of truth (VPS specs, access, ID maps):
+  `Hostinger_n8n/n8n-vps-migration-handover.md` in the private CODING
+  OneDrive folder — outside this repo, which is public; server access
+  details never go in this repo.
 
 **Deployment state (2026-05-05):**
 - TV display: `https://fairytails123.github.io/groomingtv/` — initial commit
@@ -345,7 +363,7 @@ NEXT MORNING (06:00)
 
 ### 4.2 n8n — orchestration
 
-Lives at `ftmanager.app.n8n.cloud`. Twelve workflows. Workflow numbering is the deployment order; the chain that processes a PDF intake runs `WF-04 → WF-06 ∥ WF-07 → WF-08 → WF-09`.
+Lives at `auto.thefairytails.co.uk` (self-hosted n8n on a Hostinger VPS; migrated off n8n Cloud on 2026-07-05 — amendment #46). Twelve workflows. Workflow numbering is the deployment order; the chain that processes a PDF intake runs `WF-04 → WF-06 ∥ WF-07 → WF-08 → WF-09`.
 
 1. **WF-01 Daily session sync** — cron 06:00 + 11:30 + JotForm webhook (any new booking) — pulls today's confirmed Full Groom appointments, writes `today.json` to GitHub Pages.
 2. **WF-02 Tomorrow's grooms morning prep** (cron 07:00) — pulls tomorrow's bookings, cross-references the knowledge base, pushes Telegram alert with ✅/⚠️/❌ status per breed. One alert per day. Missed = missed.
