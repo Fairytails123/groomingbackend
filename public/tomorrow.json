@@ -1,14 +1,14 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-07-12T18:00:12.475Z",
-  "session_date": "2026-07-13",
+  "generated_at": "2026-07-13T06:00:44.498Z",
+  "session_date": "2026-07-14",
   "saturday_open": false,
   "bookings": [
     {
-      "booking_id": "JF-6592243457862334777",
-      "appointment_datetime": "2026-07-13 08:00T00:00:00",
+      "booking_id": "JF-6594224936323319249",
+      "appointment_datetime": "2026-07-14 03:45T00:00:00",
       "appointment_type": "unknown",
-      "raw_breed": "Jackapoo",
+      "raw_breed": "Cocker spaniel",
       "matched": false,
       "breed_id": null,
       "breed_slug": null,
@@ -19,10 +19,10 @@
       }
     },
     {
-      "booking_id": "JF-6592227417863030346",
-      "appointment_datetime": "2026-07-13 03:45T00:00:00",
+      "booking_id": "JF-6594223203913612670",
+      "appointment_datetime": "2026-07-14 04:00T00:00:00",
       "appointment_type": "unknown",
-      "raw_breed": "Cockerpoo",
+      "raw_breed": "Spaniel",
       "matched": false,
       "breed_id": null,
       "breed_slug": null,
@@ -33,10 +33,24 @@
       }
     },
     {
-      "booking_id": "JF-6591488139476885832",
-      "appointment_datetime": "2026-07-13 04:00T00:00:00",
+      "booking_id": "JF-6593206967864491694",
+      "appointment_datetime": "2026-07-14 08:15T00:00:00",
       "appointment_type": "unknown",
-      "raw_breed": "Toy",
+      "raw_breed": "Pug",
+      "matched": false,
+      "breed_id": null,
+      "breed_slug": null,
+      "breed_pack_url": null,
+      "fallback": {
+        "reason": "not_in_kb",
+        "suggested_breed_ids": []
+      }
+    },
+    {
+      "booking_id": "JF-6590839686354149627",
+      "appointment_datetime": "2026-07-14 08:00T00:00:00",
+      "appointment_type": "unknown",
+      "raw_breed": "Shorkie",
       "matched": false,
       "breed_id": null,
       "breed_slug": null,
