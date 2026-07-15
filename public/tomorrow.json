@@ -1,14 +1,14 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-07-14T18:00:11.384Z",
-  "session_date": "2026-07-15",
+  "generated_at": "2026-07-15T06:00:34.144Z",
+  "session_date": "2026-07-16",
   "saturday_open": false,
   "bookings": [
     {
-      "booking_id": "JF-6594851074019820955",
-      "appointment_datetime": "2026-07-15 04:00T00:00:00",
+      "booking_id": "JF-6587163943172463218",
+      "appointment_datetime": "2026-07-16 04:00T00:00:00",
       "appointment_type": "unknown",
-      "raw_breed": "Tibetan Terrier",
+      "raw_breed": "Cockerpoo",
       "matched": false,
       "breed_id": null,
       "breed_slug": null,
@@ -19,10 +19,10 @@
       }
     },
     {
-      "booking_id": "JF-6594207150327436074",
-      "appointment_datetime": "2026-07-15 08:15T00:00:00",
+      "booking_id": "JF-6587162463174150493",
+      "appointment_datetime": "2026-07-16 03:45T00:00:00",
       "appointment_type": "unknown",
-      "raw_breed": "Cocker spaniel",
+      "raw_breed": "Spaniel",
       "matched": false,
       "breed_id": null,
       "breed_slug": null,
