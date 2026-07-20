@@ -1,7 +1,64 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-07-19T10:30:07.491Z",
-  "session_date": "2026-07-19",
+  "generated_at": "2026-07-20T05:00:11.511Z",
+  "session_date": "2026-07-20",
   "saturday_open": false,
-  "bookings": []
+  "bookings": [
+    {
+      "booking_id": "JF-6595722955428408781",
+      "appointment_datetime": "2026-07-20 03:45T00:00:00",
+      "appointment_type": "unknown",
+      "raw_breed": "Yorkshire terrier",
+      "matched": false,
+      "breed_id": null,
+      "breed_slug": null,
+      "breed_pack_url": null,
+      "fallback": {
+        "reason": "not_in_kb",
+        "suggested_breed_ids": []
+      }
+    },
+    {
+      "booking_id": "JF-6594964547448260105",
+      "appointment_datetime": "2026-07-20 08:00T00:00:00",
+      "appointment_type": "unknown",
+      "raw_breed": "Cavapoo",
+      "matched": false,
+      "breed_id": null,
+      "breed_slug": null,
+      "breed_pack_url": null,
+      "fallback": {
+        "reason": "not_in_kb",
+        "suggested_breed_ids": []
+      }
+    },
+    {
+      "booking_id": "JF-6593020544713336352",
+      "appointment_datetime": "2026-07-20 08:15T00:00:00",
+      "appointment_type": "unknown",
+      "raw_breed": "Mixed",
+      "matched": false,
+      "breed_id": null,
+      "breed_slug": null,
+      "breed_pack_url": null,
+      "fallback": {
+        "reason": "not_in_kb",
+        "suggested_breed_ids": []
+      }
+    },
+    {
+      "booking_id": "JF-6585350102601316967",
+      "appointment_datetime": "2026-07-20 04:00T00:00:00",
+      "appointment_type": "unknown",
+      "raw_breed": "Shih tzu",
+      "matched": false,
+      "breed_id": null,
+      "breed_slug": null,
+      "breed_pack_url": null,
+      "fallback": {
+        "reason": "not_in_kb",
+        "suggested_breed_ids": []
+      }
+    }
+  ]
 }
