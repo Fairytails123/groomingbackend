@@ -1,14 +1,14 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-07-22T10:30:11.610Z",
-  "session_date": "2026-07-22",
+  "generated_at": "2026-07-23T05:00:11.171Z",
+  "session_date": "2026-07-23",
   "saturday_open": false,
   "bookings": [
     {
-      "booking_id": "JF-6601018480613713839",
-      "appointment_datetime": "2026-07-22 03:45T00:00:00",
+      "booking_id": "JF-6604415057862430455",
+      "appointment_datetime": "2026-07-23 08:15T00:00:00",
       "appointment_type": "unknown",
-      "raw_breed": "Maltese terrier",
+      "raw_breed": "German Shepherd",
       "matched": false,
       "breed_id": null,
       "breed_slug": null,
@@ -19,10 +19,10 @@
       }
     },
     {
-      "booking_id": "JF-6600080337863164125",
-      "appointment_datetime": "2026-07-22 04:15T00:00:00",
+      "booking_id": "JF-6603820168318611003",
+      "appointment_datetime": "2026-07-23 08:00T00:00:00",
       "appointment_type": "unknown",
-      "raw_breed": "Toy poodle",
+      "raw_breed": "Springer poo",
       "matched": false,
       "breed_id": null,
       "breed_slug": null,
@@ -33,8 +33,8 @@
       }
     },
     {
-      "booking_id": "JF-6598294117861428698",
-      "appointment_datetime": "2026-07-22 08:15T00:00:00",
+      "booking_id": "JF-6602839017717837540",
+      "appointment_datetime": "2026-07-23 04:30T00:00:00",
       "appointment_type": "unknown",
       "raw_breed": "Cockerpoo",
       "matched": false,
@@ -47,10 +47,10 @@
       }
     },
     {
-      "booking_id": "JF-6585395432602377953",
-      "appointment_datetime": "2026-07-22 08:00T00:00:00",
+      "booking_id": "JF-6599254797862600647",
+      "appointment_datetime": "2026-07-23 04:00T00:00:00",
       "appointment_type": "unknown",
-      "raw_breed": "Cockerpoo",
+      "raw_breed": "Spaniel",
       "matched": false,
       "breed_id": null,
       "breed_slug": null,
