@@ -1,14 +1,14 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-07-23T10:30:14.392Z",
-  "session_date": "2026-07-23",
+  "generated_at": "2026-07-24T05:00:08.946Z",
+  "session_date": "2026-07-24",
   "saturday_open": false,
   "bookings": [
     {
-      "booking_id": "JF-6604415057862430455",
-      "appointment_datetime": "2026-07-23 08:15T00:00:00",
+      "booking_id": "JF-6596818020187485313",
+      "appointment_datetime": "2026-07-24 08:15T00:00:00",
       "appointment_type": "unknown",
-      "raw_breed": "German Shepherd",
+      "raw_breed": "Yorkshire terrier",
       "matched": false,
       "breed_id": null,
       "breed_slug": null,
@@ -19,38 +19,10 @@
       }
     },
     {
-      "booking_id": "JF-6603820168318611003",
-      "appointment_datetime": "2026-07-23 08:00T00:00:00",
+      "booking_id": "JF-6586306632606992820",
+      "appointment_datetime": "2026-07-24 04:15T00:00:00",
       "appointment_type": "unknown",
-      "raw_breed": "Springer poo",
-      "matched": false,
-      "breed_id": null,
-      "breed_slug": null,
-      "breed_pack_url": null,
-      "fallback": {
-        "reason": "not_in_kb",
-        "suggested_breed_ids": []
-      }
-    },
-    {
-      "booking_id": "JF-6602839017717837540",
-      "appointment_datetime": "2026-07-23 04:30T00:00:00",
-      "appointment_type": "unknown",
-      "raw_breed": "Cockerpoo",
-      "matched": false,
-      "breed_id": null,
-      "breed_slug": null,
-      "breed_pack_url": null,
-      "fallback": {
-        "reason": "not_in_kb",
-        "suggested_breed_ids": []
-      }
-    },
-    {
-      "booking_id": "JF-6599254797862600647",
-      "appointment_datetime": "2026-07-23 04:00T00:00:00",
-      "appointment_type": "unknown",
-      "raw_breed": "Spaniel",
+      "raw_breed": "Corgi x",
       "matched": false,
       "breed_id": null,
       "breed_slug": null,
