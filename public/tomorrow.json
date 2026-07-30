@@ -1,14 +1,14 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-07-29T18:00:18.182Z",
-  "session_date": "2026-07-30",
+  "generated_at": "2026-07-30T06:00:39.027Z",
+  "session_date": "2026-07-31",
   "saturday_open": false,
   "bookings": [
     {
-      "booking_id": "JF-6609622416326491039",
-      "appointment_datetime": "2026-07-30 08:15T00:00:00",
+      "booking_id": "JF-6611604320418265673",
+      "appointment_datetime": "2026-07-31 04:15T00:00:00",
       "appointment_type": "unknown",
-      "raw_breed": "Staffie",
+      "raw_breed": "Cockapoo",
       "matched": false,
       "breed_id": null,
       "breed_slug": null,
@@ -19,10 +19,10 @@
       }
     },
     {
-      "booking_id": "JF-6606933747862559676",
-      "appointment_datetime": "2026-07-30 04:00T00:00:00",
+      "booking_id": "JF-6610492251221998956",
+      "appointment_datetime": "2026-07-31 03:45T00:00:00",
       "appointment_type": "unknown",
-      "raw_breed": "Aussie Labdoodle",
+      "raw_breed": "Norfolk terrier",
       "matched": false,
       "breed_id": null,
       "breed_slug": null,
@@ -33,10 +33,38 @@
       }
     },
     {
-      "booking_id": "JF-6606932597863407201",
-      "appointment_datetime": "2026-07-30 03:45T00:00:00",
+      "booking_id": "JF-6610402355614142247",
+      "appointment_datetime": "2026-07-31 08:15T00:00:00",
       "appointment_type": "unknown",
-      "raw_breed": "Labdoodle",
+      "raw_breed": "mixed",
+      "matched": false,
+      "breed_id": null,
+      "breed_slug": null,
+      "breed_pack_url": null,
+      "fallback": {
+        "reason": "not_in_kb",
+        "suggested_breed_ids": []
+      }
+    },
+    {
+      "booking_id": "JF-6609014948575599966",
+      "appointment_datetime": "2026-07-31 08:00T00:00:00",
+      "appointment_type": "unknown",
+      "raw_breed": "Cockapoo",
+      "matched": false,
+      "breed_id": null,
+      "breed_slug": null,
+      "breed_pack_url": null,
+      "fallback": {
+        "reason": "not_in_kb",
+        "suggested_breed_ids": []
+      }
+    },
+    {
+      "booking_id": "JF-6607040457869077907",
+      "appointment_datetime": "2026-07-31 04:00T00:00:00",
+      "appointment_type": "unknown",
+      "raw_breed": "Cockerpoo",
       "matched": false,
       "breed_id": null,
       "breed_slug": null,
