@@ -1,14 +1,14 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-07-29T10:30:11.409Z",
-  "session_date": "2026-07-29",
+  "generated_at": "2026-07-30T05:00:12.455Z",
+  "session_date": "2026-07-30",
   "saturday_open": false,
   "bookings": [
     {
-      "booking_id": "JF-6604421977865035457",
-      "appointment_datetime": "2026-07-29 04:15T00:00:00",
+      "booking_id": "JF-6609622416326491039",
+      "appointment_datetime": "2026-07-30 08:15T00:00:00",
       "appointment_type": "unknown",
-      "raw_breed": "Yorkie",
+      "raw_breed": "Staffie",
       "matched": false,
       "breed_id": null,
       "breed_slug": null,
@@ -19,10 +19,24 @@
       }
     },
     {
-      "booking_id": "JF-6603812226813581737",
-      "appointment_datetime": "2026-07-29 08:00T00:00:00",
+      "booking_id": "JF-6606933747862559676",
+      "appointment_datetime": "2026-07-30 04:00T00:00:00",
       "appointment_type": "unknown",
-      "raw_breed": "Jack Russell",
+      "raw_breed": "Aussie Labdoodle",
+      "matched": false,
+      "breed_id": null,
+      "breed_slug": null,
+      "breed_pack_url": null,
+      "fallback": {
+        "reason": "not_in_kb",
+        "suggested_breed_ids": []
+      }
+    },
+    {
+      "booking_id": "JF-6606932597863407201",
+      "appointment_datetime": "2026-07-30 03:45T00:00:00",
+      "appointment_type": "unknown",
+      "raw_breed": "Labdoodle",
       "matched": false,
       "breed_id": null,
       "breed_slug": null,
