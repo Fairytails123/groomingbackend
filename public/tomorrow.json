@@ -1,7 +1,50 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-08-01T18:00:17.919Z",
-  "session_date": "2026-08-02",
+  "generated_at": "2026-08-02T06:00:46.438Z",
+  "session_date": "2026-08-03",
   "saturday_open": false,
-  "bookings": []
+  "bookings": [
+    {
+      "booking_id": "JF-6610458495612310967",
+      "appointment_datetime": "2026-08-03 08:15T00:00:00",
+      "appointment_type": "unknown",
+      "raw_breed": "Cockerpoo",
+      "matched": false,
+      "breed_id": null,
+      "breed_slug": null,
+      "breed_pack_url": null,
+      "fallback": {
+        "reason": "not_in_kb",
+        "suggested_breed_ids": []
+      }
+    },
+    {
+      "booking_id": "JF-6610361765617057745",
+      "appointment_datetime": "2026-08-03 04:30T00:00:00",
+      "appointment_type": "unknown",
+      "raw_breed": "mix",
+      "matched": false,
+      "breed_id": null,
+      "breed_slug": null,
+      "breed_pack_url": null,
+      "fallback": {
+        "reason": "not_in_kb",
+        "suggested_breed_ids": []
+      }
+    },
+    {
+      "booking_id": "JF-6608912191326024222",
+      "appointment_datetime": "2026-08-03 04:00T00:00:00",
+      "appointment_type": "unknown",
+      "raw_breed": "Jack Russell",
+      "matched": false,
+      "breed_id": null,
+      "breed_slug": null,
+      "breed_pack_url": null,
+      "fallback": {
+        "reason": "not_in_kb",
+        "suggested_breed_ids": []
+      }
+    }
+  ]
 }
