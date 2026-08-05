@@ -1,42 +1,14 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-08-04T10:30:24.939Z",
-  "session_date": "2026-08-04",
+  "generated_at": "2026-08-05T05:00:23.209Z",
+  "session_date": "2026-08-05",
   "saturday_open": false,
   "bookings": [
     {
-      "booking_id": "JF-6611492685955762608",
-      "appointment_datetime": "2026-08-04 04:15T00:00:00",
+      "booking_id": "JF-6615718323179407389",
+      "appointment_datetime": "2026-08-05 08:00T00:00:00",
       "appointment_type": "unknown",
-      "raw_breed": "Shitzu poodle",
-      "matched": false,
-      "breed_id": null,
-      "breed_slug": null,
-      "breed_pack_url": null,
-      "fallback": {
-        "reason": "not_in_kb",
-        "suggested_breed_ids": []
-      }
-    },
-    {
-      "booking_id": "JF-6611296174853121464",
-      "appointment_datetime": "2026-08-04 08:00T00:00:00",
-      "appointment_type": "unknown",
-      "raw_breed": "Terrier",
-      "matched": false,
-      "breed_id": null,
-      "breed_slug": null,
-      "breed_pack_url": null,
-      "fallback": {
-        "reason": "not_in_kb",
-        "suggested_breed_ids": []
-      }
-    },
-    {
-      "booking_id": "JF-6582787262606647430",
-      "appointment_datetime": "2026-08-04 04:00T00:00:00",
-      "appointment_type": "unknown",
-      "raw_breed": "Shih tzu",
+      "raw_breed": "Border Collie Poodle X",
       "matched": false,
       "breed_id": null,
       "breed_slug": null,
