@@ -1,14 +1,14 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-08-05T18:00:29.270Z",
-  "session_date": "2026-08-06",
+  "generated_at": "2026-08-06T06:00:37.381Z",
+  "session_date": "2026-08-07",
   "saturday_open": false,
   "bookings": [
     {
-      "booking_id": "JF-6612232405618704025",
-      "appointment_datetime": "2026-08-06 04:30T00:00:00",
+      "booking_id": "JF-6617452425719232729",
+      "appointment_datetime": "2026-08-07 04:15T00:00:00",
       "appointment_type": "unknown",
-      "raw_breed": "Shihtzu cross",
+      "raw_breed": "Poodle cross",
       "matched": false,
       "breed_id": null,
       "breed_slug": null,
@@ -19,10 +19,10 @@
       }
     },
     {
-      "booking_id": "JF-6611604320418265673",
-      "appointment_datetime": "2026-08-06 08:15T00:00:00",
+      "booking_id": "JF-6614827453618101172",
+      "appointment_datetime": "2026-08-07 08:00T00:00:00",
       "appointment_type": "unknown",
-      "raw_breed": "Cockapoo",
+      "raw_breed": "English bulldog",
       "matched": false,
       "breed_id": null,
       "breed_slug": null,
@@ -33,10 +33,10 @@
       }
     },
     {
-      "booking_id": "JF-6609682639221214389",
-      "appointment_datetime": "2026-08-06 08:00T00:00:00",
+      "booking_id": "JF-6612309357028538778",
+      "appointment_datetime": "2026-08-07 03:45T00:00:00",
       "appointment_type": "unknown",
-      "raw_breed": "Cavapoo",
+      "raw_breed": "Mixed breed small",
       "matched": false,
       "breed_id": null,
       "breed_slug": null,
@@ -47,10 +47,10 @@
       }
     },
     {
-      "booking_id": "JF-6575391522522358167",
-      "appointment_datetime": "2026-08-06 04:15T00:00:00",
+      "booking_id": "JF-6604708093226789653",
+      "appointment_datetime": "2026-08-07 04:00T00:00:00",
       "appointment_type": "unknown",
-      "raw_breed": "Yorkshire terrier cross",
+      "raw_breed": "Mixed",
       "matched": false,
       "breed_id": null,
       "breed_slug": null,
