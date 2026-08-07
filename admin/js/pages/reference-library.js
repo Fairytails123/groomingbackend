@@ -26,11 +26,12 @@ catalogVisualFilesEl.addEventListener("change", () => importCatalogVisuals([...c
 createApprovedProfilesEl.addEventListener("click", createApprovedProfiles);
 detailEl.addEventListener("click", handleDetailClick);
 
-await Promise.all([loadSummary(), loadEntries()]);
+await loadSummary(true);
+await loadEntries();
 const requestedEntryId = new URLSearchParams(location.search).get("entry");
 if (requestedEntryId) await openEntry(requestedEntryId);
 
-async function loadSummary() {
+async function loadSummary(initializeIfMissing = false) {
   try {
     const status = await api("reference_catalog_status", {});
     const needsReview = Object.entries(status.review_status_counts ?? {})
@@ -43,6 +44,14 @@ async function loadSummary() {
       stat(status.linked_profiles, "Profiles created"),
     ].join("");
   } catch {
+    if (initializeIfMissing) {
+      try {
+        await api("ensure_reference_catalog_schema", {}, { timeoutMs: 120000 });
+        return await loadSummary(false);
+      } catch (error) {
+        console.error("Reference schema initialization failed", error);
+      }
+    }
     summaryEl.innerHTML = `<p class="muted">Reference sheets are unavailable. Run the idempotent setup after deploying this code.</p>`;
   }
 }
