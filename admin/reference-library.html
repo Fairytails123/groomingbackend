@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Reference catalogue — Fairy Tails Knowledge</title>
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/pages/reference-library.css">
+</head>
+<body>
+<div class="app">
+  <aside class="sb">
+    <div class="sb__brand">
+      <div class="sb__logo">FT</div>
+      <div><div class="sb__name">Fairy Tails</div><div class="sb__sub">Knowledge admin</div></div>
+    </div>
+    <nav class="sb__nav" aria-label="Primary">
+      <a href="dashboard.html" class="sb__link">Home</a>
+      <a href="library.html" class="sb__link">Breeds</a>
+      <a href="reference-library.html" class="sb__link" aria-current="page">Reference catalogue</a>
+      <a href="upload.html" class="sb__link">Add new</a>
+      <div class="sb__group">Manage</div>
+      <a href="publish.html" class="sb__link">Ready to publish</a>
+    </nav>
+    <div class="sb__user">
+      <div class="sb__avatar" id="user-initials">·</div>
+      <div class="sb__userinfo"><div class="sb__username" id="user-name">Signed in</div><div class="sb__userrole">Admin</div></div>
+      <a href="#" class="sb__signout" id="logout-link" title="Sign out">↪</a>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <nav class="crumbs"><a href="library.html">Breeds</a><span>/</span><strong>Reference catalogue</strong></nav>
+    </header>
+    <div class="content reference-layout">
+      <section>
+        <div class="content__head">
+          <div>
+            <h1 class="content__title">Reference catalogue</h1>
+            <p class="content__sub">Private source records. OCR, boundaries, labels and blade numbers remain review-gated.</p>
+          </div>
+        </div>
+
+        <div class="reference-summary" id="reference-summary" aria-live="polite"></div>
+
+        <div class="card reference-import">
+          <h2>Import verified catalogue records</h2>
+          <p class="muted">Choose JSON files from <code>software-catalog-final/breeds</code>. Only evidence-resolved records can be approved for profile creation; re-importing an unchanged record is idempotent.</p>
+          <label class="btn" for="record-files">Choose breed records</label>
+          <label class="btn btn--secondary" for="catalog-visual-files">Import private visual assets</label>
+          <button class="btn btn--secondary" id="create-approved-profiles" type="button">Create approved Pet Groom drafts</button>
+          <input id="record-files" class="visually-hidden" type="file" accept="application/json,.json" multiple>
+          <input id="catalog-visual-files" class="visually-hidden" type="file" accept="image/png" multiple>
+          <span id="import-progress" class="muted" role="status"></span>
+        </div>
+
+        <div class="card reference-browser">
+          <div class="filters">
+            <div class="field field--search"><input id="reference-search" type="search" placeholder="Search reference breeds…"></div>
+            <select id="reference-status">
+              <option value="">All review states</option>
+              <option value="needs_review">Needs review</option>
+              <option value="source_gap_supplemented">Source gap supplemented</option>
+              <option value="approved">Approved</option>
+            </select>
+          </div>
+          <table class="table">
+            <thead><tr><th>Breed</th><th>Source</th><th>Review</th><th>High-risk</th></tr></thead>
+            <tbody id="reference-table"><tr><td colspan="4" class="muted center">Loading…</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="card reference-detail" id="reference-detail">
+        <p class="muted center">Choose a reference entry to inspect its text, illustrations and verification queue.</p>
+      </section>
+    </div>
+  </main>
+</div>
+<div class="toast-container" id="toast-container"></div>
+<script type="module" src="js/pages/reference-library.js"></script>
+</body>
+</html>

@@ -2,7 +2,7 @@
 
 **Owner:** Kamal (Fairy Tails K9 Centre)
 **Status:** Working spec, v3.10 (Stage 1 TV display live on 2026-05-05 at `https://fairytails123.github.io/groomingtv/`; full system loop now closed end-to-end).
-**Last updated:** 11 July 2026
+**Last updated:** 7 August 2026
 
 ---
 
@@ -99,6 +99,26 @@ actual TV (Hisense 40" 40E4QTUK FHD, 1920×1080, Vidaa browser).
   `Hostinger_n8n/n8n-vps-migration-handover.md` in the private CODING
   OneDrive folder — outside this repo, which is public; server access
   details never go in this repo.
+- #47 **Private, integrity-gated reference catalogue for the full grooming book
+  corpus (2026-08-07).** The 490-page source is retained under the gitignored
+  local `Knowledge/` directory as OCR, page mappings, SQLite/JSON indexes,
+  exact embedded TIFFs and browser-compatible lossless PNGs. Every PNG is
+  decoded-pixel verified against its PDF-embedded TIFF; the source PDF SHA-256
+  is fixed in provenance. Twenty objectively faded pages also have separately
+  hashed conservative tonal derivatives (no crop, rotation or rescale); these
+  never replace or masquerade as the exact master. New authenticated Apps
+  Script operations store canonical breed records and visual assets privately
+  in Drive under `00-reference-library`, index them in `Reference Sources` and
+  `Reference Entries`, and fail closed on canonical-record or encoded-image
+  hash mismatch. OCR and model output remain evidence, not automatically
+  trusted instructions: every blade specification, label/number and grooming
+  boundary has deterministic review state, unresolved items block approval,
+  and profile creation produces a `Needs Review` draft only. Missing printed
+  pages 288–293 are disclosed; separately attributed AKC/parent-club/FCI and
+  professional manufacturer sources supplement the affected breeds without
+  claiming to reconstruct missing book text or artwork. Reference visuals stay
+  private and authenticated; this amendment does not authorize public exposure
+  or automatic publication of copyrighted pages.
 
 **Deployment state (2026-05-05):**
 - TV display: `https://fairytails123.github.io/groomingtv/` — initial commit

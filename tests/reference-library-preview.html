@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Reference catalogue preview</title>
+  <link rel="stylesheet" href="../admin/css/tokens.css">
+  <link rel="stylesheet" href="../admin/css/base.css">
+  <link rel="stylesheet" href="../admin/css/components.css">
+  <link rel="stylesheet" href="../admin/css/pages/reference-library.css">
+</head>
+<body>
+<div class="app">
+  <aside class="sb"><div class="sb__brand"><div class="sb__logo">FT</div><div><div class="sb__name">Fairy Tails</div><div class="sb__sub">Knowledge admin</div></div></div><nav class="sb__nav"><a class="sb__link">Home</a><a class="sb__link">Breeds</a><a class="sb__link" aria-current="page">Reference catalogue</a></nav></aside>
+  <main class="main"><div class="content reference-layout">
+    <section><h1 class="content__title">Reference catalogue</h1><p class="content__sub">Private source records. OCR, boundaries, labels and blade numbers remain review-gated.</p>
+      <div class="reference-summary"><div class="reference-stat"><strong>155</strong><span>Catalogue entries</span></div><div class="reference-stat"><strong>155</strong><span>Need review</span></div><div class="reference-stat"><strong>0</strong><span>Ready for profile</span></div><div class="reference-stat"><strong>0</strong><span>Profiles created</span></div></div>
+      <div class="card reference-import"><h2>Import verified catalogue records</h2><p class="muted">Choose JSON files from the software catalogue.</p><button class="btn">Choose breed records</button></div>
+      <div class="card"><table class="table"><thead><tr><th>Breed</th><th>Source</th><th>Review</th><th>High-risk</th></tr></thead><tbody><tr><td><strong>Miniature Schnauzer</strong><br><span class="muted">Terrier Group</span></td><td>available</td><td>needs_review</td><td>0/25</td></tr><tr><td><strong>Lakeland Terrier</strong><br><span class="muted">Terrier Group</span></td><td>partial_scan</td><td>source_gap_supplemented</td><td>0/12</td></tr></tbody></table></div>
+    </section>
+    <section class="card reference-detail"><div class="reference-detail__header"><div><h2>Miniature Schnauzer</h2><p class="muted">Terrier Group</p></div><div class="reference-badges"><span class="reference-badge">needs_review</span><span class="reference-badge">PDF 286–291</span></div></div>
+      <h3>Breed facts</h3><div class="reference-fact"><strong>Correct grooming procedure</strong><div>Hand-strip</div><span class="muted">needs_visual_review</span></div>
+      <h3>Editorial sections</h3><article class="reference-section"><strong>Body</strong><details><summary>Show OCR evidence</summary></details><textarea placeholder="Verified, groomer-ready wording…"></textarea><label><input type="checkbox"> Editorial text checked against source</label></article>
+      <h3>High-risk verification</h3><article class="reference-risk"><strong>Blade specification</strong> · PDF 286 / printed 294<div class="reference-risk__context">Typical blades used on the body for pet grooming…</div><input value="#10, #9, #8.5, #7F, #5F"><select><option>Verified from source image</option></select><textarea rows="2">Checked against the exact source illustration.</textarea></article>
+      <h3>Exact visual masters</h3><article class="reference-visual"><strong>PDF 286 / printed 294</strong><div class="muted">Decoded pixels identical to PDF embedded TIFF</div><button class="btn btn--secondary">View stored master</button></article>
+      <div class="reference-actions"><button class="btn btn--secondary">Save review</button><button class="btn">Approve resolved entry</button></div>
+    </section>
+  </div></main>
+</div>
+</body>
+</html>

@@ -193,7 +193,8 @@ function validatePublishable_(profile, breed) {
 
   // At least one image with role=main, with valid crop bounds within its page.
   const { rows: images } = readSheet_("Images");
-  const profileImages = images.filter((i) => i.profile_id === profile.profile_id);
+  const profileImages = images.filter((i) =>
+    i.profile_id === profile.profile_id && (i.approved === true || i.approved === "TRUE"));
   const mainImage = profileImages.find((i) => i.image_role === "main");
   if (!mainImage) {
     errors.push("no main image set");
@@ -258,7 +259,8 @@ function buildProfileForPack_(profile, breed, version) {
     .sort((a, b) => a.order - b.order);
 
   const { rows: images } = readSheet_("Images");
-  const profileImages = images.filter((i) => i.profile_id === profile.profile_id);
+  const profileImages = images.filter((i) =>
+    i.profile_id === profile.profile_id && (i.approved === true || i.approved === "TRUE"));
   const mainImage = profileImages.find((i) => i.image_role === "main");
   const supplementary = profileImages
     .filter((i) => i.image_role !== "main")

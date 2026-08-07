@@ -2,9 +2,19 @@
 
 > **Read this in full before touching anything.** Then the spec at `.md/grooming-knowledge-software-architecture.md` (v3.10). Memory at `<.claude>/projects/.../memory/MEMORY.md` has user/feedback/reference notes that are authoritative for *how* to work on this project.
 >
-> **System state — Stage 1 TV display LIVE.** Full architecture-spec loop now closed end-to-end: TV at `https://fairytails123.github.io/groomingtv/` (Stage 1) reads from the back end at `https://fairytails123.github.io/groomingbackend/` (Stages 2–5 + Phase 2). Apps Script Web App at Version 10 (`2026-05-04 12:41 UTC`). Spec at v3.10.
+> **System state — Stage 1 TV display LIVE.** Full architecture-spec loop now closed end-to-end: TV at `https://fairytails123.github.io/groomingtv/` (Stage 1) reads from the back end at `https://fairytails123.github.io/groomingbackend/` (Stages 2–5 + Phase 2). Apps Script Web App at Version 16 (`2026-08-07 21:11 BST`). Spec at v3.10.
 
-**Last updated:** 2026-05-06 — handover pass over both repo's docs after Stage 1 ship. Back-end commits `e249143` (writePublicIndex_ + index.json seed) → `dd9c488` (spec v3.10 + HANDOVER P5). TV repo commits `345d03c` (initial scaffold) → `124316f` (single-screen / no-scroll pass) → `85fbe79` (Claude Design Apple-inspired redesign drop-in).
+**Last updated:** 2026-08-07 — private full-book reference-catalogue code is deployed as Apps Script Version 16 at the existing persistent Web App URL. Full-resolution evidence processing and catalogue import are still in progress; only final records from `software-catalog-final/breeds/` may be imported.
+
+## 2026-08-07 — full grooming-book reference catalogue (Apps Script v16 deployed; data import pending)
+
+- Private reusable corpus: `Knowledge/reusable-data/notes-from-the-grooming-table/` (gitignored; never commit to this public repo). The source PDF hash, 490 OCR pages, 155 breed records, exact page-image masters, lossless browser PNGs, conservative restoration derivatives, manifests and checksums are retained there.
+- Source gap: printed pages 288–293 are absent. Lakeland Terrier is partial; Standard Manchester Terrier and Miniature Bull Terrier are absent. Their supplements retain separate AKC/parent-club/FCI/manufacturer citations and never claim to recreate the missing book pages or illustrations.
+- Compiler chain: `build_software_catalog.py` → `merge_vision_analysis.py` → targeted `run_second_pass.py` → `finalize_catalog.py`. Import only from `software-catalog-final/breeds/`; approval remains blocked wherever the final unresolved queue is non-empty.
+- Production-code candidate adds authenticated reference catalogue browsing/review/import and private exact/enhanced visual retrieval. New Sheets: `Reference Sources`, `Reference Entries`; new ID prefix: `REF`.
+- Visual invariant: exact lossless PNG decoded pixels equal the PDF-embedded TIFF. Enhanced assets are separate, labelled derivatives with unchanged geometry and their own SHA-256. Neither variant is exposed publicly by the reference operations.
+- Safety invariant: profile creation requires a fully approved record, refuses to overwrite an existing active Pet Groom profile, creates status `Needs Review`, and never publishes automatically. Publish validation/pack construction now both ignore `Images.approved != TRUE`.
+- Verification available now: Node reference-library tests, canonical Python/Apps Script hash compatibility, approved-image publish regression, Python catalogue integrity test, JS syntax checks and Apps Script parse checks. Apps Script source push and persistent deployment v16 completed; unauthenticated registration smoke returned `UNAUTHORIZED` as expected. Authenticated schema initialization, static-admin release, final catalogue import and live UI smoke remain pending.
 
 Earlier same-day work folded in:
 - v6: `max_tokens` → `max_completion_tokens` for gpt-5/o1/o3 model family (older models keep `max_tokens` + `temperature`).

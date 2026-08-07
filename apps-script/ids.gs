@@ -18,6 +18,7 @@ const ID_PREFIXES = {
   alert:       "ALT",
   job:         "JOB",
   ai_call:     "AIC",
+  reference:   "REF",
 };
 
 function nextId_(kind) {

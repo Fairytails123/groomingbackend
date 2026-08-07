@@ -30,3 +30,7 @@ build/
 .env.local
 admin/js/config.local.js
 .secrets/
+
+# Private source corpus and generated reference catalogue. The production repo
+# is public; these local knowledge assets must never be committed wholesale.
+Knowledge/

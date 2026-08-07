@@ -385,7 +385,7 @@ function op_health_check(body) {
   for (const k of optional) scriptProperties[k] = { required: false, set: !!props.getProperty(k) };
 
   const sheetCounts = {};
-  for (const name of ["Breeds", "Groom Profiles", "Groom Knowledge", "Images", "Page Renders", "Operational Alerts", "AI Call Log"]) {
+  for (const name of ["Breeds", "Groom Profiles", "Groom Knowledge", "Images", "Page Renders", "Operational Alerts", "AI Call Log", "Reference Sources", "Reference Entries"]) {
     try {
       const { rows } = readSheet_(name);
       sheetCounts[name] = rows.length;

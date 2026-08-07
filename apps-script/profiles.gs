@@ -123,6 +123,7 @@ function op_get_breed_profile(body) {
       updated_at: toIso_(profile.updated_at),
     },
     breed: breedToView_(breed),
+    reference_entry: findProfileReferenceEntry_(profile.profile_id, breed.slug),
     sections: profileSections,
     images: profileImages,
     page_renders: profileRenders,
@@ -143,11 +144,21 @@ function shellProfileForBreed_(breed) {
   return {
     profile: null,
     breed: breedToView_(breed),
+    reference_entry: findProfileReferenceEntry_("", breed.slug),
     sections: [],
     images: [],
     page_renders: [],
     display_settings: defaultDisplaySettings_(),
   };
+}
+
+function findProfileReferenceEntry_(profileId, breedSlug) {
+  const sheet = getDb_().getSheetByName("Reference Entries");
+  if (!sheet) return null;
+  const { rows } = readSheet_("Reference Entries");
+  const row = rows.find((item) =>
+    (profileId && item.profile_id === profileId) || item.breed_slug === breedSlug);
+  return row ? referenceEntryView_(row) : null;
 }
 
 function defaultDisplaySettings_() {

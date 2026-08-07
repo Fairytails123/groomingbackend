@@ -4,7 +4,7 @@
  * Run setupAll() once from the Apps Script editor after deploying. It:
  *   - generates SESSION_SECRET and ADMIN_PASSWORD_SALT (idempotent)
  *   - creates the Sheets workbook in the Drive root folder if it doesn't exist
- *   - populates all 13 sheets with headers
+ *   - populates all 16 sheets with headers
  *   - sets GITHUB_OWNER and GITHUB_REPO defaults
  *
  * What still needs hand work after setupAll():
@@ -84,6 +84,16 @@ const SHEET_SCHEMAS = {
     "call_id", "profile_id", "source", "model",
     "prompt_tokens", "completion_tokens", "cost_usd",
     "latency_ms", "success", "error_code", "created_at"
+  ],
+  "Reference Sources": [
+    "source_id", "title", "source_pdf_sha256", "schema_version",
+    "rights_status", "created_at", "updated_at"
+  ],
+  "Reference Entries": [
+    "reference_entry_id", "source_id", "breed_name", "breed_slug", "group_name",
+    "source_status", "review_status", "record_sha256", "stored_record_sha256", "drive_file_id", "revision",
+    "high_risk_total", "high_risk_verified", "sections_total", "sections_approved",
+    "profile_id", "imported_at", "updated_at"
   ],
 };
 

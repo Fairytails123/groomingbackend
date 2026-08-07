@@ -18,6 +18,17 @@ const OP_REGISTRY = {
   search_breeds:         op_search_breeds,
   override_breed_match:  op_override_breed_match,
 
+  // Private source/reference catalogue. These ops are deliberately authenticated.
+  ensure_reference_catalog_schema: op_ensure_reference_catalog_schema,
+  reference_catalog_status: op_reference_catalog_status,
+  import_reference_entry:   op_import_reference_entry,
+  import_reference_visual:  op_import_reference_visual,
+  get_reference_visual:     op_get_reference_visual,
+  search_reference_entries: op_search_reference_entries,
+  get_reference_entry:      op_get_reference_entry,
+  save_reference_review:    op_save_reference_review,
+  create_profile_from_reference: op_create_profile_from_reference,
+
   // Profiles
   get_breed_profile:     op_get_breed_profile,
   save_profile:          op_save_profile,

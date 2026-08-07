@@ -67,6 +67,42 @@ Distilled from the data + API design agent output (2026-05-03 design pass) and t
 **Request:** `{ op: "override_breed_match", auth_token, raw_breed, matched_breed_id }`
 **Response:** `{ cache_id, hit_count }` — writes `Breed Match Cache` with `source = manual, confidence = 1.0`. If a `Backlog Signals` row exists for `raw_breed`, flips it to `current_status = done`.
 
+### Private reference catalogue
+
+All reference-catalogue operations require the normal admin session token. Source-page visuals remain private in Drive and are returned only as authenticated data URLs; these operations do not publish them to GitHub Pages.
+
+#### `op: "ensure_reference_catalog_schema"`
+**Request:** `{ op, auth_token }`
+**Behaviour:** idempotently creates the private `Reference Sources` and `Reference Entries` sheets/columns through the normal schema bootstrapper, preserving existing rows and columns. Returns the verified sheet dimensions.
+
+#### `op: "reference_catalog_status"`
+**Request:** `{ op, auth_token }`
+**Response:** counts by review state, entries ready for profile creation, and linked profiles.
+
+#### `op: "import_reference_entry"`
+**Request:** `{ op, auth_token, record, expected_record_sha256? }`
+**Behaviour:** validates the canonical SHA-256 over the complete record, upserts the private Drive JSON and searchable `Reference Entries` row, and uses the expected hash to reject stale overwrites. Identical imports are idempotent.
+
+#### `op: "search_reference_entries"` / `op: "get_reference_entry"`
+**Request:** `{ op, auth_token, query?, review_status?, limit? }` or `{ op, auth_token, reference_entry_id|breed_slug }`
+**Response:** searchable catalogue summaries or the complete provenance-rich record.
+
+#### `op: "import_reference_visual"`
+**Request:** `{ op, auth_token, reference_entry_id, asset_id, variant:"master"|"enhanced", data_url }`
+**Behaviour:** accepts PNG only. `master` must match the catalogue's pixel-verified lossless-PNG encoded hash; `enhanced` must match its separately recorded conservative-derivative hash. Stores the file privately and never substitutes the enhanced asset for the authoritative master.
+
+#### `op: "get_reference_visual"`
+**Request:** `{ op, auth_token, reference_entry_id, asset_id, variant:"master"|"enhanced" }`
+**Response:** `{ asset_id, variant, data_url, encoded_sha256 }` after re-hashing the stored file. A mismatch fails closed.
+
+#### `op: "save_reference_review"`
+**Request:** `{ op, auth_token, reference_entry_id, expected_revision, patch:{ facts?, sections?, high_risk_items? }, approve }`
+**Behaviour:** revision-controlled editorial review. Approval is refused until every non-empty editorial section is approved and every blade specification, label/number and grooming-boundary item has an accepted verification status.
+
+#### `op: "create_profile_from_reference"`
+**Request:** `{ op, auth_token, reference_entry_id }`
+**Behaviour:** creates a `Needs Review` Pet Groom profile only from an approved, fully resolved record. It never overwrites an existing active Pet Groom profile and never auto-publishes.
+
 ### Profiles
 
 #### `op: "get_breed_profile"`

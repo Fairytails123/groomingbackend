@@ -34,6 +34,7 @@ const showWarnEl  = document.getElementById("show-warnings");
 const defaultEl   = document.getElementById("default-profile");
 const snipLink    = document.getElementById("open-snip-link");
 const reextractBtn = document.getElementById("reextract-button");
+const sourceReferenceLink = document.getElementById("source-reference-link");
 
 const CORE_NAMES = new Set([
   "Body", "Throat and chest", "Carriage and tail end", "Legs and feet", "Head/ears/brows",
@@ -44,6 +45,7 @@ let state = {
   breed: null,
   sections: [],
   display: null,
+  referenceEntry: null,
 };
 let saveDebounce = null;
 let savingInFlight = false;
@@ -339,6 +341,7 @@ async function load() {
     state.breed = data.breed;
     state.sections = data.sections;
     state.display = data.display_settings;
+    state.referenceEntry = data.reference_entry ?? null;
 
     // If breed exists but no profile yet, prompt the user to create the first profile.
     if (!state.profile) {
@@ -371,6 +374,12 @@ async function load() {
     if (reextractBtn) {
       reextractBtn.hidden = !data.profile.source_pdf_drive_id;
       reextractBtn.onclick = onReextract;
+    }
+    if (sourceReferenceLink) {
+      sourceReferenceLink.hidden = !state.referenceEntry;
+      if (state.referenceEntry) {
+        sourceReferenceLink.href = `reference-library.html?entry=${encodeURIComponent(state.referenceEntry.reference_entry_id)}`;
+      }
     }
 
     renderSections();
