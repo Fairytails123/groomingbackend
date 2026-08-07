@@ -1,6 +1,7 @@
 import hashlib
 import importlib.util
 import json
+import math
 from pathlib import Path
 
 
@@ -18,7 +19,15 @@ def read_json(path):
 
 
 def canonical_hash(value):
-    payload = json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    def js_numbers(item):
+        if isinstance(item, dict):
+            return {key: js_numbers(entry) for key, entry in item.items()}
+        if isinstance(item, list):
+            return [js_numbers(entry) for entry in item]
+        if isinstance(item, float) and math.isfinite(item) and item.is_integer():
+            return int(item)
+        return item
+    payload = json.dumps(js_numbers(value), ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
     return hashlib.sha256(payload).hexdigest()
 
 
@@ -36,6 +45,27 @@ for issues in grouped_queue.values():
         compact = second_pass.compact_issue(issue)
         assert compact["issue_key"] == issue["issue_key"]
         assert compact["kind"] == issue["kind"]
+
+normalization_sample = {
+    "resolutions": [
+        {"issue_key": "a", "kind": "blade_specification", "status": "corrected",
+         "exact_value": None, "source_text": "Use #10 or #7F with the grain."},
+        {"issue_key": "b", "kind": "blade_specification", "status": "confirmed",
+         "exact_value": None, "source_text": "The blade marking is not legible."},
+    ],
+    "remaining_uncertainties": [],
+}
+normalization_issues = [
+    {"issue_key": "a", "kind": "blade_specification"},
+    {"issue_key": "b", "kind": "blade_specification"},
+]
+normalization_sample["resolutions"][0]["kind"] = "copy exactly"
+second_pass.normalize_resolution_fields(normalization_sample, normalization_issues)
+assert normalization_sample["resolutions"][0]["kind"] == "blade_specification"
+assert normalization_sample["resolutions"][0]["field_normalization"]["kind_from_saved_queue"] is True
+assert normalization_sample["resolutions"][0]["exact_value"] == "#10, #7F"
+assert normalization_sample["resolutions"][0]["field_normalization"]["invented_value"] is False
+assert normalization_sample["resolutions"][1]["status"] == "unresolved"
 
 
 index = read_json(FINAL / "catalog-index.json")

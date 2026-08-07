@@ -12,9 +12,25 @@ const codeSource = fs.readFileSync(path.join(projectRoot, "apps-script", "Code.g
 const publicOpsSource = codeSource.slice(codeSource.indexOf("const PUBLIC_OPS"));
 assert.doesNotMatch(publicOpsSource, /reference_(catalog|entry|visual|review)/,
   "reference catalogue operations must never be public");
+assert.match(codeSource, /import_reference_visuals_batch:\s*op_import_reference_visuals_batch/);
+const adminReferenceSource = fs.readFileSync(
+  path.join(projectRoot, "admin", "js", "pages", "reference-library.js"), "utf8");
+const bulkImportSource = adminReferenceSource.slice(
+  adminReferenceSource.indexOf("async function importCatalogVisuals"),
+  adminReferenceSource.indexOf("async function openEntry"),
+);
+assert.match(bulkImportSource, /api\("import_reference_visuals_batch"/,
+  "bulk catalogue import must write one batch per breed");
+assert.doesNotMatch(bulkImportSource, /api\("import_reference_visual"/,
+  "bulk catalogue import must not rewrite the record once per image");
 const context = {
   console,
   sha256Hex_: (value) => crypto.createHash("sha256").update(value, "utf8").digest("hex"),
+  Utilities: {
+    DigestAlgorithm: { SHA_256: "SHA_256" },
+    Charset: { UTF_8: "UTF_8" },
+    computeDigest: (_algorithm, value, _charset) => [...crypto.createHash("sha256").update(value, "utf8").digest()],
+  },
   apiError_: (code, message) => Object.assign(new Error(message), { code, apiError: true }),
 };
 vm.createContext(context);
@@ -75,23 +91,19 @@ assert.deepEqual(
 );
 assert.throws(() => lib.referenceVisualVariant_(visual, "unknown"), { code: "VALIDATION_FAILED" });
 
-for (const catalogue of ["software-catalog", "software-catalog-final"]) {
-  const localRecord = path.join(
-    projectRoot,
-    "Knowledge",
-    "reusable-data",
-    "notes-from-the-grooming-table",
-    catalogue,
-    "breeds",
-    "miniature-schnauzer.json",
-  );
-  if (fs.existsSync(localRecord)) {
-    const record = JSON.parse(fs.readFileSync(localRecord, "utf8"));
-    assert.equal(lib.referenceRecordSourceHash_(record), record.record_sha256);
-    const originalHash = record.record_sha256;
-    record.breed.name = "Tampered name";
-    assert.notEqual(lib.referenceRecordSourceHash_(record), originalHash);
+const catalogueDir = path.join(projectRoot, "Knowledge", "reusable-data", "notes-from-the-grooming-table",
+  "software-catalog-final", "breeds");
+if (fs.existsSync(catalogueDir)) {
+  const records = fs.readdirSync(catalogueDir).filter((name) => name.endsWith(".json"));
+  assert.equal(records.length, 155);
+  for (const filename of records) {
+    const record = JSON.parse(fs.readFileSync(path.join(catalogueDir, filename), "utf8"));
+    assert.equal(lib.referenceRecordSourceHash_(record), record.record_sha256, filename);
   }
+  const sampleRecord = JSON.parse(fs.readFileSync(path.join(catalogueDir, records[0]), "utf8"));
+  const originalHash = sampleRecord.record_sha256;
+  sampleRecord.breed.name = "Tampered name";
+  assert.notEqual(lib.referenceRecordSourceHash_(sampleRecord), originalHash);
 }
 
 console.log("reference-library tests passed");

@@ -136,51 +136,86 @@ function op_search_reference_entries(body) {
 }
 
 function op_import_reference_visual(body) {
+  const result = importReferenceVisualsBatch_(body, [{
+    asset_id: body.asset_id,
+    variant: body.variant,
+    data_url: body.data_url,
+  }]);
+  return result.items[0];
+}
+
+function op_import_reference_visuals_batch(body) {
+  const items = Array.isArray(body.items) ? body.items : [];
+  if (!items.length || items.length > 20) {
+    throw apiError_("VALIDATION_FAILED", "items must contain between 1 and 20 visual assets");
+  }
+  return importReferenceVisualsBatch_(body, items);
+}
+
+function importReferenceVisualsBatch_(body, rawItems) {
   const row = findReferenceEntry_(body);
-  const assetId = String(body.asset_id || "").trim();
-  const variant = String(body.variant || "master").trim();
-  const dataUrl = String(body.data_url || "");
-  if (!assetId || !dataUrl) throw apiError_("VALIDATION_FAILED", "asset_id and data_url required");
-  const match = dataUrl.match(/^data:image\/png;base64,([A-Za-z0-9+/=]+)$/);
-  if (!match) throw apiError_("VALIDATION_FAILED", "Reference visual must be a base64 PNG data URL");
+  const requested = rawItems.map((item) => {
+    const assetId = String(item.asset_id || "").trim();
+    const variant = String(item.variant || "master").trim();
+    const dataUrl = String(item.data_url || "");
+    if (!assetId || !dataUrl) throw apiError_("VALIDATION_FAILED", "asset_id and data_url required");
+    const match = dataUrl.match(/^data:image\/png;base64,([A-Za-z0-9+/=]+)$/);
+    if (!match) throw apiError_("VALIDATION_FAILED", "Reference visual must be a base64 PNG data URL");
+    return { assetId, variant, base64: match[1] };
+  });
 
   return withScriptLock_(30000, () => {
     const fresh = findReferenceEntry_({ reference_entry_id: row.reference_entry_id });
     const record = readReferenceRecord_(fresh.drive_file_id, fresh.stored_record_sha256);
-    const visual = record.visual_references.find((item) => item.asset_id === assetId);
-    if (!visual) throw apiError_("NOT_FOUND", `Reference visual '${assetId}' not found`);
-    const descriptor = referenceVisualVariant_(visual, variant);
-    const bytes = Utilities.base64Decode(match[1]);
-    const encodedHash = sha256ByteArrayHex_(bytes);
-    if (encodedHash !== descriptor.expectedHash) {
-      throw apiError_("VALIDATION_FAILED", `Uploaded ${variant} visual hash differs from its catalogue hash`);
-    }
-    if (descriptor.driveFileId) {
-      try {
-        const existing = DriveApp.getFileById(descriptor.driveFileId);
-        if (sha256ByteArrayHex_(existing.getBlob().getBytes()) === encodedHash) {
-          return { asset_id: assetId, variant, drive_file_id: existing.getId(), unchanged: true };
-        }
-      } catch (error) {
-        console.warn("[reference] existing visual unavailable; replacing", error);
+    const prepared = requested.map((item) => {
+      const visual = record.visual_references.find((candidate) => candidate.asset_id === item.assetId);
+      if (!visual) throw apiError_("NOT_FOUND", `Reference visual '${item.assetId}' not found`);
+      const descriptor = referenceVisualVariant_(visual, item.variant);
+      const bytes = Utilities.base64Decode(item.base64);
+      const encodedHash = sha256ByteArrayHex_(bytes);
+      if (encodedHash !== descriptor.expectedHash) {
+        throw apiError_("VALIDATION_FAILED", `Uploaded ${item.variant} visual hash differs from its catalogue hash`);
       }
-    }
+      return { ...item, visual, descriptor, bytes, encodedHash };
+    });
 
     const sourceFolder = ensureSubfolder_(referenceRootFolder_(), record.source.source_id);
     const visualsFolder = ensureSubfolder_(sourceFolder, "visuals");
-    const filename = `${record.breed.slug}__${assetId}__${variant}.png`;
-    const file = visualsFolder.createFile(Utilities.newBlob(bytes, "image/png", filename));
-    if (variant === "master") {
-      visual.drive_file_id = file.getId();
-      visual.drive_encoded_sha256 = encodedHash;
-      visual.import_status = "verified_private_master";
-      visual.imported_at = nowIso_();
-    } else {
-      visual.enhanced_derivative.drive_file_id = file.getId();
-      visual.enhanced_derivative.drive_encoded_sha256 = encodedHash;
-      visual.enhanced_derivative.import_status = "verified_private_derivative";
-      visual.enhanced_derivative.imported_at = nowIso_();
+    const results = [];
+    let changed = 0;
+    for (const item of prepared) {
+      if (item.descriptor.driveFileId) {
+        try {
+          const existing = DriveApp.getFileById(item.descriptor.driveFileId);
+          if (sha256ByteArrayHex_(existing.getBlob().getBytes()) === item.encodedHash) {
+            results.push({ asset_id: item.assetId, variant: item.variant,
+              drive_file_id: existing.getId(), unchanged: true });
+            continue;
+          }
+        } catch (error) {
+          console.warn("[reference] existing visual unavailable; replacing", error);
+        }
+      }
+      const filename = `${record.breed.slug}__${item.assetId}__${item.variant}.png`;
+      const file = visualsFolder.createFile(Utilities.newBlob(item.bytes, "image/png", filename));
+      if (item.variant === "master") {
+        item.visual.drive_file_id = file.getId();
+        item.visual.drive_encoded_sha256 = item.encodedHash;
+        item.visual.import_status = "verified_private_master";
+        item.visual.imported_at = nowIso_();
+      } else {
+        item.visual.enhanced_derivative.drive_file_id = file.getId();
+        item.visual.enhanced_derivative.drive_encoded_sha256 = item.encodedHash;
+        item.visual.enhanced_derivative.import_status = "verified_private_derivative";
+        item.visual.enhanced_derivative.imported_at = nowIso_();
+      }
+      changed++;
+      results.push({ asset_id: item.assetId, variant: item.variant,
+        drive_file_id: file.getId(), unchanged: false });
     }
+    if (!changed) return { items: results, imported: 0, unchanged: results.length,
+      revision: Number(fresh.revision || 1) };
+
     record.review = record.review || {};
     record.review.review_revision_sha256 = referenceReviewHash_(record);
     const recordFile = writeReferenceRecordFile_(record, fresh.drive_file_id);
@@ -193,7 +228,7 @@ function op_import_reference_visual(body) {
       stored_record_sha256: referenceStoredFileHash_(recordFile),
       updated_at: nowIso_(),
     });
-    return { asset_id: assetId, variant, drive_file_id: file.getId(), revision: nextRevision, unchanged: false };
+    return { items: results, imported: changed, unchanged: results.length - changed, revision: nextRevision };
   });
 }
 
@@ -575,7 +610,13 @@ function isResolvedReferenceStatus_(status) {
 function referenceRecordSourceHash_(record) {
   const clone = JSON.parse(JSON.stringify(record));
   delete clone.record_sha256;
-  return sha256Hex_(JSON.stringify(sortReferenceValue_(clone)));
+  const canonical = JSON.stringify(sortReferenceValue_(clone));
+  const bytes = Utilities.computeDigest(
+    Utilities.DigestAlgorithm.SHA_256,
+    canonical,
+    Utilities.Charset.UTF_8,
+  );
+  return bytes.map((value) => (value < 0 ? value + 256 : value).toString(16).padStart(2, "0")).join("");
 }
 
 function referenceReviewHash_(record) {

@@ -165,22 +165,27 @@ async function importCatalogVisuals(files) {
         if (visual.enhanced_derivative?.file) items.push({ visual, variant: "enhanced", path: visual.enhanced_derivative.file });
         return items;
       });
+      const uploadItems = [];
       for (const item of variants) {
         const filename = item.path.split("/").pop().toLowerCase();
         const file = byName.get(filename);
         if (!file) continue;
-        try {
-          await api("import_reference_visual", {
-            reference_entry_id: entry.reference_entry_id,
+        uploadItems.push({
             asset_id: item.visual.asset_id,
             variant: item.variant,
             data_url: await fileToDataUrl(file),
-          }, { timeoutMs: 120000 });
-          imported++;
-        } catch (error) {
-          failed++;
-          console.error("Reference visual import failed", entry.breed_name, filename, error);
-        }
+        });
+      }
+      if (!uploadItems.length) continue;
+      try {
+        const result = await api("import_reference_visuals_batch", {
+          reference_entry_id: entry.reference_entry_id,
+          items: uploadItems,
+        }, { timeoutMs: 300000 });
+        imported += Number(result.imported || 0) + Number(result.unchanged || 0);
+      } catch (error) {
+        failed += uploadItems.length;
+        console.error("Reference visual batch import failed", entry.breed_name, error);
       }
     }
     progressEl.textContent = `${imported} private visuals imported${failed ? `, ${failed} failed` : ""}.`;

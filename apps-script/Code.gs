@@ -23,6 +23,7 @@ const OP_REGISTRY = {
   reference_catalog_status: op_reference_catalog_status,
   import_reference_entry:   op_import_reference_entry,
   import_reference_visual:  op_import_reference_visual,
+  import_reference_visuals_batch: op_import_reference_visuals_batch,
   get_reference_visual:     op_get_reference_visual,
   search_reference_entries: op_search_reference_entries,
   get_reference_entry:      op_get_reference_entry,
