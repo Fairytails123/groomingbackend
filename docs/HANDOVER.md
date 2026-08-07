@@ -2,19 +2,24 @@
 
 > **Read this in full before touching anything.** Then the spec at `.md/grooming-knowledge-software-architecture.md` (v3.10). Memory at `<.claude>/projects/.../memory/MEMORY.md` has user/feedback/reference notes that are authoritative for *how* to work on this project.
 >
-> **System state — Stage 1 TV display LIVE.** Full architecture-spec loop now closed end-to-end: TV at `https://fairytails123.github.io/groomingtv/` (Stage 1) reads from the back end at `https://fairytails123.github.io/groomingbackend/` (Stages 2–5 + Phase 2). Apps Script Web App at Version 16 (`2026-08-07 21:11 BST`). Spec at v3.10.
+> **System state — Stage 1 TV display LIVE.** Full architecture-spec loop now closed end-to-end: TV at `https://fairytails123.github.io/groomingtv/` (Stage 1) reads from the back end at `https://fairytails123.github.io/groomingbackend/` (Stages 2–5 + Phase 2). Apps Script Web App at Version 18 (`2026-08-08`). Spec at v3.10.
 
-**Last updated:** 2026-08-07 — private full-book reference-catalogue code is deployed as Apps Script Version 16 at the existing persistent Web App URL. Full-resolution evidence processing and catalogue import are still in progress; only final records from `software-catalog-final/breeds/` may be imported.
+**Last updated:** 2026-08-08 — the full-book private reference catalogue is imported and live in the authenticated admin software. Apps Script Version 18 remains on the existing persistent Web App URL. No reference entry or generated Pet Groom draft was published automatically.
 
-## 2026-08-07 — full grooming-book reference catalogue (Apps Script v16 deployed; data import pending)
+## 2026-08-08 — full grooming-book reference catalogue imported (Apps Script v18)
 
-- Private reusable corpus: `Knowledge/reusable-data/notes-from-the-grooming-table/` (gitignored; never commit to this public repo). The source PDF hash, 490 OCR pages, 155 breed records, exact page-image masters, lossless browser PNGs, conservative restoration derivatives, manifests and checksums are retained there.
+- Private reusable corpus: `Knowledge/reusable-data/notes-from-the-grooming-table/` (gitignored; never commit to this public repo). It contains the source PDF metadata and SHA-256 (`4a87cac593828492bac4283015ec667853df1444179ad420520fa85694eeb89a`), 490 OCR pages, 490 thumbnails, 490 original 3310×4680 TIFF page images, 490 lossless browser PNG masters, 20 conservative enhanced derivatives, manifests, and 3,454 verified derived-file SHA-256 entries.
 - Source gap: printed pages 288–293 are absent. Lakeland Terrier is partial; Standard Manchester Terrier and Miniature Bull Terrier are absent. Their supplements retain separate AKC/parent-club/FCI/manufacturer citations and never claim to recreate the missing book pages or illustrations.
 - Compiler chain: `build_software_catalog.py` → `merge_vision_analysis.py` → targeted `run_second_pass.py` → `finalize_catalog.py`. Import only from `software-catalog-final/breeds/`; approval remains blocked wherever the final unresolved queue is non-empty.
-- Production-code candidate adds authenticated reference catalogue browsing/review/import and private exact/enhanced visual retrieval. New Sheets: `Reference Sources`, `Reference Entries`; new ID prefix: `REF`.
+- Processing evidence: 385 breed pages in the first pass; 384/384 pages in the second pass with zero validation issues; final targeted risk pass covered 97/97 pages and returned 383 item results (357 confirmed, 20 corrected, 6 unresolved) with zero integrity issues. The final catalogue contains 155 breeds: 105 approved and 50 deliberately review-gated, with 225 unresolved critical review items retained rather than guessed.
+- General knowledge is indexed into 25 technique/style/anatomy sections spanning 83 pages. 57 pages received dedicated vision analysis; the remaining 26 retain OCR plus exact page images because malformed responses and the local API budget ceiling prevented safe additional calls.
+- Production adds authenticated reference catalogue browsing/review/import and private exact/enhanced visual retrieval. New Sheets: `Reference Sources`, `Reference Entries`; new ID prefix: `REF`. Batch visual import in v18 performs one locked record update per breed and accepts at most 20 variants per call; the original single-visual operation remains compatible.
 - Visual invariant: exact lossless PNG decoded pixels equal the PDF-embedded TIFF. Enhanced assets are separate, labelled derivatives with unchanged geometry and their own SHA-256. Neither variant is exposed publicly by the reference operations.
 - Safety invariant: profile creation requires a fully approved record, refuses to overwrite an existing active Pet Groom profile, creates status `Needs Review`, and never publishes automatically. Publish validation/pack construction now both ignore `Images.approved != TRUE`.
-- Verification available now: Node reference-library tests, canonical Python/Apps Script hash compatibility, approved-image publish regression, Python catalogue integrity test, JS syntax checks and Apps Script parse checks. Apps Script source push and persistent deployment v16 completed; unauthenticated registration smoke returned `UNAUTHORIZED` as expected. Authenticated schema initialization, static-admin release, final catalogue import and live UI smoke remain pending.
+- Live import result: all 155 final catalogue records are present. 396 private visual variants imported with zero failures: 385 exact source masters plus 11 breed-applicable enhanced derivatives. Enhanced derivatives remain visibly labelled and never replace the exact master.
+- Draft result: 104 new Pet Groom profiles were created in `Needs Review`; Miniature Schnauzer was safely skipped because an active/conflicting profile already exists. One approved catalogue record therefore remains `Ready for profile`; there were zero failed creations and no publication.
+- API accounting: the known recorded total is US$5.63724325. Three additional malformed calls returned no token usage; charging each at the locally enforced US$0.03 safety maximum gives a conservative total ceiling of US$5.72724325, below the authorised US$5.75 cap. The organisation usage endpoint could not recover exact usage because the available key lacks `api.usage.read`; do not claim a more precise total.
+- Verification completed: Node reference-library/schema/publish regressions, canonical all-155 Python/Apps Script hash compatibility, Python catalogue integrity tests, JS syntax, `git diff --check`, authenticated schema initialization, live UI catalogue counts, exact-master retrieval, enhanced-derivative retrieval, batch imports, draft creation, and four production health endpoints returning HTTP 200. Static admin commit `9a87d32`; Apps Script persistent deployment v18.
 
 Earlier same-day work folded in:
 - v6: `max_tokens` → `max_completion_tokens` for gpt-5/o1/o3 model family (older models keep `max_tokens` + `temperature`).
@@ -91,14 +96,14 @@ Everything below is live unless flagged ⏳ pending or 🟡 not-yet-verified.
 | **TV display GitHub repo** | https://github.com/Fairytails123/groomingtv |
 | **TV display live URL** | https://fairytails123.github.io/groomingtv/ — open on the salon Hisense 40" 40E4QTUK Vidaa browser. Reads `today.json` + `breeds/{slug}.json` + `index.json` from the back-end Pages site. Local working copy at `C:\Users\FT Manager\OneDrive\Business\CODING\groomingtv\` |
 | Apps Script project | https://script.google.com/home/projects/1sxgzOrmd2OEmuJmMeoW15Vbb1GkbO1GIhs3h0afmOafcgOb1tDErvIA1/edit (project ID `1sxgzOrmd2OEmuJmMeoW15Vbb1GkbO1GIhs3h0afmOafcgOb1tDErvIA1`) |
-| Apps Script Web App URL | `https://script.google.com/macros/s/AKfycby5CU8J-xyCn38ruoe_HdDswRBCNcxXLO9O2AyiiHDt781mwsJzWeyyahySfwjpq4ZL/exec` (deployment Version 10, persistent — same URL across all v1→v10 redeploys) |
+| Apps Script Web App URL | `https://script.google.com/macros/s/AKfycby5CU8J-xyCn38ruoe_HdDswRBCNcxXLO9O2AyiiHDt781mwsJzWeyyahySfwjpq4ZL/exec` (deployment Version 18, persistent — same URL across all v1→v18 redeploys) |
 | n8n workflow | https://auto.thefairytails.co.uk/workflow/6xHWEX3f9zrWtDDa ("Dog Grooming Back End") — self-hosted n8n on the Hostinger VPS; migrated off n8n Cloud 2026-07-05 |
 
 ### Data + storage
 
 | What | Where |
 |---|---|
-| Sheets workbook ("Grooming Backend") | https://docs.google.com/spreadsheets/d/1SZtkWUjXXgRIO5CzB_8NBeJ0_SEEq5k3IMAEPBZN01s/edit (ID `1SZtkWUjXXgRIO5CzB_8NBeJ0_SEEq5k3IMAEPBZN01s`) — **14 sheets populated** (13 original + `AI Call Log` added 2026-05-03) |
+| Sheets workbook ("Grooming Backend") | https://docs.google.com/spreadsheets/d/1SZtkWUjXXgRIO5CzB_8NBeJ0_SEEq5k3IMAEPBZN01s/edit (ID `1SZtkWUjXXgRIO5CzB_8NBeJ0_SEEq5k3IMAEPBZN01s`) — **16 sheets populated** (14 prior sheets plus `Reference Sources` and `Reference Entries`) |
 | Drive root folder ("Dog Grooming Back end") | https://drive.google.com/drive/folders/1Ry1YbBVhPwlvb6WFnsxiEBPvBzDDlNUk (ID `1Ry1YbBVhPwlvb6WFnsxiEBPvBzDDlNUk`) |
 | Per-breed folders | Auto-created under root by `op_save_page_render` / `op_save_crop` / `op_upload_pdf` / publish flow |
 
@@ -303,7 +308,7 @@ The breed working screen was redesigned same-day to an Apple-inspired layout via
 | Index.json live (TV search) | `curl -s https://fairytails123.github.io/groomingbackend/public/index.json \| jq '.breeds \| length'` | At least `1` |
 | Apps Script Web App reachable | The Web App URL serves a 302 to a `script.googleusercontent.com` echo URL on plain GET — that's normal Google interstitial behaviour. Easiest dispatcher check: log in via the admin site → DevTools Network tab → any successful op (e.g. `list_breeds`) shows `ok:true`. |
 | Login works | Visit login URL, password `fairytails22` | Lands on dashboard |
-| Sheets accessible | Open the Sheets workbook URL | 14 sheets visible (last sheet should be `AI Call Log`) |
+| Sheets accessible | Open the Sheets workbook URL | 16 sheets visible, including `Reference Sources` and `Reference Entries` |
 | Drive root accessible | Open Drive root folder URL | One subfolder per breed digitised so far |
 | Phase 2 ops registered | Admin site → DevTools Console → `(await fetch("https://script.google.com/macros/s/AKfycby5CU8J-xyCn38ruoe_HdDswRBCNcxXLO9O2AyiiHDt781mwsJzWeyyahySfwjpq4ZL/exec",{method:"POST",headers:{"Content-Type":"text/plain"},body:'{"op":"extract_sections"}'})).json()` | `{ok:false, error:{code:"UNAUTHORIZED",…}}` — op exists, no auth_token. NOT `code:"NOT_FOUND"` (which would mean the OP_REGISTRY isn't picking up the new op). |
 | Public op `log_backlog_hit` reachable | Same console snippet but `body:'{"op":"log_backlog_hit","raw_breed":""}'` | `{ok:false, error:{code:"VALIDATION_FAILED",…}}` — op exists and is public; empty `raw_breed` triggers the validation. NOT `UNAUTHORIZED` (would mean it's not in the public set) and NOT `NOT_FOUND`. |
