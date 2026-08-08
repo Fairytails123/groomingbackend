@@ -1,8 +1,8 @@
 # Fairy Tails Grooming Knowledge Software — Architecture & Build Plan
 
 **Owner:** Kamal (Fairy Tails K9 Centre)
-**Status:** Working spec, v3.10 (Stage 1 TV display live on 2026-05-05 at `https://fairytails123.github.io/groomingtv/`; full system loop now closed end-to-end).
-**Last updated:** 7 August 2026
+**Status:** Working spec, v3.11 (private salon-TV display live at `https://auto.thefairytails.co.uk/salon-tv/`; full book knowledge and exact breed illustrations integrated).
+**Last updated:** 8 August 2026
 
 ---
 
@@ -119,17 +119,41 @@ actual TV (Hisense 40" 40E4QTUK FHD, 1920×1080, Vidaa browser).
   claiming to reconstruct missing book text or artwork. Reference visuals stay
   private and authenticated; this amendment does not authorize public exposure
   or automatic publication of copyrighted pages.
+- #48 **The salon TV is now a server-side PIN-protected private application
+  with a separate, integrity-gated knowledge export (2026-08-08).** The
+  `Fairytails123/groomingtv` repository is private, GitHub Pages is disabled,
+  and the former public Pages URL returns 404. The live route is
+  `https://auto.thefairytails.co.uk/salon-tv/`, served by an isolated
+  `ft-grooming-tv` container behind the existing reverse proxy. The first
+  response is a four-digit PIN form; HTML, JS, CSS, breed JSON and illustration
+  PNGs all require the same signed HttpOnly/Secure/SameSite=Strict session.
+  The PIN hash and session-signing secret are mounted from private server files
+  and never appear in source or browser payloads. A deterministic local builder
+  compiles all 155 approved breed records into private TV packs with 1,213
+  approved sections and 271 exact source-pixel PNG crops for 153 breeds;
+  Standard Manchester Terrier and Miniature Bull Terrier remain explicit
+  no-image source gaps. Each crop carries its role, label, source page/bounding
+  box, encoded SHA-256 and decoded-pixel SHA-256. The private host verifies the
+  export checksum manifest before packaging. The renderer exposes every
+  body/front/back/head/supplementary view, using a dense two-row thumbnail grid
+  for breeds with more than seven images. Only authenticated requests for
+  `today.json` and `tomorrow.json` are refreshed from the existing public
+  session-pack source; validated packaged copies are the offline fallback.
+  Breed knowledge and book illustrations never use the legacy public image
+  publisher. Deployment keeps a complete prior release and compose backup for
+  rollback, and recreates only the salon-TV container.
 
-**Deployment state (2026-05-05):**
-- TV display: `https://fairytails123.github.io/groomingtv/` — initial commit
-  `345d03c`. Pages enabled from `main` / root.
+**Deployment state (2026-08-08):**
+- TV display: `https://auto.thefairytails.co.uk/salon-tv/` — private PIN host;
+  155 searchable breeds, 1,213 sections and 271 exact illustration crops live.
+  The `groomingtv` repository is private and GitHub Pages is disabled.
 - Back-end: commit `e249143` adds `writePublicIndex_()` + the seed
   `public/index.json` (one entry, BRD-001 Miniature Schnauzer). Apps Script
   Web App still on Version 10; redeploy needed for `writePublicIndex_` to
   fire on future publishes (until then the seed is maintained manually if
   another breed publishes).
 
-**What's still pending after v3.10 ship:**
+**What's still pending after v3.11 ship:**
 - Live verification on the actual Hisense 40E4QTUK Vidaa browser (the
   load-bearing test for Stage 1 — desktop Chrome rendering is not a
   guarantee). Plug in a Fire TV Stick if Vidaa proves unreliable.

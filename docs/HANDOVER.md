@@ -1,10 +1,21 @@
 # HANDOVER — Fairy Tails Grooming Knowledge Software
 
-> **Read this in full before touching anything.** Then the spec at `.md/grooming-knowledge-software-architecture.md` (v3.10). Memory at `<.claude>/projects/.../memory/MEMORY.md` has user/feedback/reference notes that are authoritative for *how* to work on this project.
+> **Read this in full before touching anything.** Then the spec at `.md/grooming-knowledge-software-architecture.md` (v3.11). Memory at `<.claude>/projects/.../memory/MEMORY.md` has user/feedback/reference notes that are authoritative for *how* to work on this project.
 >
-> **System state — Stage 1 TV display LIVE.** Full architecture-spec loop now closed end-to-end: TV at `https://fairytails123.github.io/groomingtv/` (Stage 1) reads from the back end at `https://fairytails123.github.io/groomingbackend/` (Stages 2–5 + Phase 2). Apps Script Web App at Version 18 (`2026-08-08`). Spec at v3.10.
+> **System state — private salon TV LIVE.** The whole TV application is PIN-gated at `https://auto.thefairytails.co.uk/salon-tv/`; its private export contains the complete finalized book catalogue and exact breed illustrations. The former public GitHub Pages site is disabled. Apps Script Web App remains at Version 18 (`2026-08-08`). Spec at v3.11.
 
-**Last updated:** 2026-08-08 — the full-book private reference catalogue is imported and live in the authenticated admin software. Apps Script Version 18 remains on the existing persistent Web App URL. No reference entry or generated Pet Groom draft was published automatically.
+**Last updated:** 2026-08-08 — the full-book private reference catalogue is imported in admin and independently compiled into the PIN-hosted salon TV. Apps Script Version 18 remains on the existing persistent Web App URL. No reference entry or generated Pet Groom draft was published through the legacy public pipeline.
+
+## 2026-08-08 — private salon TV and exact multi-angle illustrations live
+
+- Live TV: `https://auto.thefairytails.co.uk/salon-tv/`. The first page is the PIN prompt; every HTML, JS, CSS, JSON and PNG request is session-gated. The PIN is represented only by a private salted scrypt hash, and the session secret is server-mounted.
+- `Fairytails123/groomingtv` is private, GitHub Pages is disabled, and the former Pages URL returns 404.
+- The reusable source of truth is `Knowledge/reusable-data/notes-from-the-grooming-table/illustration-catalog-v1/`: 271 lossless source-pixel crops across 153 breeds, classified as body/front/back/head/supplementary. Every crop is independently compared with its source-page bounding box and protected by encoded and decoded-pixel SHA-256 hashes.
+- `private-tv-export/` contains 155 searchable TV packs, 1,213 approved sections and all 271 crops. Manchester Terrier (Standard) and Miniature Bull Terrier remain explicit no-book-image entries because their pages are absent from the supplied scan.
+- The TV no longer truncates the illustration strip at six supplementary images. Dense two-row thumbnails retain all 10 Cocker Spaniel views and all 11 Portuguese Water Dog views while keeping the 1080p no-scroll layout.
+- The private host validates the input checksum manifest before packaging. Authenticated `today.json` and `tomorrow.json` requests refresh from the existing session-pack source with JSON validation and a five-second timeout; the packaged files are the offline fallback. Breed packs and book images are never fetched from or published to the public repository.
+- Production verification: PIN absent from page source; unauthenticated data/image requests redirect to the PIN; hardened session cookie attributes present; all 155 live packs and all 271 served PNG hashes read back successfully; the two source-gap breeds have no fabricated image; former Pages URL 404; n8n stayed HTTP 200 and its container identity did not change.
+- Rollback copies are retained on the VPS as the pre-knowledge release, the pre-live-session release and the compose backup. Server access details remain only in the private VPS handover, never in this public repo.
 
 ## 2026-08-08 — full grooming-book reference catalogue imported (Apps Script v18)
 
@@ -50,21 +61,21 @@ After v8: PRF-001 (Miniature Schnauzer / Pet Groom) extracted 14 vision findings
    `C:\Users\FT Manager\OneDrive\Business\CODING\groomingtv\`. Skip this
    step only if the work is purely back-end (Apps Script / Sheets / n8n).
 3. **Skim memory:** `<.claude>/projects/.../memory/MEMORY.md` (entries are short).
-4. **Open the spec:** `.md/grooming-knowledge-software-architecture.md` v3.10, §0a "v3.10 amendments" block at the top is the diff-from-current-truth. Decisions #39–#44 cover the TV display. Don't read the whole spec unless touching a specific section.
+4. **Open the spec:** `.md/grooming-knowledge-software-architecture.md` v3.11, §0a is the diff-from-current-truth. Decision #48 is the private TV and exact-illustration delivery contract.
 5. **Sanity check the live system** — both halves:
    ```bash
    curl -s -o /dev/null -w "admin login:  %{http_code}\n" \
      https://fairytails123.github.io/groomingbackend/admin/login.html
-   curl -s -o /dev/null -w "tv root:      %{http_code}\n" \
+   curl -s -o /dev/null -w "tv PIN root:  %{http_code}\n" \
+     https://auto.thefairytails.co.uk/salon-tv/
+   curl -s -o /dev/null -w "old TV Pages: %{http_code}\n" \
      https://fairytails123.github.io/groomingtv/
-   curl -s -o /dev/null -w "tv breed:     %{http_code}\n" \
-     "https://fairytails123.github.io/groomingtv/breed.html?slug=miniature-schnauzer"
    curl -s -o /dev/null -w "today.json:   %{http_code}\n" \
      https://fairytails123.github.io/groomingbackend/public/today.json
    curl -s -o /dev/null -w "index.json:   %{http_code}\n" \
      https://fairytails123.github.io/groomingbackend/public/index.json
    ```
-   All five should print `200`. Login URL + password in §"Live deployment state" below.
+   Admin, TV PIN root, today and index should print `200`; old TV Pages should print `404`.
 6. **Check git state:** `git log --oneline -10`. Latest as of 2026-05-06 — back-end: `dd9c488 Spec §0a #44 + HANDOVER` (or newer cron rebuilds); TV repo: `85fbe79 Breed page redesign — Apple-inspired`. Any newer commits should match what this file describes.
 7. **Pick a task** from §"Recommended next-task priorities" — items are ranked by what unblocks the most.
 
@@ -93,8 +104,8 @@ Everything below is live unless flagged ⏳ pending or 🟡 not-yet-verified.
 | Back-end GitHub repo | https://github.com/Fairytails123/groomingbackend |
 | Back-end GitHub Pages site | https://fairytails123.github.io/groomingbackend/ |
 | Admin website (login) | https://fairytails123.github.io/groomingbackend/admin/login.html |
-| **TV display GitHub repo** | https://github.com/Fairytails123/groomingtv |
-| **TV display live URL** | https://fairytails123.github.io/groomingtv/ — open on the salon Hisense 40" 40E4QTUK Vidaa browser. Reads `today.json` + `breeds/{slug}.json` + `index.json` from the back-end Pages site. Local working copy at `C:\Users\FT Manager\OneDrive\Business\CODING\groomingtv\` |
+| **TV display GitHub repo** | `Fairytails123/groomingtv` (private; Pages disabled) |
+| **TV display live URL** | https://auto.thefairytails.co.uk/salon-tv/ — server-side PIN gate, private same-origin breed packs and illustrations. Local working copy at `C:\Users\FT Manager\OneDrive\Business\CODING\groomingtv\` |
 | Apps Script project | https://script.google.com/home/projects/1sxgzOrmd2OEmuJmMeoW15Vbb1GkbO1GIhs3h0afmOafcgOb1tDErvIA1/edit (project ID `1sxgzOrmd2OEmuJmMeoW15Vbb1GkbO1GIhs3h0afmOafcgOb1tDErvIA1`) |
 | Apps Script Web App URL | `https://script.google.com/macros/s/AKfycby5CU8J-xyCn38ruoe_HdDswRBCNcxXLO9O2AyiiHDt781mwsJzWeyyahySfwjpq4ZL/exec` (deployment Version 18, persistent — same URL across all v1→v18 redeploys) |
 | n8n workflow | https://auto.thefairytails.co.uk/workflow/6xHWEX3f9zrWtDDa ("Dog Grooming Back End") — self-hosted n8n on the Hostinger VPS; migrated off n8n Cloud 2026-07-05 |
@@ -222,8 +233,8 @@ Every row links the relevant commit so a `git show` brings up the diff.
 
 ### Stage 1 — TV display (separate repo, shipped 2026-05-05)
 
-- ✅ **Repo created** at `https://github.com/Fairytails123/groomingtv` (initial commit `345d03c`). Local clone at `C:\Users\FT Manager\OneDrive\Business\CODING\groomingtv\`. GitHub Pages enabled from `main` / root via `gh api repos/.../pages -X POST` (no manual UI step needed).
-- ✅ **Live URL** at `https://fairytails123.github.io/groomingtv/` — open on the salon Hisense 40" 40E4QTUK Vidaa browser. Reads `today.json`, `breeds/{slug}.json`, and `index.json` from the back-end's GitHub Pages. CORS is permissive on Pages so cross-origin fetches work natively.
+- ✅ **Repo is private** at `Fairytails123/groomingtv`; GitHub Pages is disabled and the former Pages URL returns 404.
+- ✅ **Live URL** at `https://auto.thefairytails.co.uk/salon-tv/` — whole-site server-side PIN gate with private same-origin data and images.
 - ✅ **Single-screen, no-scroll layout** (`124316f`) — start screen is a 3×3 grid capped at 9 bookings with a "+N more" Search prompt; breed page is one section at a time via a section pager + interactive thumbnail strip. `body { overflow: hidden }` on both pages.
 - ✅ **Apple-inspired breed redesign** (`85fbe79`) — Claude Design drop-in: translucent topbar with `backdrop-filter`, floating white cards on a soft-white canvas (`#F5F5F7`), iOS-style segmented Pet/Show toggle, 60 px section-pager pills with monospace `01..05` numerals, floating role chip on the main image, **interactive bottom thumbnail strip** that cross-fades thumbs into the main display (180 ms). CSS tokens namespaced (`--brand`, `--ink`, `--bg`) inside `css/breed.css` so they don't collide with `tokens.css`; the start page is unaffected.
 - ✅ **`writePublicIndex_()` in back-end's `apps-script/publish.gs`** (`e249143`) — writes a flat `public/index.json` listing every Published breed for the TV's manual-search autocomplete. Called from `op_publish_profile` and `op_unpublish_profile`; manual `rebuildPublicIndex()` helper for editor-side backfill.
@@ -284,7 +295,7 @@ Steps:
 
 ### P5 — TV display ✅ DONE (2026-05-05)
 
-Shipped as a separate repo at `https://github.com/Fairytails123/groomingtv` (initial commit `345d03c`, breed-page redesign `85fbe79`). Live at `https://fairytails123.github.io/groomingtv/`. Vanilla HTML / ES modules / no build step.
+Shipped as a separate private repo `Fairytails123/groomingtv` (initial commit `345d03c`, breed-page redesign `85fbe79`). Live behind the PIN gate at `https://auto.thefairytails.co.uk/salon-tv/`; GitHub Pages is disabled. Vanilla HTML / ES modules with a small built-in-Node private host and deterministic deployment packager.
 
 The breed working screen was redesigned same-day to an Apple-inspired layout via a Claude Design drop-in handoff (`~/Downloads/groomingtv-redesign`): translucent topbar, floating white cards on a soft-white canvas, iOS-style segmented Pet/Show toggle, 60 px rounded section-pager pills with monospace `01..05` numerals, floating role chip on the main image, and an **interactive bottom thumbnail strip** — clicking a thumb cross-fades it into the main display. Spec §0a #44 captures the locked decisions; CSS tokens namespaced (`--brand`, `--ink`, etc.) so they don't collide with `tokens.css` and the start page is unaffected.
 
@@ -302,8 +313,8 @@ The breed working screen was redesigned same-day to an Apple-inspired layout via
 | Check | Command / step | Expected |
 |---|---|---|
 | Admin Pages alive | `curl -s -o /dev/null -w "%{http_code}\n" https://fairytails123.github.io/groomingbackend/admin/login.html` | `200` |
-| TV root alive | `curl -s -o /dev/null -w "%{http_code}\n" https://fairytails123.github.io/groomingtv/` | `200` |
-| TV breed page alive | `curl -s -o /dev/null -w "%{http_code}\n" "https://fairytails123.github.io/groomingtv/breed.html?slug=miniature-schnauzer"` | `200` |
+| TV PIN root alive | `curl -s -o /dev/null -w "%{http_code}\n" https://auto.thefairytails.co.uk/salon-tv/` | `200` with PIN form; PIN absent from source |
+| Old public TV disabled | `curl -s -o /dev/null -w "%{http_code}\n" https://fairytails123.github.io/groomingtv/` | `404` |
 | Today/Tomorrow JSON live | `curl -s https://fairytails123.github.io/groomingbackend/public/today.json \| jq '.session_date'` | Today's ISO date in `"YYYY-MM-DD"` |
 | Index.json live (TV search) | `curl -s https://fairytails123.github.io/groomingbackend/public/index.json \| jq '.breeds \| length'` | At least `1` |
 | Apps Script Web App reachable | The Web App URL serves a 302 to a `script.googleusercontent.com` echo URL on plain GET — that's normal Google interstitial behaviour. Easiest dispatcher check: log in via the admin site → DevTools Network tab → any successful op (e.g. `list_breeds`) shows `ok:true`. |
@@ -362,7 +373,7 @@ In chronological order; only the ones that left a trap if you're not careful.
    It has its own §6 verification cheat-sheet and §7 bugs-fixed list
    specific to the TV.
 3. **Read memory:** `<.claude>/projects/.../memory/MEMORY.md` index, then any of the entries that look relevant.
-4. **Spec read:** §0a "v3.10 amendments" at the top of `.md/grooming-knowledge-software-architecture.md`. Decisions #39–#44 cover the TV display. Don't read the whole spec unless touching a specific section.
+4. **Spec read:** §0a at the top of `.md/grooming-knowledge-software-architecture.md`. Decision #48 covers the private TV and exact illustrations.
 5. **Verify alive:** the cheat-sheet in §6 above (covers both repos in one block of curls).
 6. **Check git state:** `git log --oneline -10`. Latest as of 2026-05-06 — back-end: `dd9c488 Spec §0a #44 + HANDOVER` (or newer cron rebuilds). TV repo: `85fbe79 Breed page redesign — Apple-inspired`. If `git status` shows local changes you don't recognise, that's almost certainly OneDrive CRLF noise — `.gitattributes` will normalise.
 7. **If the work is TV-side:** prefer pushing to `Fairytails123/groomingtv@main` directly (small repo, no auth-protected paths). The back-end repo has cron rebuilds running daily, so always `git fetch origin main` + rebase before pushing back-end commits.
