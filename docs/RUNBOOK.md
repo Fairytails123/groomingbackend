@@ -1,302 +1,234 @@
-# RUNBOOK — Kamal-side wiring
+# Production runbook — grooming knowledge and private salon TV
 
-Step-by-step list of what Kamal needs to do that Claude couldn't do
-autonomously. Each step has a copy-pasteable command or a clickable URL
-and an "expected result" so you can verify as you go.
+Current baseline: 8 August 2026, Apps Script Version 19, private release
+`20260808-knowledge-v2`.
 
-Order is roughly low-effort → higher-effort. Aim is ~30 minutes total
-for everything below.
+This replaces the original build-day wiring checklist. The Google, GitHub,
+n8n and TV services are already configured. Do not repeat first-time setup or
+reactivate retired workflow paths.
 
----
+## 1. Normal health check
 
-## 0. Commit the day's work to git
-
-Once everything else in this runbook has been verified, run this in
-PowerShell from the repo root:
+Expected HTTP boundary:
 
 ```powershell
-cd "C:\Users\FT Manager\OneDrive\Business\CODING\Grooming Software"
-
-# Sanity check: should show the modified files plus a few new ones.
-git status
-
-# Stage everything we want to commit.
-git add `
-  apps-script/Code.gs `
-  apps-script/dashboard.gs `
-  apps-script/setup.gs `
-  admin/dashboard.html `
-  admin/js/pages/dashboard.js `
-  admin/js/pdf-intake.js `
-  .md/grooming-knowledge-software-architecture.md `
-  .md/grooming-knowledge-software-architecture.v3.8.backup.md `
-  docs/HANDOVER.md `
-  docs/api.md `
-  docs/RUNBOOK.md `
-  n8n/README.md
-
-# Commit with a thorough message.
-git commit -m "Stage 3 follow-on: re-extract page-count fix, dashboard polish, runbook" -m "Built in the same session that smoke-tested Phase 2:
-
-* admin/js/pdf-intake.js — re-extract now catches up on missing page renders.
-  Diff existing renders against locally rendered pages; save the missing ones.
-  Closes the gap where re-extracting a profile whose stored renders were a
-  strict subset of the source PDF would silently skip the back pages.
-
-* op_acknowledge_alert (apps-script/dashboard.gs + Code.gs OP_REGISTRY) —
-  patches Operational Alerts row with acknowledged_at + acknowledged_by.
-  Idempotent. Dashboard renders a Dismiss button per alert (admin/js/pages/
-  dashboard.js). Deployed as Apps Script v9.
-
-* op_health_check (apps-script/dashboard.gs + Code.gs PUBLIC_OPS) — returns
-  Property-set booleans (never the values), sheet counts, last AI call,
-  today's GBP AI spend. Surfaces in dashboard's new Backend health card.
-  Deployed as Apps Script v10.
-
-* setupTriggers() (apps-script/setup.gs) — programmatic install of the
-  midnight resetLoginFailCounter trigger. Idempotent. Replaces the manual
-  Triggers-UI click-through. setupAll() calls it; standalone setupTriggers()
-  available for re-runs.
-
-* Spec bumped v3.8 → v3.9 with five new amendments (#34-#38) covering the
-  three vision-call fixes, the re-extract page-count fix, and op_acknowledge_alert.
-  v3.8 backup at .md/*.v3.8.backup.md.
-
-* docs/api.md gains a Dashboard ops section documenting acknowledge_alert
-  + health_check.
-
-* n8n/README.md — design + build instructions for WF-04 Telegram intake
-  and WF-09 Telegram heading approval, including all hard-coded constants
-  (Apps Script URL, chat ID, etc.). JSON exports get committed back to
-  n8n/ once Kamal finalises them in the n8n UI.
-
-* docs/RUNBOOK.md — this file. Operational steps Kamal performs to finish
-  wiring the system."
-
-# Push.
-git push
+curl.exe -s -o NUL -w "admin: %{http_code}\n" https://fairytails123.github.io/groomingbackend/admin/login.html
+curl.exe -s -o NUL -w "tv PIN: %{http_code}\n" https://auto.thefairytails.co.uk/salon-tv/
+curl.exe -s -o NUL -w "old TV: %{http_code}\n" https://fairytails123.github.io/groomingtv/
+curl.exe -s -o NUL -w "public Afghan pack: %{http_code}\n" https://fairytails123.github.io/groomingbackend/public/breeds/afghan-hound.json
 ```
 
-**Expected:** `pushed to origin/main`. The admin website on
-`https://fairytails123.github.io/groomingbackend/admin/` will pick up the
-new dashboard panels within a minute or two as GitHub Pages rebuilds.
+Expected: admin 200, TV PIN 200, old TV 404, public Afghan pack 404.
 
----
+Unauthenticated requests to private-TV JSON or image paths must return a 303
+redirect to `/salon-tv/`. A 200 response containing protected JSON/image bytes
+is a security incident.
 
-## 1. Generate `GITHUB_PAT` and paste into Apps Script Properties (~3 min)
+After admin login, the dashboard baseline is:
 
-The publish-to-GitHub-Pages flow currently fails with `GITHUB_FAILED`
-because the personal-access-token is missing. After this step, the
-"publish profile" button on the admin website starts working.
+- Live cards: 155
+- Need review: 0
+- Pending TV release: 0
+- Drafts: 0
 
-1. Open https://github.com/settings/personal-access-tokens — sign in if
-   needed.
-2. Click **Generate new token** (top right) → **Fine-grained tokens**.
-3. **Token name:** `groomingbackend (publish)`.
-4. **Expiration:** pick something practical — 1 year is fine, longer if
-   you don't want to rotate. Set a calendar reminder.
-5. **Repository access:** "Only select repositories" →
-   `Fairytails123/groomingbackend`.
-6. **Permissions → Repository permissions:**
-   - **Contents:** read and write
-   - **Metadata:** read-only (auto-required)
-7. Click **Generate token**. Copy the token (`github_pat_…`).
-8. Open the Apps Script project:
-   https://script.google.com/home/projects/1sxgzOrmd2OEmuJmMeoW15Vbb1GkbO1GIhs3h0afmOafcgOb1tDErvIA1/edit
-9. ⚙ Project Settings (left-side gear icon) → **Script properties** → **Add
-   script property**.
-10. **Property:** `GITHUB_PAT` — **Value:** paste the token. Click **Save**.
+Admin → Private TV must show release `20260808-knowledge-v2`, 155 breeds,
+1,213 sections and 271 images.
 
-**Verify:** open
-https://fairytails123.github.io/groomingbackend/admin/dashboard.html — the
-Backend health card should now show `0 required Properties not set ✓`. (If
-the card still says missing, hard-refresh the page.)
+## 2. Regression checks before any release
 
----
-
-## 2. Run `setupTriggers()` once in the Apps Script editor (~30 sec)
-
-Installs the midnight reset trigger for the login-fail counter so brute-force
-attempts don't accumulate forever.
-
-1. With the Apps Script editor still open from step 1, click on
-   `setup.gs` in the file tree.
-2. In the function dropdown at the top (just to the right of "Debug"),
-   select **`setupTriggers`**.
-3. Click **▶ Run**.
-4. First run: an authorisation prompt opens — click through it (allow
-   `Google Apps Script` to manage triggers in your account).
-5. Second click of **▶ Run** if it didn't actually run after auth.
-
-**Verify:** click the clock icon in the left rail (Triggers). You should
-see one trigger:
-```
-resetLoginFailCounter — Time-driven — Day timer — Midnight to 1am
-```
-
----
-
-## 3. Paste the Apps Script URL into n8n's existing workflow (~3 min)
-
-The "Dog Grooming Back End" workflow at
-https://auto.thefairytails.co.uk/workflow/6xHWEX3f9zrWtDDa has three HTTP
-Request nodes that hit Apps Script crons. Their URL field is currently a
-placeholder.
-
-1. Open the workflow.
-2. Find the three HTTP Request nodes (one per cron schedule: 06:00 + 11:30,
-   07:00, 19:00).
-3. For each: replace the URL with:
-   ```
-   https://script.google.com/macros/s/AKfycby5CU8J-xyCn38ruoe_HdDswRBCNcxXLO9O2AyiiHDt781mwsJzWeyyahySfwjpq4ZL/exec
-   ```
-   - Method: **POST**
-   - Body Content Type: **Raw / Text**
-   - Body matches the cron — see `n8n/README.md` "Pasting the Apps Script URL
-     into the existing workflow" for the exact JSON per cron.
-4. Save the workflow. Click **Inactive → Active** in the top-right toggle
-   when ready.
-
-**Verify:** click **Execute Workflow** on the cron node manually. You
-should see a 200 response from Apps Script and a Telegram-Outbox row in
-the Sheets workbook.
-
----
-
-## 4. Wire n8n credentials (~10 min — one-time)
-
-Create on `auto.thefairytails.co.uk` (VPS n8n) → Credentials. Each credential is
-shared across all workflows that need that connection.
-
-| Credential name             | Type                | What it's for                                  |
-|------------------------------|---------------------|-----------------------------------------------|
-| `Google Sheets — workbook`   | Google Sheets OAuth2 | future direct-write workflows (none today)    |
-| `Google Drive — root`        | Google Drive OAuth2  | WF-04 Drive uploads (when built)              |
-| `GitHub Contents API`        | HTTP Header Auth    | name `Authorization`, value `Bearer <PAT>` from step 1 |
-| `OpenAI`                     | OpenAI               | only if WF-06/07/08 are revived (currently the live path is direct from Apps Script) |
-| `Telegram Bot — fairy tails` | Telegram             | bot token from `.secrets/telegram-token.md` (when WF-04/09 are built) |
-
-For each Google credential, n8n walks you through an OAuth flow — click
-**Connect**, allow the scopes, you're done.
-
-**Verify:** in any workflow node that uses one of these credentials, the
-green tick appears next to "Credential to connect with".
-
----
-
-## 5. JotForm webhook → n8n WF-01 trigger (~3 min)
-
-Today, `today.json` rebuilds at 06:00 + 11:30 from the cron. After this
-step, it also rebuilds within seconds of any new JotForm submission, so
-last-minute bookings appear on the TV without waiting for the next cron.
-
-1. Open https://www.jotform.com/myforms — sign in.
-2. Find form **Grooming Appointment** (form ID `251190647924057`).
-3. Click **Settings** (top tab) → **Integrations** (left rail) → search
-   for **Webhooks**.
-4. Add a webhook URL:
-   ```
-   https://auto.thefairytails.co.uk/webhook/<your-WF-01-webhook-path>
-   ```
-   (Get the exact path by opening WF-01 in n8n and copying the webhook
-   node's production URL.)
-5. **Save**.
-
-**Verify:** make a test JotForm submission with a real breed. Within a
-few seconds, the n8n workflow should fire (visible in n8n's Executions
-tab) and `today.json` on GitHub Pages should include the new booking.
-
----
-
-## 6. (Recommended) Move repo out of OneDrive (~10 min)
-
-Today's session hit three OneDrive-induced incidents:
-1. `.git/objects/*` files dehydrated to Files-On-Demand placeholders;
-   git reported "corrupt object".
-2. CRLF/LF flips across 9 files (mitigated by `.gitattributes`).
-3. The `Edit` tool's writes raced with OneDrive sync, truncating
-   `apps-script/ai.gs` mid-function on two separate edits.
-
-git + GitHub already gives you authoritative version control + off-machine
-backup. OneDrive on top is redundant and dangerous. The clean fix:
+Run from the repository root:
 
 ```powershell
-# 1. Make sure all work is committed and pushed (step 0 above).
-git -C "C:\Users\FT Manager\OneDrive\Business\CODING\Grooming Software" status
-# Should report "nothing to commit, working tree clean".
-
-# 2. Pause OneDrive (right-click cloud icon in tray → Pause syncing → 8 hours)
-#    so it doesn't fight with the move.
-
-# 3. Move the folder.
-Move-Item `
-  "C:\Users\FT Manager\OneDrive\Business\CODING\Grooming Software" `
-  "C:\Users\FT Manager\Code\Grooming Software"
-
-# 4. Verify the new location.
-git -C "C:\Users\FT Manager\Code\Grooming Software" log --oneline -3
-git -C "C:\Users\FT Manager\Code\Grooming Software" remote -v
-
-# 5. Re-point Cowork: in this chat, click the folder picker in the
-#    bottom-right and select the new path. Cowork will re-mount it.
-
-# 6. Resume OneDrive sync. Ignore any "missing folder" warnings — git is
-#    your version control now, not OneDrive.
+node tests/reference-library.test.js
+node tests/reference-schema.test.js
+node tests/publish-approved-images.test.js
+node tests/private-tv-publish.test.js
+node --check admin/js/pages/publish.js
+node --check admin/js/pages/profile.js
+git diff --check
 ```
 
-If anything feels off, the original folder is still in OneDrive's recycle
-bin for 30 days as a safety net.
+All commands must pass. `private-tv-publish.test.js` specifically proves that
+the private release path contains no GitHub content-write helpers, that the new
+operations require authentication, and that legacy public publishing fails
+closed.
 
----
+## 3. Apps Script deployment
 
-## 7. (Optional) `clasp login` for cleaner Apps Script deploys (~2 min)
-
-Today's deploys (v6 through v10) went via Chrome MCP + Monaco's exposed
-`setValue` API. That works but is brittle. Setting up `clasp` properly
-makes future deploys a one-liner.
+Use the persistent deployment ID only:
 
 ```powershell
-# In any PowerShell window:
-clasp login
-
-# Authorise the Google account in the browser. Returns "Authorized" once done.
-
-# Verify .clasp.json has the right project ID.
-cd "C:\Users\FT Manager\Code\Grooming Software\apps-script"  # or current path
-cat .clasp.json
-# Should contain "scriptId": "1sxgzOrmd2OEmuJmMeoW15Vbb1GkbO1GIhs3h0afmOafcgOb1tDErvIA1"
-# If file missing, copy .clasp.json.example and fill in the ID.
-
-# Future deploys:
+Set-Location apps-script
 clasp push
-clasp deploy --deploymentId AKfycby5CU8J-xyCn38ruoe_HdDswRBCNcxXLO9O2AyiiHDt781mwsJzWeyyahySfwjpq4ZL --description "vN <description>"
+clasp deploy --deploymentId AKfycby5CU8J-xyCn38ruoe_HdDswRBCNcxXLO9O2AyiiHDt781mwsJzWeyyahySfwjpq4ZL --description "vN concise-description"
+clasp deployments
 ```
 
----
+The final line must show the persistent deployment at the intended version.
+Never run a bare `clasp deploy`; that creates a different Web App URL and can
+strand the admin and n8n callers.
 
-## 8. (Reserved) Build WF-04 Telegram intake when Telegram is ready
+After a schema change, run the authenticated operation or documented setup
+path that calls `ensureSheets_()`. `setupAll()` is idempotent but should not be
+used casually in production. The current workbook has 17 sheets.
 
-See `n8n/README.md` for the full design. ~30-45 min once credentials are
-wired. Adds Telegram as a second PDF intake path (browser stays the
-primary).
+Dispatcher smoke test for an authenticated-only operation:
 
-## 9. (Reserved) Build WF-09 Telegram heading approval
+```javascript
+(await fetch("<WEB_APP_URL>", {
+  method: "POST",
+  headers: { "Content-Type": "text/plain" },
+  body: '{"op":"private_tv_release_status"}'
+})).json()
+```
 
-See `n8n/README.md`. ~20-30 min. Only useful if/when AI starts surfacing
-extra headings (none surfaced for the Miniature Schnauzer test PDF).
+Expected without a token: `UNAUTHORIZED`. `NOT_FOUND` means the deployment did
+not receive the operation.
 
----
+## 4. Build and deploy a new private TV release
 
-## Sanity check at the end
+Only do this after the reusable catalogue is final, approved and integrity
+clean.
 
-After steps 0-5, hit
-https://fairytails123.github.io/groomingbackend/admin/dashboard.html and
-look at the Backend health card. You should see:
+1. Work from
+   `Knowledge/reusable-data/notes-from-the-grooming-table/`.
+2. Build the sealed private-TV export with the existing deterministic builder.
+3. Run the export verifier. It must validate every manifest/checksum entry,
+   breed pack and image. Source-gap breeds must remain explicit.
+4. Confirm exact image masters still match their recorded encoded and decoded
+   pixel hashes. Enhanced variants must remain separate.
+5. Deploy the sealed export to the isolated private TV container using the TV
+   repository's deployment procedure.
+6. Verify the protected host independently: PIN page, authenticated index,
+   representative breeds, all image hashes and unauthenticated redirects.
+7. Retain the prior server release and configuration as rollback material.
+8. Only after steps 1–7 pass, generate the hash-only registration file with:
+   `build_private_tv_release_registration.py`.
 
-- "All required Script Properties are set ✓"
-- Sheet counts non-zero
-- Last AI call recent and `success` (matching whatever Kamal's done last)
-- Today's AI spend reflecting actual usage
+The registration file belongs alongside the sealed export, never inside it;
+placing it inside changes the export manifest and must make verification fail.
 
-If any of those are off, the relevant step above has a Verify clause —
-work back from there.
+## 5. Reconcile backend publication state
+
+1. Sign in to the admin site.
+2. Open **Private TV**.
+3. Confirm the page describes the already-deployed protected release and does
+   not offer public GitHub publishing.
+4. Choose the hash-only `private-tv-release-registration.json`.
+5. Check the release ID and breed count in the confirmation.
+6. Select **Register verified release**.
+7. Wait for reconciliation; the operation has a 120-second client timeout.
+
+Expected result:
+
+- release summary updates;
+- profiles transition to Published as required;
+- pending table becomes empty;
+- dashboard and sidebar counts refresh;
+- each changed profile receives one `private_tv_publish` history entry.
+
+Retry the same registration once when validating a new implementation. The
+second run must report no transitions and must not add history rows.
+
+Do not register a manifest before the matching bundle is serving users. Backend
+state is evidence of a deployed release, not a deployment trigger.
+
+## 6. Post-release verification
+
+Verify using final persisted and served values:
+
+- Admin dashboard totals match the release.
+- Admin library shows every expected breed live.
+- A representative profile reports `publication_target:"private-tv"`, the
+  current release ID and exactly one history entry for that transition.
+- TV search returns the expected breed count.
+- A dense guide such as Portuguese Water Dog exposes every illustration angle,
+  not only the first six.
+- Blade labels and grooming boundaries remain readable and unchanged.
+- Public backend index has not gained the private catalogue.
+- A representative public breed-pack path returns 404.
+- Former TV GitHub Pages remains 404.
+- Unauthenticated private data and image requests redirect to the PIN page.
+- n8n remains healthy; private release registration does not edit n8n.
+
+Record counts, status codes, deployment version, commit IDs and any untested
+scenario in `docs/HANDOVER.md`.
+
+## 7. Failure and recovery
+
+### Builder or integrity verification fails
+
+Stop. Keep the current live release and backend state. Correct the source,
+mapping or builder defect and regenerate. Never suppress a hash, missing-page,
+blade-label or grooming-boundary failure.
+
+### Private deployment fails
+
+Restore the retained previous TV release. Do not register the failed release.
+Recheck PIN, authenticated packs and image hashes after rollback.
+
+### Registration validation fails
+
+The operation is fail-closed and should not partially transition profiles.
+Compare the approved reference slug set, profile links, source PDF identity and
+release hash map. Fix the mismatch at its source; do not weaken validation.
+
+### Registration times out
+
+Read the backend release status and representative profile history before
+retrying. The operation is idempotent, so an unchanged retry safely resolves a
+response lost after a successful write.
+
+### Public catalogue content appears
+
+Treat it as a privacy incident. Do not enable the escape hatch. Identify the
+commit or caller, remove public content through a reviewed remediation, verify
+Pages/CDN behaviour and record the incident. Preserve audit evidence.
+
+### TV pack must be removed or superseded
+
+Build and deploy a corrected private release first. Do not call legacy
+`unpublish_profile` for a private-TV profile. The current backend intentionally
+blocks that path.
+
+## 8. n8n boundary
+
+All n8n work targets `https://auto.thefairytails.co.uk`. Never reactivate the
+retired cloud instance. The private-TV release pipeline does not run through
+n8n; Apps Script owns release registration, while the VPS workflow continues
+scheduled session-pack and Telegram intake duties.
+
+Before changing the workflow, read back the live VPS version, compare it with
+`n8n/dog-grooming-backend.json`, make the smallest change, validate it, then
+export the live result back into this repository.
+
+## 9. Git and documentation handoff
+
+This repository is public and daily cron jobs can create new commits. Before a
+push:
+
+```powershell
+git fetch origin main
+git rev-list --left-right --count origin/main...main
+git status --short
+```
+
+Rebase only when the worktree and rollback implications are understood. Stage
+only intended tracked files; preserve untracked backups and user files.
+
+Every handoff must state:
+
+- exact commits and deployments;
+- changed files and why;
+- final backend/TV counts;
+- integrity and regression checks;
+- public/private boundary results;
+- untested physical-device scenarios;
+- rollback position and known risks.
+
+## 10. Remaining physical TV walkthrough
+
+On the salon's Hisense Vidaa device, verify PIN entry using the remote, D-pad
+search, opening a breed, changing sections, selecting all dense thumbnails,
+locking, refreshing and recovering after a browser restart. This remains the
+only major display-specific check not reproduced by desktop Chrome.

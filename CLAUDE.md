@@ -32,43 +32,69 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Read these first
 
 1. `docs/HANDOVER.md` — operational truth: what is live, what is pending, recent commits, every bug that left a trap. Always read in full before editing.
-2. `.md/grooming-knowledge-software-architecture.md` — canonical spec (currently v3.10). The §0a amendment block at the top is the diff against the last full revision; don't read the whole spec unless touching a specific section.
+2. `.md/grooming-knowledge-software-architecture.md` — canonical spec (currently v3.12). The §0a amendment block at the top is the diff against the last full revision; decisions #47–49 define the reviewed corpus, private TV and backend publication model.
 3. `docs/api.md` — Apps Script op catalogue (request/response shapes).
-4. `docs/workflows.md` — n8n workflow catalogue. WF-06/07/08 are deprecated for the Phase 2 path (Apps Script owns OpenAI calls directly).
+4. `docs/private-tv-publication.md` — current publication trust boundary, integrity invariants, recovery and implementation map.
+5. `docs/workflows.md` — current n8n boundary plus the explicitly historical twelve-workflow design. WF-06/07/08 are deprecated for the Phase 2 path (Apps Script owns OpenAI calls directly).
+
+## Current release baseline — do not infer from historical sections
+
+- Apps Script persistent deployment: Version 19.
+- Protected TV: `https://auto.thefairytails.co.uk/salon-tv/`.
+- Registered release: `20260808-knowledge-v2`.
+- Backend: 155 Published, 0 Needs Review, 0 pending TV release, 0 Drafts.
+- Private release: 155 breed packs, 1,213 sections, 271 exact crops.
+- Workbook: 17 sheets, including `Reference Sources`, `Reference Entries` and
+  `Private TV Releases`.
+- Commit `176a812` introduced the control plane. The older v18 import section
+  in the handover is historical evidence, not the present queue state.
 
 ## Big-picture architecture
 
-Three deployment targets glued together by a single Apps Script Web App. There is **no build step** anywhere — admin site, TV site, and Apps Script all run their sources directly.
+Four boundaries cooperate through a single Apps Script Web App. The admin has
+no build step. The protected TV is packaged separately from a deterministic,
+gitignored knowledge export.
 
 ```
-┌─────────────────────┐    POST {op:...}     ┌────────────────────────┐
-│ admin/  (vanilla JS │ ───────────────────► │ apps-script/ (.gs)     │
-│ ES modules, no      │ ◄─────────────────── │ Web App: doPost        │
-│ build, GitHub Pages)│   JSON envelope      │ dispatches via         │
-└─────────────────────┘                      │ OP_REGISTRY            │
-                                             └─────┬──────────┬───────┘
-┌─────────────────────┐                            │          │
-│ groomingtv/  (SEP-  │   read-only GETs           ▼          ▼
-│ ARATE REPO; TV at   │ ────────────────►   Google Sheets   Google Drive
-│ salon)              │   public/*.json     (14 sheets,     (per-breed
-└─────────────────────┘                       DB of record)   folders)
-                                                    ▲          ▲
-┌─────────────────────┐  POST {service_token,...}   │          │
-│ n8n on VPS (cron +  │ ────────────────────────────┘          │
-│ Telegram bot WF-04) │                                        │
-└─────────────────────┘   publish flow writes ─────────────────┘
-                          public/*.json + breeds/{slug}.json
-                          + image commits to GitHub via Contents API
+GitHub Pages admin ──POST ops──► Apps Script v19
+                                      │
+                                      ├──► Google Sheets (17-sheet DB)
+                                      ├──► Google Drive (private source data)
+                                      └◄── n8n VPS (cron + Telegram intake)
+
+Reviewed reusable corpus ──► deterministic private-TV export
+                                      │
+                                      ├──► PIN-hosted isolated TV container
+                                      └──► hash-only registration manifest
+                                                   │
+                                                   └──► Apps Script reconciliation
 ```
 
 Key invariants to keep in mind when editing:
 
 - **Single endpoint, op dispatch.** Every admin/n8n call is `POST <Web App URL>` with body `{op, auth_token|service_token, ...}`. `apps-script/Code.gs` registers handlers in `OP_REGISTRY` and gates non-public ops on `PUBLIC_OPS`. New ops must be added to both.
 - **Auth in body, not header.** Apps Script Web Apps strip non-standard headers, and `Content-Type: text/plain` is used deliberately to avoid the CORS preflight (the server JSON-parses the body). Two auth paths: short-lived HMAC `auth_token` from `op_login` (12 h, signed with `SESSION_SECRET`), or static `service_token` matching the `SERVICE_TOKEN` Script Property for n8n.
-- **Sheets are the database of record.** Drive holds files (PDFs, page renders, crops); GitHub Pages holds the published artefacts (`public/breeds/{slug}.json`, `today.json`, `tomorrow.json`, `index.json`). Sheets store the canonical state. Atomic publish writes the Sheet row + Drive folder + GitHub commit; concurrency is guarded by `expected_version` on mutating ops.
+- **Sheets are the backend database of record.** Drive holds private PDFs,
+  renders, crops and reference records. GitHub Pages hosts the admin and legacy
+  session artefacts only. The complete breed catalogue and book illustrations
+  live in the sealed private-TV export.
+- **Private publication is evidence reconciliation, not content upload.** The
+  verified bundle is deployed first. `register_private_tv_release` then checks
+  the approved slug set, source identity, profile coverage and pack hashes
+  before one bounded Sheets write marks profiles Published.
+- **Legacy publication fails closed.** Reference profiles never enter
+  `publish_profile`; all legacy GitHub content publishing requires the explicit
+  emergency property `ALLOW_LEGACY_PUBLIC_PUBLISH=TRUE`.
+- **Release retries are idempotent.** An identical release does not bump
+  profile versions or duplicate history. A reused release ID with different
+  hashes returns `CONFLICT`.
 - **Phase 2 PDF intake is browser-orchestrated.** `admin/js/pdf-intake.js` drives the sequence (upload → render in browser via vendored `pdf.js` → save renders → `extract_sections` → per-page `run_vision_pass_page` → `finalize_pdf_intake`). The Apps Script side is synchronous; there is no job queue.
 - **Stable ID prefixes.** `apps-script/ids.gs` defines `BRD`, `PRF`, `SEC`, `IMG`, `PGR`, `APR`, `VER`, `MCH`, `BLG`, `ALT`, `JOB`, `AIC`. Counters live in Script Properties and only increment. Slugs are unique per breed via `uniqueBreedSlug_` (appends `-brd-xxx` on collision).
-- **TV display is in a separate repo** (`Fairytails123/groomingtv`, local clone at `C:\Users\FT Manager\OneDrive\Business\CODING\groomingtv\`). It reads `public/*.json` from this repo's GitHub Pages and is intentionally read-only against the back end (the one exception is the public op `log_backlog_hit`).
+- **TV display is in a separate private repo** (`Fairytails123/groomingtv`,
+  local clone at `C:\Users\FT Manager\OneDrive\Business\CODING\groomingtv\`).
+  GitHub Pages is disabled. The PIN host serves same-origin protected breed
+  packs and illustrations; only authenticated today/tomorrow requests refresh
+  from the legacy public session-pack source.
 
 ### Directory map (only the non-obvious bits)
 
@@ -77,8 +103,15 @@ Key invariants to keep in mind when editing:
 - `admin/js/pages/*.js` — one module per page; each page's HTML imports it as `<script type="module">`. Page state lives in `store.js`; UI helpers (toasts, dialogs, status pills) in `ui.js`.
 - `apps-script/Code.gs` — `doPost` dispatcher + `OP_REGISTRY` + `PUBLIC_OPS`. Start here when adding ops.
 - `apps-script/ai.gs` — OpenAI wrapper `callOpenAI_` (branches on `gpt-5|o1|o3` for `max_completion_tokens` + `reasoning_effort`), `op_extract_sections` (gpt-4o-mini text), `op_run_vision_pass_page` (gpt-5 vision), daily cost cap via `assertCostCapNotExceeded_`, `AI Call Log` sheet writes.
-- `apps-script/publish.gs` — atomic publish; `writePublicIndex_()` emits `public/index.json` for the TV's autocomplete.
-- `apps-script/setup.gs` — `setupAll()` bootstrapper (idempotent: creates Sheets workbook, populates 14 sheet schemas, generates SESSION_SECRET + ADMIN_PASSWORD_SALT, hashes the seeded password and deletes the plaintext property). Re-run after spec/schema bumps.
+- `apps-script/private-tv-publish.gs` — validates and reconciles a verified,
+  hash-only private release. It must never call GitHub content-write helpers.
+- `apps-script/publish.gs` — retired/legacy public publisher. It is retained for
+  compatibility but disabled by default and is not the private-TV path.
+- `apps-script/setup.gs` — `setupAll()` bootstrapper (idempotent: creates the
+  workbook, populates 17 sheet schemas, generates crypto properties and hashes
+  the staged password). Do not run casually against production.
+- `admin/publish.html` + `admin/js/pages/publish.js` — Private TV release
+  registration UI; accepts the hash-only JSON after deployment verification.
 - `n8n/dog-grooming-backend.json` — exported workflow JSON. Edit on the VPS n8n (`auto.thefairytails.co.uk`), export, replace the file.
 
 ## Common commands
@@ -94,13 +127,13 @@ clasp deploy --deploymentId AKfycby5CU8J-xyCn38ruoe_HdDswRBCNcxXLO9O2AyiiHDt781m
 #   ^ persistent deployment id — same Web App URL across all redeploys.
 #     Use this rather than `clasp deploy` alone (which mints a new URL).
 
-# If clasp isn't authed (current state on this machine): drive the Apps Script
-# editor via Chrome MCP. See memory/reference_apps_script_deploy.md for the
-# Monaco setValue / "Manage deployments → edit pencil → New version" path.
+# If clasp authentication later expires, use the documented Apps Script editor
+# fallback rather than minting a new deployment URL.
 
-# Health-check the live system (5 curls; all should return 200)
+# Health-check the live system: admin/TV/session files 200; old TV 404
 curl -s -o /dev/null -w "admin: %{http_code}\n" https://fairytails123.github.io/groomingbackend/admin/login.html
-curl -s -o /dev/null -w "tv:    %{http_code}\n" https://fairytails123.github.io/groomingtv/
+curl -s -o /dev/null -w "tv PIN: %{http_code}\n" https://auto.thefairytails.co.uk/salon-tv/
+curl -s -o /dev/null -w "old TV: %{http_code}\n" https://fairytails123.github.io/groomingtv/
 curl -s -o /dev/null -w "today: %{http_code}\n" https://fairytails123.github.io/groomingbackend/public/today.json
 curl -s -o /dev/null -w "index: %{http_code}\n" https://fairytails123.github.io/groomingbackend/public/index.json
 
@@ -113,7 +146,9 @@ curl -s -o /dev/null -w "index: %{http_code}\n" https://fairytails123.github.io/
 # {ok:false, error:{code:"NOT_FOUND"}} (not registered — push failed)
 ```
 
-There is no test suite, no linter, and no CI in this repo. Verification is the curl block in `HANDOVER.md §6` plus a manual smoke test in the admin UI.
+There is no CI, but there is a targeted Node regression suite. Run the four
+tests listed in `README.md` and `docs/RUNBOOK.md`, syntax-check changed modules,
+then verify final persisted admin state plus the protected/public HTTP boundary.
 
 ## Environment hazards specific to this checkout
 

@@ -8,6 +8,12 @@
 
 ## 0a. Amendments since v3.9 (Stage 1 TV display ship)
 
+**Reading rule:** this amendment block is current and overrides conflicting
+statements in the older full-spec sections below. In particular, decisions
+#48–49 supersede the public GitHub-Pages TV/public breed-publisher assumptions
+in decisions #39–44 and §§4–7. Those older sections remain as design history
+until the next complete spec back-fold.
+
 The TV display deferred from day one finally shipped on 2026-05-05. New repo
 `Fairytails123/groomingtv` (separate from the back-end), GitHub Pages live at
 `https://fairytails123.github.io/groomingtv/`. Vanilla HTML / ES modules / no
@@ -150,8 +156,10 @@ actual TV (Hisense 40" 40E4QTUK FHD, 1920×1080, Vidaa browser).
   authenticated `register_private_tv_release` operation validates the complete
   approved reference-catalogue slug set, source-PDF identity, profile links and
   existing-profile collision coverage before a single bounded Sheets write
-  marks linked profiles `Published`. `Private TV Releases` is an append-only
-  release ledger; `Groom Profiles` records `publication_target`, release ID and
+  marks linked profiles `Published`. `Private TV Releases` keeps one identity
+  row per release; identical retries preserve its registered identity and
+  update only reconciliation evidence. `Groom Profiles` records
+  `publication_target`, release ID and
   pack hash, and Version History records each transition. Re-registering the
   same release is idempotent; a reused release ID with different hashes fails
   closed. Reference profiles can never enter the legacy GitHub publisher, and
@@ -164,18 +172,20 @@ actual TV (Hisense 40" 40E4QTUK FHD, 1920×1080, Vidaa browser).
 - TV display: `https://auto.thefairytails.co.uk/salon-tv/` — private PIN host;
   155 searchable breeds, 1,213 sections and 271 exact illustration crops live.
   The `groomingtv` repository is private and GitHub Pages is disabled.
-- Back-end: commit `e249143` adds `writePublicIndex_()` + the seed
-  `public/index.json` (one entry, BRD-001 Miniature Schnauzer). Apps Script
-  Web App still on Version 10; redeploy needed for `writePublicIndex_` to
-  fire on future publishes (until then the seed is maintained manually if
-  another breed publishes).
+- Back-end: commit `176a812` and Apps Script persistent deployment Version 19
+  add the private-TV release control plane. Release `20260808-knowledge-v2`
+  is registered: 155 Published profiles, 0 Needs Review, 0 pending TV release
+  and 0 Drafts. The workbook has 17 sheets. The public index retains only the
+  single legacy Miniature Schnauzer entry; no complete-book breed packs or
+  illustrations were added to the public repository.
+- Detailed rationale, data flow, recovery and verification live in
+  `docs/private-tv-publication.md`. Operational steps live in
+  `docs/RUNBOOK.md`.
 
-**What's still pending after v3.11 ship:**
+**What's still pending after v3.12 ship:**
 - Live verification on the actual Hisense 40E4QTUK Vidaa browser (the
   load-bearing test for Stage 1 — desktop Chrome rendering is not a
   guarantee). Plug in a Fire TV Stick if Vidaa proves unreliable.
-- Apps Script redeploy so `writePublicIndex_` fires automatically on
-  subsequent publishes.
 - Optional: PWA manifest + service worker once Vidaa support is confirmed.
 
 ---
@@ -669,7 +679,12 @@ This is where most of Kamal's daily image-work happens. The snipping tool sits i
 
 **Source-of-truth for crop bytes is server-side, not browser-side.** Cropper.js draws the rectangle and emits coordinates; the browser POSTs `{page_render_id, role, x, y, w, h}` to Apps Script which dispatches WF-10 to perform the actual pixel crop using Pillow against the source render in Drive. Two reasons: (1) the browser's `canvas.toBlob()` would JPEG re-encode and lose fidelity (violates the "images preserved exactly" rule, decision #8); (2) Drive's CDN doesn't serve `Access-Control-Allow-Origin` reliably, so client-side `canvas.getImageData()` taints the canvas and `toBlob` fails. Server-side keeps bytes byte-perfect to the source render and bypasses CORS entirely.
 
-### 6.10 Atomic publish — the transaction
+### 6.10 Legacy public atomic publish — retired compatibility path
+
+This section describes the original GitHub publisher and is superseded for
+production breed knowledge by §0a #48–49 and
+`docs/private-tv-publication.md`. `publish_profile` is disabled by default;
+private releases are deployed first and reconciled from hashes.
 
 The publish step touches Sheets, Drive, and GitHub Pages — three independent systems. The transaction is structured so partial failure recovers cleanly on retry:
 
@@ -721,6 +736,8 @@ Long-running ops (publish, crop generation) return `{ ok:true, data:{ job_id, st
 | `list_page_renders` | filmstrip data for snipping editor | sync |
 | `publish_profile` | atomic publish (§6.10) | sync ≤30s, else async |
 | `unpublish_profile` | reverse publish | sync |
+| `register_private_tv_release` | reconcile an already-deployed verified private release | sync, authenticated |
+| `private_tv_release_status` | latest protected-release summary | sync, authenticated |
 | `list_groom_types` | controlled vocabulary + counts | sync |
 | `override_breed_match` | resolve unmatched breed | sync |
 | `search_breeds` | typeahead for library + Telegram | sync |
@@ -741,17 +758,24 @@ All sheets sit in a new workbook (NOT the existing read-only "Jot form Dog Detai
 `slug` — lowercase alphanumerics + hyphens, derived from `breed_name`, unique. Diacritics stripped (`Belgian Malinois` → `belgian-malinois`). On collision, append `-{breed_id}` suffix (e.g. `cavapoo-brd-014`).
 
 ### Sheet 2: Groom Profiles
-`profile_id, breed_id, breed_name, groom_type, source_type, source_pdf_drive_id, default_profile, status, error_message, current_version, published_version, published_pack_url, last_publish_attempt_at, last_publish_succeeded_at, approved_date, published_date, created_at, updated_at`
+`profile_id, breed_id, breed_name, groom_type, source_type, source_pdf_drive_id, default_profile, status, error_message, current_version, published_version, published_pack_url, publication_target, private_tv_release_id, private_tv_pack_sha256, last_publish_attempt_at, last_publish_succeeded_at, approved_date, published_date, created_at, updated_at`
 
 Status enum: `Draft`, `Processing`, `Needs Review`, `Published`, `Archived`, `Failed`.
 - `Processing` — n8n workflow has the PDF, hasn't yet returned text + page renders.
 - `Needs Review` — extraction complete; profile awaiting Kamal's edits + snipping.
 - `Draft` — Kamal has begun editing; not yet published.
-- `Published` — visible to TV via GitHub Pages JSON.
+- `Published` — reconciled to its recorded publication target. Production
+  reference profiles use `publication_target="private-tv"` plus release ID and
+  pack SHA-256; legacy public status is not sufficient evidence of protected-TV
+  deployment.
 - `Archived` — soft-deleted; no longer rendered into packs.
 - `Failed` — pipeline stopped; `error_message` explains why.
 
-`current_version` increments on every save; `published_version` lags it during editing. `published_pack_url` is computed `https://fairytails123.github.io/groomingbackend/public/breeds/{slug}.json`.
+`current_version` increments on every save; `published_version` lags it during
+editing. For a private release, `published_pack_url` points to the protected TV
+breed route and the integrity identity is carried by
+`private_tv_release_id` + `private_tv_pack_sha256`. The old public URL formula
+applies only to the disabled legacy publisher.
 
 ### Sheet 3: Groom Knowledge
 `section_id, profile_id, section_name, section_order, section_text, blade_numbers, important_notes, ai_confidence, approved, created_at, updated_at`

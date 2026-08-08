@@ -19,7 +19,9 @@ Distilled from the data + API design agent output (2026-05-03 design pass) and t
 { "ok": false, "error": { "code": "STRING", "message": "..." }, "request_id": "REQ-..." }
 ```
 
-**Error codes:** `UNAUTHORIZED`, `NOT_FOUND`, `VALIDATION_FAILED`, `CONFLICT`, `QUOTA_EXCEEDED`, `GITHUB_FAILED`, `OPENAI_FAILED`, `TIMEOUT`, `INTERNAL`.
+**Error codes:** `UNAUTHORIZED`, `NOT_FOUND`, `VALIDATION_FAILED`, `CONFLICT`,
+`PRIVATE_TV_RELEASE_REQUIRED`, `PUBLIC_PUBLISH_DISABLED`, `QUOTA_EXCEEDED`,
+`GITHUB_FAILED`, `OPENAI_FAILED`, `TIMEOUT`, `INTERNAL`.
 
 **Concurrency:** Mutating ops accept `expected_version` (int). Server compares against `Groom Profiles.current_version`; mismatch returns `CONFLICT`. This guards two-tabs-same-user accidents.
 
@@ -153,7 +155,7 @@ All reference-catalogue operations require the normal admin session token. Sourc
 #### `op: "delete_image"`
 **Request:** `{ op: "delete_image", auth_token, image_id, expected_version }`
 **Response:** `{ image_id, deleted: true, drive_deleted: boolean, already_deleted?: true }`.
-**Behaviour:** marks the Images row `approved=FALSE`, `display_position=-1` AND moves the Drive blob to Drive trash via `File.setTrashed(true)` (best-effort — if the Drive file is already gone the op still succeeds and returns `drive_deleted: false`). The Sheet row is kept so Version-History references to `image_id` still make sense as an audit trail; the bytes are recoverable from Drive trash for 30 days, after which Drive auto-purges. The publish flow filters by `approved=TRUE` so the image drops out of the next publish. Wrapped in `withProfileLock_` to serialise against in-flight `save_crop` / `save_image_record` on the same profile. Idempotent — re-deleting an already-deleted row returns `already_deleted: true` without error and skips the Drive call.
+**Behaviour:** marks the Images row `approved=FALSE`, `display_position=-1` AND moves the Drive blob to Drive trash via `File.setTrashed(true)` (best-effort — if the Drive file is already gone the op still succeeds and returns `drive_deleted: false`). The Sheet row is kept so Version-History references to `image_id` still make sense as an audit trail; the bytes are recoverable from Drive trash for 30 days, after which Drive auto-purges. Legacy pack construction filters by `approved=TRUE`. For the private TV, deleting an admin image record does not mutate the sealed live release; a corrected private export must be built, verified, deployed and registered. Wrapped in `withProfileLock_` to serialise against in-flight `save_crop` / `save_image_record` on the same profile. Idempotent — re-deleting an already-deleted row returns `already_deleted: true` without error and skips the Drive call.
 
 #### `op: "list_page_renders"`
 **Request:** `{ op: "list_page_renders", auth_token, profile_id }`
@@ -212,9 +214,16 @@ The browser drives the whole intake sequence: pdf.js renders pages locally, Apps
 
 ### Publish
 
+The production publication path is private-TV release reconciliation. It is a
+control-plane operation: deploy protected content first, then register hashes.
+See `docs/private-tv-publication.md`. The old GitHub content publisher remains
+only as disabled compatibility code.
+
 #### `op: "register_private_tv_release"`
 **Request:** `{ op, auth_token, release:{ release_id, manifest_sha256, checksums_sha256, source_pdf_sha256, generated_at, breed_count, profile_count, section_count, image_count, breed_pack_sha256:{ "breed-slug":"<sha256>", ... } } }`
 **Behaviour:** reconciles the backend with an already-deployed, independently verified private salon-TV release. It validates that the release contains exactly the approved reference-catalogue breed set, that every linked profile is a non-archived `reference-catalog` profile, and that every intentionally unlinked entry is covered by an existing Published profile. It records the release in `Private TV Releases`, updates linked profiles to `Published` with `publication_target:"private-tv"`, and writes Version History rows in a bounded batch. It never uploads text or images to GitHub. Re-registering an identical release is idempotent; a reused release ID with different hashes returns `CONFLICT`.
+
+**Response:** `{ release_id, live_base_url, breed_count, linked_reference_profiles, existing_profile_coverage, profiles_transitioned, profiles_already_current, unchanged }`.
 
 #### `op: "private_tv_release_status"`
 **Request:** `{ op, auth_token }`
@@ -222,7 +231,10 @@ The browser drives the whole intake sequence: pdf.js renders pages locally, Apps
 
 #### `op: "publish_profile"` (sync ≤30s, else async)
 **Request:** `{ op: "publish_profile", auth_token, profile_id, expected_version }`
-**Behaviour:** runs the atomic publish (spec §6.10) — validate, stage, commit JSON + images to GitHub, write Sheets, enqueue session-pack rewrite.
+**Behaviour:** legacy public-GitHub operation retained for compatibility. When
+the emergency escape hatch is enabled it runs the old atomic sequence —
+validate, stage, commit JSON + images to GitHub, write Sheets and enqueue a
+session-pack rewrite. It is not the production private-TV workflow.
 **Response (success):** `{ profile_id, published_pack_url, today_json_refreshed: true }`
 **Errors:** `CONFLICT`, `VALIDATION_FAILED` (e.g. `no_main_image`, `missing_core_section`), `GITHUB_FAILED`, `TIMEOUT`.
 
@@ -230,7 +242,9 @@ The browser drives the whole intake sequence: pdf.js renders pages locally, Apps
 
 #### `op: "unpublish_profile"`
 **Request:** `{ op: "unpublish_profile", auth_token, profile_id }`
-**Behaviour:** removes JSON from GitHub Pages, flips status back to `Draft`, rewrites `today.json` if needed.
+**Behaviour:** legacy-only reversal. When the emergency public publisher is
+enabled, removes legacy JSON from GitHub Pages, flips status back to `Draft`
+and rewrites `today.json` if needed.
 
 Profiles with `publication_target:"private-tv"` return `PRIVATE_TV_RELEASE_REQUIRED`; their status must be changed only after a verified private TV release has removed or superseded the pack.
 
@@ -303,7 +317,8 @@ Apps Script Web App settings: `Execute as: Me, Who has access: Anyone with the l
 ## Quota guard rails
 
 - 6-min Apps Script execution per request: each Phase 2 op is well under this (extract_sections ≤30s, single vision page ≤30s).
-- ~20K UrlFetch/day budget: GitHub Contents API (~10/day), OpenAI calls (~10-20 per breed × ~10 breeds/day = ~200/day).
+- ~20K UrlFetch/day budget: session-pack helpers plus OpenAI extraction calls.
+  Private-TV release registration performs no GitHub or OpenAI request.
 - **OpenAI daily cap:** `OPENAI_DAILY_CAP_GBP` Script Property (default `5.0`). Sum of today's `cost_usd` from `AI Call Log` × `OPENAI_USD_TO_GBP` (default `0.85`) is checked before every AI op. Cap exceeded → `QUOTA_EXCEEDED`. One-per-day Operational Alerts row logged.
 - `LockService.getScriptLock()` on every mutation, 30s timeout (60s for AI ops via `withProfileLock_`).
 - Login rate limit: 50 fails/day in Script Properties, reset by midnight cron.
@@ -312,6 +327,9 @@ Apps Script Web App settings: `Execute as: Me, Who has access: Anyone with the l
 
 | Key | Required? | Default | Notes |
 |---|---|---|---|
-| `OPENAI_API_KEY` | yes (Phase 2) | — | sk-proj-… |
+| `OPENAI_API_KEY` | yes (Phase 2) | — | secret value; never document or commit |
 | `OPENAI_DAILY_CAP_GBP` | optional | `5.0` | soft cap; `0` disables |
 | `OPENAI_USD_TO_GBP` | optional | `0.85` | conservative; reality ~0.79 |
+| `SERVICE_TOKEN` | yes for n8n | — | secret request-body credential; never put in URLs or source |
+| `GITHUB_PAT` | legacy/session helpers | — | not used by private breed release registration |
+| `ALLOW_LEGACY_PUBLIC_PUBLISH` | no | unset/false | emergency compatibility gate; normal private-TV operation keeps it disabled |

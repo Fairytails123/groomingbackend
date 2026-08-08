@@ -9,12 +9,19 @@
 ## 2026-08-08 — backend reconciled with the private TV release (Apps Script v19)
 
 - Commit `176a812` adds a private-release control plane without uploading book text or images to public GitHub Pages. The admin `Private TV` page accepts a hash-only registration manifest and records the sealed release ID, pack hashes and aggregate counts.
-- Release `20260808-knowledge-v2` reconciled all 155 profiles: 154 moved from `Needs Review` to `Published`, and the existing published Miniature Schnauzer profile was linked to the same private release. Final live read-back: 155 published, 0 needs review, 0 pending TV release and 0 drafts.
+- Release `20260808-knowledge-v2` reconciled the complete 155-breed set: 154
+  generated reference profiles moved from `Needs Review` to `Published`, and
+  the existing Published Miniature Schnauzer profile satisfied the intentional
+  collision-coverage rule. Final live read-back: 155 published, 0 needs review,
+  0 pending TV release and 0 drafts.
 - The reconciliation is idempotent. Re-registering the same release produced no additional profile transition and did not duplicate the `private_tv_publish` history entry.
 - `Profiles` now records `publication_target`, `private_tv_release_id` and `private_tv_pack_sha256`; the new `Private TV Releases` sheet holds the release ledger. The workbook therefore has 17 sheets.
 - Reference-derived profiles fail closed if sent through the legacy `publish_profile` route. All legacy public GitHub publishing is disabled unless the explicit emergency Script Property `ALLOW_LEGACY_PUBLIC_PUBLISH=TRUE` is set; private-TV profiles cannot be legacy-unpublished.
 - The sealed TV export was not modified. Public `groomingbackend` received no breed packs or book illustrations; the live TV continues to serve the already-verified private 155-pack, 271-image release behind its server-side PIN gate.
 - Production verification covered the authenticated admin release flow, dashboard and library totals, a profile-level publication/read-history check, idempotent retry, operation registration, GitHub Pages admin propagation, regression tests and the private/public HTTP boundary checks.
+- Design rationale, end-to-end state flow, invariants, recovery and implementation
+  ownership are consolidated in `docs/private-tv-publication.md`. Use that
+  document before changing publication behaviour.
 
 ## 2026-08-08 — private salon TV and exact multi-angle illustrations live
 
@@ -28,6 +35,10 @@
 - Rollback copies are retained on the VPS as the pre-knowledge release, the pre-live-session release and the compose backup. Server access details remain only in the private VPS handover, never in this public repo.
 
 ## 2026-08-08 — full grooming-book reference catalogue imported (Apps Script v18)
+
+> Historical pre-v19 snapshot. The `Needs Review` and `Ready for profile`
+> counts below explain the import result before private-release reconciliation;
+> they are not the current production queue.
 
 - Private reusable corpus: `Knowledge/reusable-data/notes-from-the-grooming-table/` (gitignored; never commit to this public repo). It contains the source PDF metadata and SHA-256 (`4a87cac593828492bac4283015ec667853df1444179ad420520fa85694eeb89a`), 490 OCR pages, 490 thumbnails, 490 original 3310×4680 TIFF page images, 490 lossless browser PNG masters, 20 conservative enhanced derivatives, manifests, and 3,457 verified derived-file SHA-256 entries.
 - Source gap: printed pages 288–293 are absent. Lakeland Terrier is partial; Standard Manchester Terrier and Miniature Bull Terrier are absent. Their supplements retain separate AKC/parent-club/FCI/manufacturer citations and never claim to recreate the missing book pages or illustrations.
@@ -71,8 +82,10 @@ After v8: PRF-001 (Miniature Schnauzer / Pet Groom) extracted 14 vision findings
    `C:\Users\FT Manager\OneDrive\Business\CODING\groomingtv\`. Skip this
    step only if the work is purely back-end (Apps Script / Sheets / n8n).
 3. **Skim memory:** `<.claude>/projects/.../memory/MEMORY.md` (entries are short).
-4. **Open the spec:** `.md/grooming-knowledge-software-architecture.md` v3.12, §0a is the diff-from-current-truth. Decisions #48–49 are the private TV delivery and publication-control contracts.
-5. **Sanity check the live system** — both halves:
+4. **Read `docs/private-tv-publication.md`** for the current trust boundary,
+   integrity rules, state transitions and rollback model.
+5. **Open the spec:** `.md/grooming-knowledge-software-architecture.md` v3.12, §0a is the diff-from-current-truth. Decisions #48–49 are the private TV delivery and publication-control contracts.
+6. **Sanity check the live system** — both halves:
    ```bash
    curl -s -o /dev/null -w "admin login:  %{http_code}\n" \
      https://fairytails123.github.io/groomingbackend/admin/login.html
@@ -86,8 +99,11 @@ After v8: PRF-001 (Miniature Schnauzer / Pet Groom) extracted 14 vision findings
      https://fairytails123.github.io/groomingbackend/public/index.json
    ```
    Admin, TV PIN root, today and index should print `200`; old TV Pages should print `404`.
-6. **Check git state:** `git log --oneline -10`. Latest as of 2026-05-06 — back-end: `dd9c488 Spec §0a #44 + HANDOVER` (or newer cron rebuilds); TV repo: `85fbe79 Breed page redesign — Apple-inspired`. Any newer commits should match what this file describes.
-7. **Pick a task** from §"Recommended next-task priorities" — items are ranked by what unblocks the most.
+7. **Check git state:** `git log --oneline -10`. The private publication code
+   baseline is `176a812`; later documentation or cron commits are expected.
+   Compare against `origin/main` before editing because scheduled rebuilds can
+   commit independently.
+8. **Pick a task** from §"Recommended next-task priorities" — items are ranked by what unblocks the most.
 
 **The single biggest pending item:** Live Vidaa-browser verification of the
 TV display at the salon (HANDOVER P5 follow-up #1, TV README §5 P0). Desktop
@@ -145,27 +161,31 @@ JOTFORM_FIELD_APPT_TYPE  8                                      ✅
 JOTFORM_FIELD_DATE_FG_BUS 3                                     ✅
 JOTFORM_FIELD_DATE_FG_PRT 20                                    ✅
 OPENAI_API_KEY           (set; value in .secrets/openai-api-key.md)    ✅ (added 2026-05-03)
+SERVICE_TOKEN            (set; value held only in Apps Script/n8n)      ✅
+GITHUB_PAT               (set; legacy/session publishing only)          ✅
 ```
 
-⏳ **Pending Script Properties:**
-- `GITHUB_PAT` — fine-grained PAT (Contents r/w on `Fairytails123/groomingbackend`). Until set: `op_publish_profile` fails with `GITHUB_FAILED`.
+**Optional Script Properties:**
 - `OPENAI_DAILY_CAP_GBP` — optional, default `5.0`. Soft cap on cumulative AI cost per UTC day.
 - `OPENAI_USD_TO_GBP` — optional, default `0.85`. Conservative FX for cap math.
+- `ALLOW_LEGACY_PUBLIC_PUBLISH` — intentionally absent/false. Setting it to
+  `TRUE` re-enables the retired public content publisher and requires an
+  explicit reviewed incident or compatibility decision.
 
 ### Secrets (gitignored — `.secrets/`)
 
 | File | Contents | Used in |
 |---|---|---|
-| `.secrets/telegram-token.md` | Bot token + group chat ID `-5072836532` | n8n Telegram credential (when WF-04/09 ship); future direct Apps Script Telegram sends |
+| `.secrets/telegram-token.md` | Telegram credential material | live n8n WF-04; future approved Telegram work |
 | `.secrets/jotform-api-key.md` | JotForm API key | `JOTFORM_API_KEY` Property — already set |
-| `.secrets/openai-api-key.md` | OpenAI API key (sk-proj-2O1U…ZaP8kA, provided 2026-05-03) | `OPENAI_API_KEY` Property — already set. Vision model = `gpt-5` |
+| `.secrets/openai-api-key.md` | OpenAI API key | `OPENAI_API_KEY` Property — already set. Vision model = `gpt-5` |
 
 These files are gitignored. Memory holds pointers to them, never the values.
 
 ### Login
 
 - URL: https://fairytails123.github.io/groomingbackend/admin/login.html
-- Password: `fairytails22` (chosen by Kamal; hashed in Apps Script Properties)
+- Password: owner-managed; only its salted hash is stored in Apps Script.
 
 ---
 
@@ -173,11 +193,12 @@ These files are gitignored. Memory holds pointers to them, never the values.
 
 | Doc | What's in it |
 |---|---|
-| `.md/grooming-knowledge-software-architecture.md` | **Canonical spec, v3.9.** Sheets schema, Drive layout, API contract, atomic publish, all design decisions. §0a "v3.9 amendments" at top is the recent diff. |
+| `.md/grooming-knowledge-software-architecture.md` | **Canonical spec, v3.12.** §0a decisions #47–49 define the reviewed corpus, private TV and release control plane; older sections preserve design history. |
 | `.md/*.v3.[4-7].backup.md` | Earlier spec versions kept for historical context |
 | `docs/HANDOVER.md` | This file — operational truth (what's live, what's pending, how to verify) |
+| `docs/private-tv-publication.md` | Current publication rationale, data flow, invariants, recovery, verification and implementation map |
 | `docs/api.md` | Apps Script op catalogue — request/response shapes for every op |
-| `docs/workflows.md` | n8n workflow catalogue (12 workflows + AI prompts + Telegram stubbing). Note: WF-06/07/08 are now deprecated for the Phase 2 path — see spec §0a v3.8 amendments. |
+| `docs/workflows.md` | Current n8n boundary plus an explicitly historical twelve-workflow design catalogue. WF-06/07/08 are deprecated for the live Phase 2 path. |
 | `<.claude>/plans/read-analyse-and-get-iterative-pond.md` | Stage 3 Phase 2 implementation plan (the one that produced what's now live) |
 | `<.claude>/projects/.../memory/` | Cross-session memory — user, feedback, reference notes |
 
@@ -186,6 +207,10 @@ These files are gitignored. Memory holds pointers to them, never the values.
 ## 4. What's done — feature checklist
 
 Every row links the relevant commit so a `git show` brings up the diff.
+
+Rows from May document what was built at that time. Where they mention public
+breed publishing, TV GitHub Pages, v10 or deferred WF-04, the v19 private-TV
+release section at the top of this handover overrides them.
 
 ### Stage 2 — admin editor + JotForm session pack
 
@@ -212,7 +237,9 @@ Every row links the relevant commit so a `git show` brings up the diff.
   - `apps-script/setup.gs`: schema for new `AI Call Log` sheet + `suggested_text` column on Extra Heading Approvals (auto-applied by re-running `setupAll`; already done)
   - `apps-script/ids.gs`: new ID kind `ai_call: "AIC"`
   - Profile editor IMAGES tab: inline "Pending heading approvals" card (Approve / Edit & Approve / Ignore) + "Re-extract sections" button (round-trips PDF via `op_get_source_pdf` + `sessionStorage` + redirect to `upload.html?reextract=1`)
-  - WF-04 (Telegram intake) and WF-09 (Telegram heading approval) **deferred** — Sheet 6 schema is the same, so the Telegram path can drop in unchanged later.
+  - WF-04 Telegram intake is live through the service-token path. WF-09
+    heading approval remains deferred; Sheet 6 and the inline admin path remain
+    compatible.
 
 ### Stage 4 — cron handlers + fuzzy matcher
 
@@ -247,8 +274,10 @@ Every row links the relevant commit so a `git show` brings up the diff.
 - ✅ **Live URL** at `https://auto.thefairytails.co.uk/salon-tv/` — whole-site server-side PIN gate with private same-origin data and images.
 - ✅ **Single-screen, no-scroll layout** (`124316f`) — start screen is a 3×3 grid capped at 9 bookings with a "+N more" Search prompt; breed page is one section at a time via a section pager + interactive thumbnail strip. `body { overflow: hidden }` on both pages.
 - ✅ **Apple-inspired breed redesign** (`85fbe79`) — Claude Design drop-in: translucent topbar with `backdrop-filter`, floating white cards on a soft-white canvas (`#F5F5F7`), iOS-style segmented Pet/Show toggle, 60 px section-pager pills with monospace `01..05` numerals, floating role chip on the main image, **interactive bottom thumbnail strip** that cross-fades thumbs into the main display (180 ms). CSS tokens namespaced (`--brand`, `--ink`, `--bg`) inside `css/breed.css` so they don't collide with `tokens.css`; the start page is unaffected.
-- ✅ **`writePublicIndex_()` in back-end's `apps-script/publish.gs`** (`e249143`) — writes a flat `public/index.json` listing every Published breed for the TV's manual-search autocomplete. Called from `op_publish_profile` and `op_unpublish_profile`; manual `rebuildPublicIndex()` helper for editor-side backfill.
-- ✅ **Hand-written `public/index.json` seed** (`e249143`) — single entry for BRD-001 Miniature Schnauzer, so the TV's search works immediately. Auto-rewritten on the next publish once Apps Script is redeployed (currently still on Web App v10 — `writePublicIndex_` is dormant until that redeploy).
+- ✅ **Legacy public index retained only for session/backward compatibility.**
+  `public/index.json` still contains the single Miniature Schnauzer test entry.
+  The protected TV uses its own authenticated 155-breed index; do not rebuild
+  the public index from the complete catalogue.
 - ✅ **Read-only-with-one-exception:** TV calls Apps Script's existing public op `log_backlog_hit` after ~1.2 s of unmatched typing in the search modal so unmet breeds surface as Backlog Signals on the admin dashboard.
 - See [TV repo `README.md`](https://github.com/Fairytails123/groomingtv/blob/main/README.md) for the file structure, full data contract, verification cheat-sheet, bugs-fixed log, and follow-up list specific to the TV side.
 
@@ -263,7 +292,15 @@ Every row links the relevant commit so a `git show` brings up the diff.
 
 Items ranked by what unblocks the most. Pick one, finish it, update this section.
 
-### P0 — Move repo out of OneDrive (~10 min, blocks nothing but pays back forever)
+### P0 — Complete the physical Hisense Vidaa walkthrough
+
+Desktop and live HTTP verification pass. Use the salon remote to verify PIN
+entry, D-pad search, opening a breed, section navigation, every dense
+multi-angle thumbnail, lock/refresh and browser-restart recovery. This is the
+remaining load-bearing display check. Use a Fire TV Stick at the same URL if
+Vidaa proves unreliable.
+
+### P1 — Move repo out of OneDrive (~10 min, blocks nothing but pays back forever)
 
 OneDrive on top of `.git` is the cause of the recurring lock-file fights, the Edit-tool truncation (bug #12), the CRLF flip (bug #11), and the dehydration risk. The git remote on GitHub already gives you off-machine backup. Moving to a plain local folder costs you OneDrive sync of the source tree but you don't need that — git is the cross-machine sync layer.
 
@@ -277,7 +314,7 @@ Steps:
 5. Once the new clone works, **rename the OneDrive copy** to `groomingbackend.OLD-do-not-edit` so you don't accidentally edit the wrong tree. Don't delete it for a few days.
 6. The laptop sees this same git remote — it's a `git clone` away from being identical.
 
-### P1 — Phase A: Kamal-side wiring (mostly DONE)
+### P2 — Phase A: Kamal-side wiring (mostly DONE)
 
 1. ✅ **`GITHUB_PAT`** set; publish flow verified end-to-end (commits `12020ed` and `906d0756` on origin written by Apps Script).
 2. ✅ **n8n Apps Script URL placeholders** filled in across all three cron HTTP Request nodes.
@@ -285,25 +322,30 @@ Steps:
 4. ✅ **Midnight time trigger** for `resetLoginFailCounter` installed via `setupTriggers()` (programmatic) — see `apps-script/setup.gs`.
 5. ⏳ **JotForm webhook → n8n WF-01** — still pending; current daily flow falls back to the 06:00 / 11:30 cron for `today.json` rebuilds. Optional polish; not blocking.
 
-### P2 — `clasp login` so future deploys are one command
+### P3 — `clasp` deployment access
 
-`clasp` v3.3.0 is installed globally; `~/.clasprc.json` doesn't exist yet. Run `clasp login` in a terminal, authorise Google, then redeploys become `clasp push && clasp deploy --deploymentId AKfycby5CU8J-xyCn38ruoe_HdDswRBCNcxXLO9O2AyiiHDt781mwsJzWeyyahySfwjpq4ZL` instead of the Chrome MCP Monaco pasting path. See `<.claude>/projects/.../memory/reference_apps_script_deploy.md`.
+`clasp` is installed and authenticated on this machine; Version 19 was pushed
+and deployed through it. Continue to use the persistent deployment ID and run
+`clasp deployments` after every deploy. If authentication expires, follow the
+documented editor fallback rather than minting a new deployment URL.
 
-### P3 — small follow-ups (any order, when you have a slice)
+### P4 — small follow-ups (any order, when you have a slice)
 
 - ✅ **`op_acknowledge_alert`** — done in v9 (Dismiss button on Operational Alerts panel).
-- **Spec amendments back-fold** — current spec is **v3.9**. Every non-trivial decision should append a numbered entry to `.md/grooming-knowledge-software-architecture.md` §0a "v3.9 amendments" block. Bump to v4.0 when there are >3 new entries since v3.9 was minted.
+- **Spec amendments back-fold** — current spec is **v3.12**. Every non-trivial
+  decision should append a numbered entry to §0a. Back-fold or bump the minor
+  version after roughly three amendments.
 - **Server-side cropping** (n8n + Pillow / WF-10) — replace client-side `canvas.toDataURL()` for byte-perfect crops. Only do this if you actually see image-quality issues; current path is fine for personal-scale.
 - **Apps Script doGet image proxy** with token gating — current path makes Drive page-render and crop files publicly viewable by URL (image-id-based filenames are unguessable as a soft barrier). Do this if Kamal ever wants stricter isolation.
 
-### P4 — Stage 3 Phase 2 follow-ons
+### P5 — Stage 3 Phase 2 follow-ons
 
 - ✅ **WF-04 Telegram intake** — built and verified end-to-end this session. Two-message protocol; one-click re-extract URL in success reply.
 - ⏳ **WF-09 Telegram heading approval** — still deferred. n8n → on Phase 2 finalize → if `extra_headings_pending > 0`, send Telegram message with inline Approve / Edit / Ignore buttons → callback writes to Sheet 6 with the same shape `op_decide_heading` writes (so the inline UI keeps working in parallel). The two-message-correlation pattern from WF-04 is the template.
 - **Auto-extract trigger on `?reextract=1` URLs** — eliminate the one-click "Start extraction" step on `upload.html?reextract=1&pid=PRF-XXX` so the Telegram → publish loop is fully hands-off after the user snips diagrams. Currently `tryReextractFromUrl()` populates the breed select and PDF blob; we just need to also call `runIntakeWithUi()` immediately when `auto=1` is in the URL.
 - **Cost guard rails for n8n path** — if WF-06/07/08 ever revive (they're deprecated for Phase 2 but kept as fallback), they should call `op_extract_sections` / `op_run_vision_pass_page` rather than calling OpenAI themselves, so the Apps Script `AI Call Log` + cost cap stays single-source-of-truth.
 
-### P5 — TV display ✅ DONE (2026-05-05)
+### P6 — TV display ✅ LIVE (private release expanded 2026-08-08)
 
 Shipped as a separate private repo `Fairytails123/groomingtv` (initial commit `345d03c`, breed-page redesign `85fbe79`). Live behind the PIN gate at `https://auto.thefairytails.co.uk/salon-tv/`; GitHub Pages is disabled. Vanilla HTML / ES modules with a small built-in-Node private host and deterministic deployment packager.
 
@@ -313,7 +355,6 @@ The breed working screen was redesigned same-day to an Apple-inspired layout via
 - **Live verification on the actual Hisense TV.** Desktop Chrome rendering passed; Vidaa is the load-bearing test. Plug a Fire TV Stick at the same URL if Vidaa is too quirky. Specifically check the topbar's `backdrop-filter` (Vidaa supports it but degrades to flat translucent white if not — already styled to fall back gracefully).
 - **Search modal restyle.** `js/search.js` + `.tv-modal-*` rules in `css/base.css` were left untouched by the redesign handoff. The modal still works but visually carries the older sky-blue aesthetic. Promote or restyle once the salon Vidaa pass confirms the rest of the breed page renders cleanly.
 - **Start-page restyle (optional).** Spec §0a #44 only covers the breed working screen. The start page (today's bookings) still uses the v1 tokens. Decide whether to promote the redesign tokens up to `tokens.css` for consistency, or keep the start page on the simpler v1 chrome.
-- **Apps Script redeploy** so `writePublicIndex_()` (in `apps-script/publish.gs`, commit `e249143`) fires on every future publish. Until then `public/index.json` is maintained manually (currently has BRD-001 Miniature Schnauzer; rerun `rebuildPublicIndex()` from the editor after redeploy to refresh, or hand-edit on the next breed publish).
 - **Service worker / offline cache + PWA manifest** — deferred until Vidaa rendering is confirmed (spec §0a #43).
 
 ---
@@ -326,7 +367,8 @@ The breed working screen was redesigned same-day to an Apple-inspired layout via
 | TV PIN root alive | `curl -s -o /dev/null -w "%{http_code}\n" https://auto.thefairytails.co.uk/salon-tv/` | `200` with PIN form; PIN absent from source |
 | Old public TV disabled | `curl -s -o /dev/null -w "%{http_code}\n" https://fairytails123.github.io/groomingtv/` | `404` |
 | Today/Tomorrow JSON live | `curl -s https://fairytails123.github.io/groomingbackend/public/today.json \| jq '.session_date'` | Today's ISO date in `"YYYY-MM-DD"` |
-| Index.json live (TV search) | `curl -s https://fairytails123.github.io/groomingbackend/public/index.json \| jq '.breeds \| length'` | At least `1` |
+| Legacy public index remains bounded | `curl -s https://fairytails123.github.io/groomingbackend/public/index.json \| jq '.breeds \| length'` | `1`; the private 155-breed catalogue must not appear |
+| Private index after unlock | Open `/salon-tv/data/index.json` in an authenticated TV session | `155` breeds |
 | Apps Script Web App reachable | The Web App URL serves a 302 to a `script.googleusercontent.com` echo URL on plain GET — that's normal Google interstitial behaviour. Easiest dispatcher check: log in via the admin site → DevTools Network tab → any successful op (e.g. `list_breeds`) shows `ok:true`. |
 | Login works | Visit login URL, password `fairytails22` | Lands on dashboard |
 | Sheets accessible | Open the Sheets workbook URL | 17 sheets visible, including `Reference Sources`, `Reference Entries` and `Private TV Releases` |
@@ -383,10 +425,15 @@ In chronological order; only the ones that left a trap if you're not careful.
    It has its own §6 verification cheat-sheet and §7 bugs-fixed list
    specific to the TV.
 3. **Read memory:** `<.claude>/projects/.../memory/MEMORY.md` index, then any of the entries that look relevant.
-4. **Spec read:** §0a at the top of `.md/grooming-knowledge-software-architecture.md`. Decision #48 covers the private TV and exact illustrations.
+4. **Publication read:** `docs/private-tv-publication.md`, then §0a decisions
+   #47–49 in `.md/grooming-knowledge-software-architecture.md`.
 5. **Verify alive:** the cheat-sheet in §6 above (covers both repos in one block of curls).
-6. **Check git state:** `git log --oneline -10`. Latest as of 2026-05-06 — back-end: `dd9c488 Spec §0a #44 + HANDOVER` (or newer cron rebuilds). TV repo: `85fbe79 Breed page redesign — Apple-inspired`. If `git status` shows local changes you don't recognise, that's almost certainly OneDrive CRLF noise — `.gitattributes` will normalise.
+6. **Check git state:** `git log --oneline -10`. Backend private-publication
+   baseline is `176a812`; documentation and cron commits may be newer. Do not
+   assume unfamiliar files are line-ending noise—inspect and preserve them.
 7. **If the work is TV-side:** prefer pushing to `Fairytails123/groomingtv@main` directly (small repo, no auth-protected paths). The back-end repo has cron rebuilds running daily, so always `git fetch origin main` + rebase before pushing back-end commits.
-8. **If user asks about a feature that "should already work":** check §4 "What's done". If it's marked ✅ and the file mentioned exists locally, the feature is live (modulo GitHub Pages cache; hard-refresh).
+8. **If user asks about a feature that "should already work":** check the
+   current release section first, then §4 for history. Prove live behaviour
+   from final returned/persisted values; a checkmark or local file is not proof.
 9. **If user reports a bug:** check §7 "Bugs fixed" first (and the TV README's §7 if it's a TV bug) — don't reintroduce. If novel: drive Chrome MCP to reproduce (memory `reference_apps_script_deploy.md` has the techniques), use `mcp__Claude_in_Chrome__javascript_tool` to inspect state, fix, push.
 10. **For new work:** respect the design-first feedback (`feedback_design_first.md`) — for non-trivial changes, sketch the approach in chat first (file paths, function names, data flow) and get a thumbs-up from Kamal before writing code. Save Cowork rounds and avoid mid-stream rewrites.

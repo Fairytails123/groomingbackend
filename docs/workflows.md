@@ -1,14 +1,43 @@
 # n8n Workflow Reference
 
-Twelve workflows on `auto.thefairytails.co.uk` (self-hosted n8n on the Hostinger VPS; migrated off n8n Cloud 2026-07-05). Each is named `WF-NN-name`. Workflow JSON exports are committed under `n8n/` for source-control and re-imported on the VPS instance.
+The live grooming automation is the `Dog Grooming Back End` workflow on
+`auto.thefairytails.co.uk` (self-hosted n8n on the Hostinger VPS; migrated off
+n8n Cloud 2026-07-05). Its exported source-control snapshot is
+`n8n/dog-grooming-backend.json`. Always read back the VPS workflow before an
+edit; the export can lag the runtime.
 
 Distilled from the admin + workflows design agent output (2026-05-03 design pass) and v3.6 spec §4.2.
 
-**Telegram-using workflows are stubbed during build.** Until Kamal provides the bot token at the end of the build, the n8n Telegram credential is empty and the relevant nodes either log to a `Telegram Outbox` sheet or short-circuit to "no-op" — see §"Telegram stubbing" below.
+## Current production boundary (2026-08-08)
+
+- n8n continues scheduled today/tomorrow session-pack duties and the Telegram
+  PDF intake path.
+- Browser-orchestrated PDF extraction calls Apps Script directly. The proposed
+  WF-06/07/08 split below is deprecated for the live Phase 2 path.
+- Private breed publication does not run through n8n. The sealed bundle is
+  deployed to the PIN host first; Apps Script Version 19 then reconciles a
+  hash-only manifest through `register_private_tv_release`.
+- The complete book catalogue and illustrations are never sent to the GitHub
+  Contents API by n8n.
+- All workflow work targets the VPS. Never reactivate the retired cloud copy.
+
+```text
+n8n VPS ──scheduled/service-token ops──► Apps Script ──► session JSON/alerts
+
+Verified private-TV bundle ──deploy──► protected TV host
+          └──hash-only registration──► Apps Script ──► Sheets release ledger
+```
+
+See `docs/private-tv-publication.md` for the release model and `n8n/README.md`
+for the current live workflow record.
 
 ---
 
-## Catalogue
+## Historical twelve-workflow design catalogue
+
+The table below is retained as design history. It must not be treated as a list
+of twelve independently live workflows. In particular, WF-11 public breed
+publishing is retired and disabled by default.
 
 | # | Name | Trigger | Input | Output / side effects | Triggers downstream | Retry |
 |---|---|---|---|---|---|---|
@@ -22,12 +51,12 @@ Distilled from the admin + workflows design agent output (2026-05-03 design pass
 | 08 | AI vision pass (handwritten/blade) | Webhook (chained from #7) | `{profile_id, page_render_ids[]}` | GPT-4o per page → merged into Sheet 3 | #9 | 3× per page (skip on fail, log warning) |
 | 09 | Heading approval | Webhook (chained from #8) | `{profile_id, suggested_headings[]}` | Telegram message with inline approve/ignore/edit; flips status to `Needs Review` | none | 3× |
 | 10 | Crop generation | Webhook from Apps Script | `{profile_id, page_render_id, role, x, y, w, h}` | Pillow crop on the rendered JPEG → `03-cropped-diagrams/` → Sheet 4 row | none (Apps Script polls) | 3× |
-| 11 | Publish | Webhook from Apps Script | `{profile_id}` | Validation, status flip, regenerate breed pack JSON, GitHub Contents API push, refresh `today.json` if booked | #1 (re-fire if booked) | 3×, alert on fail |
+| 11 | Publish (retired legacy design) | Webhook from Apps Script | `{profile_id}` | Former public GitHub breed-pack publisher; replaced by private release reconciliation | none | disabled by default |
 | 12 | Backlog signal | Webhook from TV (manual search miss) or from #1 (unmatched booking) | `{raw_breed, source}` | Sheet 9 upsert with hit count | none | 3× silent |
 
 ---
 
-## The PDF intake chain (the AI extraction backbone)
+## Historical PDF intake decomposition
 
 ```
 Telegram /  Backend → WF-04/05 (intake)
@@ -132,7 +161,11 @@ Round up to ~$60/month with retries and re-runs.
 
 ---
 
-## Telegram stubbing during build
+## Historical Telegram stubbing design
+
+This section records the original build strategy. Production WF-04 Telegram
+intake is now built and uses the service-token path documented in the handover
+and `n8n/README.md`.
 
 Until Kamal provides the bot token at end of build:
 
@@ -146,7 +179,7 @@ This means Stages 2-3 can be built and tested without Kamal having registered a 
 
 ---
 
-## Workflow dependency graph
+## Historical workflow dependency graph
 
 ```
 JotForm cron (06:00, 11:30, on-submit) ── WF-01 Session sync
@@ -165,6 +198,10 @@ WF-01 unmatched booking                ── WF-12 Backlog
 ## Things to validate at runtime
 
 - Workflow #1 idempotency on `today.json`. Multiple triggers in quick succession (cron + JotForm webhook within seconds) shouldn't cause overwrites with stale data. Solution: each rebuild reads fresh from Sheets.
-- Workflow #11 atomicity. See spec §6.10. Test partial failure of GitHub Contents API by killing the PAT — the sheet status should stay `Draft`, `last_publish_attempt_at` populated, no orphan published JSON.
+- Retired workflow #11 atomicity remains relevant only if the emergency legacy
+  public publisher is deliberately enabled. The production regression is now
+  to prove that reference profiles return `PRIVATE_TV_RELEASE_REQUIRED`, the
+  escape hatch defaults off, and release registration never calls GitHub
+  content-write helpers.
 - Workflow #6 + #7 parallelism. Both should fire from the same parent webhook and rejoin at WF-08.
 - Workflow #8 per-page failure tolerance. Inject a deliberate failure on one page and confirm other pages still merge into Sheet 3.

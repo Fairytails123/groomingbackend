@@ -1,11 +1,15 @@
 # n8n Workflow Reference
 
-This folder is the source of truth for n8n workflow design. It is **not** the
-runtime — workflows live on `auto.thefairytails.co.uk` (self-hosted n8n on
-the Hostinger VPS; migrated off n8n Cloud 2026-07-05). Use this README to
-build / repair / version-control workflows; export the JSON from n8n into
-this folder once a workflow is finalised, and commit alongside other
-backend changes.
+This folder is the source-controlled export and design record for the grooming
+n8n workflow. It is **not** automatically the runtime source of truth:
+workflows live on `auto.thefairytails.co.uk` (self-hosted n8n on the Hostinger
+VPS; migrated off n8n Cloud 2026-07-05). Read back the live workflow before an
+edit, validate the final VPS state, then export it to this folder.
+
+The private salon-TV release pipeline does not run through n8n. Apps Script
+Version 19 reconciles a hash-only manifest after the sealed TV bundle is
+deployed and verified. n8n must never publish the complete book catalogue or
+its illustrations to public GitHub. See `../docs/private-tv-publication.md`.
 
 ---
 
@@ -15,10 +19,19 @@ backend changes.
 |-------------------|-----------------------|------------------------------------------------------------------------|
 | `6xHWEX3f9zrWtDDa` | Dog Grooming Back End | https://auto.thefairytails.co.uk/workflow/6xHWEX3f9zrWtDDa              |
 
-Populated as Phase 1 with sticky-noted architecture and four entry points
-(cron 06:00 + 11:30, cron 07:00, cron 19:00, Telegram intake stub, crop
-generation stub). Apps Script URL placeholders need filling in (see
-"Pasting the Apps Script URL" below).
+The production workflow contains the scheduled Apps Script calls and the
+Telegram PDF-intake chain. Workflow ID and webhook paths survived the VPS
+migration. The three cron callers use the persistent Apps Script Web App URL.
+Do not re-run the old placeholder-wiring exercise unless live read-back proves
+a node has regressed.
+
+Current division of responsibility:
+
+- n8n: cron triggers, service-token calls, Telegram intake and operational
+  orchestration;
+- Apps Script: API dispatch, Sheets/Drive state, browser-orchestrated AI
+  extraction, session-pack generation and private-release reconciliation;
+- private TV host: authenticated breed packs and illustrations.
 
 ---
 
@@ -67,7 +80,7 @@ credentials after importing any export:
 |--------------------------|----------------------|--------------------------------|
 | Google Sheets — OAuth    | Google Sheets OAuth2 | future direct-write workflows  |
 | Google Drive — OAuth     | Google Drive OAuth2  | WF-04 Drive uploads            |
-| GitHub Contents API      | HTTP Header Auth     | future publish helpers (n8n side) |
+| GitHub Contents API      | HTTP Header Auth     | legacy/session helpers only; never private book content |
 | OpenAI                   | OpenAI               | WF-06/07/08 if revived         |
 | Telegram Bot             | Telegram             | WF-04, WF-09                   |
 
@@ -80,56 +93,49 @@ For the Telegram Bot credential, paste the bot token from
 
 ---
 
-## WF-04: Telegram PDF intake (deferred)
+## WF-04: Telegram PDF intake (live)
 
-**Purpose:** Kamal sends a PDF to the bot's group chat with a caption
-containing a breed name. The workflow uploads the PDF to Drive via Apps
-Script, sets the profile to `Processing`, and replies with a one-click
-link to start AI extraction in the admin browser.
+**Purpose:** Kamal sends a PDF, then the target `PRF-XXX`, to the bot's group
+chat. The live 14-node chain holds the pending file in workflow static data,
+uploads it through Apps Script and replies with a one-click admin re-extraction
+link. The browser remains responsible for the AI extraction sequence.
 
+```text
+Telegram Trigger
+      |
+      v
+Allowed-chat gate
+      |
+      +-- PDF message --> stash file metadata in pendingPdfs[chatId]
+      |                  and ask for a separate PRF-XXX message
+      |
+      +-- text PRF-XXX --> retrieve and clear the matching pending file
+                              |
+                              v
+                         Telegram getFile/download
+                              |
+                              v
+                         build base64 upload payload
+                              |
+                              v
+                         Apps Script op_upload_pdf
+                         { service_token, profile_id,
+                           pdf_blob_b64, original_filename }
+                              |
+                              v
+                         success/error Telegram reply
+                         with admin re-extraction URL using pid=PRF-XXX
 ```
-[Telegram Trigger]                            (on message, document type)
-        ↓
-[IF: chat.id == -5072836532 AND               (security gate; ignore other chats)
-     document.mime_type == application/pdf]
-        ↓
-[Set: parse breed_name from caption]          (e.g. caption "Cavapoo" → breed_name: "Cavapoo")
-        ↓
-[Telegram: getFile]                           (resolves file_id → file_path on Telegram CDN)
-        ↓
-[HTTP Request: download PDF]                  (returns binary; convert to base64 in next node)
-        ↓
-[Function: build payload]                     (base64 the binary, package the search query)
-        ↓
-[HTTP Request: search_breeds]                 (POST → APPS_SCRIPT_URL with body
-                                               { op:"search_breeds", auth_token:"<<service token>>",
-                                                 query: breed_name, limit:1 })
-        ↓
-[IF: matches[0] exists]
-   ↓ true                                              ↓ false
-[HTTP Request: list_breeds → first profile_id]   [Telegram sendMessage:
-                                                  "Breed not in library yet. Add via admin first."]
-   ↓
-[HTTP Request: op_upload_pdf]                 (POST → APPS_SCRIPT_URL with body
-                                               { op:"upload_pdf", auth_token,
-                                                 profile_id, pdf_blob_b64, original_filename })
-   ↓
-[Telegram sendMessage]                        (reply: "✓ PDF received for {breed}.
-                                                Run AI extraction:
-                                                https://fairytails123.github.io/groomingbackend/admin/profile.html
-                                                ?profile_id={profile_id}")
-```
+
+Do not enqueue or retain a file without its chat/file identity. The pending
+static-data record must be cleared on successful handoff and have an operable
+error/retry path; inspect the live nodes before changing this state machine.
 
 **Notes on auth:**
-- `op_upload_pdf` is NOT in `PUBLIC_OPS`, so the workflow needs an `auth_token`.
-- Easiest: create a service-account login by running `op_login` once with
-  the admin password and storing the returned token in n8n credentials as
-  a generic credential. Token TTL is 12h, so this needs renewal — better
-  to add a `service_token` Script Property and tighten `requireAuth_()` to
-  accept it as a static service token (one-line change to `auth.gs`).
-- Until that's done, easiest dev path: run a fresh login in browser
-  DevTools, copy `localStorage["ft.session_token"]`, paste into a Set node.
-  Refresh roughly daily.
+- `op_upload_pdf` is not public. Production uses `service_token` in the JSON
+  request body, matched against the Apps Script `SERVICE_TOKEN` property.
+- Never put the token in this repository or a URL/query string.
+- The older short-lived admin-token proposal is superseded.
 
 **Reply timing:** keep the workflow short (< 30s) so Telegram doesn't time
 out. The PDF upload to Drive is the slow leg — for large PDFs (>5MB),
