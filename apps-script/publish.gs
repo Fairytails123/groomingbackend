@@ -31,6 +31,15 @@ function op_publish_profile(body) {
     const profile = profiles.find((p) => p.profile_id === profileId);
     if (!profile) throw apiError_("NOT_FOUND", `profile '${profileId}' not found`);
 
+    if (profile.source_type === "reference-catalog") {
+      throw apiError_("PRIVATE_TV_RELEASE_REQUIRED",
+        "Reference catalogue profiles go live only through a verified private TV release");
+    }
+    if (PropertiesService.getScriptProperties().getProperty("ALLOW_LEGACY_PUBLIC_PUBLISH") !== "TRUE") {
+      throw apiError_("PUBLIC_PUBLISH_DISABLED",
+        "Legacy public GitHub publishing is disabled; use the private TV release workflow");
+    }
+
     const currentVersion = Number(profile.current_version ?? 1);
     if (expectedVersion && expectedVersion !== currentVersion) {
       throw apiError_("CONFLICT", `version mismatch — expected ${expectedVersion}, got ${currentVersion}`);
@@ -133,6 +142,10 @@ function op_unpublish_profile(body) {
     const { headers: profilesHeaders, rows: profiles } = readSheet_("Groom Profiles");
     const profile = profiles.find((p) => p.profile_id === profileId);
     if (!profile) throw apiError_("NOT_FOUND", `profile '${profileId}' not found`);
+    if (profile.publication_target === "private-tv") {
+      throw apiError_("PRIVATE_TV_RELEASE_REQUIRED",
+        "Remove the breed from a verified private TV release before changing its publication state");
+    }
     if (profile.status !== "Published") {
       throw apiError_("VALIDATION_FAILED", "Profile is not currently Published");
     }

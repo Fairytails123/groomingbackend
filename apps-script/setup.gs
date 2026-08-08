@@ -4,7 +4,7 @@
  * Run setupAll() once from the Apps Script editor after deploying. It:
  *   - generates SESSION_SECRET and ADMIN_PASSWORD_SALT (idempotent)
  *   - creates the Sheets workbook in the Drive root folder if it doesn't exist
- *   - populates all 16 sheets with headers
+ *   - populates all 17 sheets with headers
  *   - sets GITHUB_OWNER and GITHUB_REPO defaults
  *
  * What still needs hand work after setupAll():
@@ -30,6 +30,7 @@ const SHEET_SCHEMAS = {
     "profile_id", "breed_id", "breed_name", "groom_type", "source_type",
     "source_pdf_drive_id", "default_profile", "status", "error_message",
     "current_version", "published_version", "published_pack_url",
+    "publication_target", "private_tv_release_id", "private_tv_pack_sha256",
     "last_publish_attempt_at", "last_publish_succeeded_at",
     "approved_date", "published_date", "created_at", "updated_at"
   ],
@@ -94,6 +95,11 @@ const SHEET_SCHEMAS = {
     "source_status", "review_status", "record_sha256", "stored_record_sha256", "drive_file_id", "revision",
     "high_risk_total", "high_risk_verified", "sections_total", "sections_approved",
     "profile_id", "imported_at", "updated_at"
+  ],
+  "Private TV Releases": [
+    "release_id", "manifest_sha256", "checksums_sha256", "source_pdf_sha256",
+    "generated_at", "breed_count", "profile_count", "section_count", "image_count",
+    "breed_pack_sha256_json", "live_base_url", "registered_at", "last_reconciled_at"
   ],
 };
 

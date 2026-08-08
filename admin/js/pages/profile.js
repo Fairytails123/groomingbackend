@@ -369,7 +369,12 @@ async function load() {
     statusEl.innerHTML = "";
     statusEl.appendChild(statusPill(data.profile.status));
 
-    publishBtn.disabled = false;
+    publishBtn.disabled = true;
+    publishBtn.textContent = data.profile.status === "Published"
+      ? "Live on private TV"
+      : (data.profile.source_type === "reference-catalog"
+        ? "Awaiting private TV release"
+        : "Public publishing disabled");
     snipLink.href = `snip.html?profile_id=${encodeURIComponent(data.profile.profile_id)}`;
     if (reextractBtn) {
       reextractBtn.hidden = !data.profile.source_pdf_drive_id;
@@ -635,61 +640,7 @@ async function onReextract() {
 
 async function onPublish() {
   if (!state.profile) return;
-
-  // 1) Flush any pending edits first so we publish the latest version.
-  if (saveDebounce) { clearTimeout(saveDebounce); saveDebounce = null; }
-  await saveNow();
-
-  // 2) Confirm with the user.
-  const breedName = state.breed && state.breed.breed_name ? state.breed.breed_name : "";
-  const groomType = state.profile.groom_type || "";
-  const ok = await confirmDialog({
-    title: "Publish profile?",
-    body: "This pushes the current draft of " + breedName + " / " + groomType + " to GitHub Pages so the TV display can pick it up.",
-    confirmLabel: "Publish",
-  });
-  if (!ok) return;
-
-  const originalLabel = publishBtn.textContent;
-  publishBtn.disabled = true;
-  publishBtn.textContent = "Publishing...";
-  saveEl.textContent = "Publishing...";
-
-  try {
-    const result = await api(
-      "publish_profile",
-      {
-        profile_id: state.profile.profile_id,
-        expected_version: state.profile.current_version,
-      },
-      { timeoutMs: 120000 },
-    );
-    const imgs = result.images_pushed != null ? result.images_pushed : 0;
-    toastSuccess("Published \u2014 " + imgs + " image(s) pushed.");
-    saveEl.textContent = "";
-    await load();
-  } catch (err) {
-    saveEl.textContent = "";
-    if (err instanceof ApiError && err.code === "VALIDATION_FAILED") {
-      toastError(err.message || "Profile failed validation \u2014 fix issues and try again.");
-    } else if (err instanceof ApiError && err.code === "GITHUB_FAILED") {
-      toastError("GitHub push failed \u2014 check GITHUB_PAT in Apps Script Properties.");
-    } else if (err instanceof ApiError && err.code === "CONFLICT") {
-      const reload = await confirmDialog({
-        title: "Edited elsewhere",
-        body: "This profile was changed in another tab since the last save. Reload to pull the latest?",
-        confirmLabel: "Reload",
-      });
-      if (reload) location.reload();
-    } else if (err instanceof ApiError) {
-      toastError(err.message || "Publish failed.");
-    } else {
-      toastError("Publish failed \u2014 please try again.");
-    }
-  } finally {
-    publishBtn.disabled = false;
-    publishBtn.textContent = originalLabel || "Publish";
-  }
+  toastError("Profiles go live through a verified private TV release. Use the Private TV page after deployment.");
 }
 
 function escapeText(s) { return String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }

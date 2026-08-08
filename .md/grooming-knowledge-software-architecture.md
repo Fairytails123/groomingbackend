@@ -1,7 +1,7 @@
 # Fairy Tails Grooming Knowledge Software — Architecture & Build Plan
 
 **Owner:** Kamal (Fairy Tails K9 Centre)
-**Status:** Working spec, v3.11 (private salon-TV display live at `https://auto.thefairytails.co.uk/salon-tv/`; full book knowledge and exact breed illustrations integrated).
+**Status:** Working spec, v3.12 (private salon-TV display and backend publication control plane aligned at `https://auto.thefairytails.co.uk/salon-tv/`).
 **Last updated:** 8 August 2026
 
 ---
@@ -142,6 +142,23 @@ actual TV (Hisense 40" 40E4QTUK FHD, 1920×1080, Vidaa browser).
   Breed knowledge and book illustrations never use the legacy public image
   publisher. Deployment keeps a complete prior release and compose backup for
   rollback, and recreates only the salon-TV container.
+- #49 **Backend publication state is reconciled from verified private-TV
+  releases, never from the retired public GitHub publisher (2026-08-08).** A
+  hash-only release-registration JSON records the exact private export
+  manifest, checksum manifest and every per-breed pack SHA-256 after the
+  matching bundle has been deployed and independently verified. The new
+  authenticated `register_private_tv_release` operation validates the complete
+  approved reference-catalogue slug set, source-PDF identity, profile links and
+  existing-profile collision coverage before a single bounded Sheets write
+  marks linked profiles `Published`. `Private TV Releases` is an append-only
+  release ledger; `Groom Profiles` records `publication_target`, release ID and
+  pack hash, and Version History records each transition. Re-registering the
+  same release is idempotent; a reused release ID with different hashes fails
+  closed. Reference profiles can never enter the legacy GitHub publisher, and
+  all legacy public publishing is disabled unless the explicit emergency
+  `ALLOW_LEGACY_PUBLIC_PUBLISH=TRUE` Script Property is deliberately set. The
+  admin navigation and dashboard now describe Private TV releases rather than
+  implying that GitHub Pages is the TV runtime.
 
 **Deployment state (2026-08-08):**
 - TV display: `https://auto.thefairytails.co.uk/salon-tv/` — private PIN host;

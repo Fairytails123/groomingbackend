@@ -13,10 +13,10 @@
 //   - oldest_drafts (limit=5, oldest updated_at first)
 //   - recently_updated (limit=3, newest updated_at first, non-Archived)
 //
-// "ready_to_publish" reuses the same checks as op_publish_profile (5 core
-// sections present + non-empty, main image with valid crop bounds, valid
-// groom_type, breed has slug). Pre-loads sheets once so the per-Draft
-// readiness check is O(profiles) not O(profiles * sheet-reads).
+// "ready_to_publish" now means pending inclusion in a verified private-TV
+// release for approved reference profiles. The legacy GitHub publisher is
+// disabled by default; its old readiness rules are considered only when the
+// explicit ALLOW_LEGACY_PUBLIC_PUBLISH escape hatch is set.
 
 function op_dashboard_summary(body) {
   const { rows: breeds } = readSheet_("Breeds");
@@ -24,6 +24,7 @@ function op_dashboard_summary(body) {
   const { rows: sections } = readSheet_("Groom Knowledge");
   const { rows: images } = readSheet_("Images");
   const { rows: renders } = readSheet_("Page Renders");
+  const { rows: referenceEntries } = readSheet_("Reference Entries");
 
   const breedsById = new Map();
   for (const b of breeds) {
@@ -48,13 +49,21 @@ function op_dashboard_summary(body) {
   const rendersById = new Map();
   for (const r of renders) rendersById.set(r.page_render_id, r);
 
+  const approvedReferenceProfiles = new Set(referenceEntries
+    .filter((entry) => entry.review_status === "approved" && entry.profile_id)
+    .map((entry) => entry.profile_id));
+  const legacyPublishEnabled = PropertiesService.getScriptProperties()
+    .getProperty("ALLOW_LEGACY_PUBLIC_PUBLISH") === "TRUE";
+
   let published = 0, needsReview = 0, drafts = 0, readyToPublish = 0;
   for (const p of profiles) {
     if (p.status === "Archived") continue;
     if (p.status === "Published") published++;
     if (p.status === "Needs Review") needsReview++;
-    if (p.status === "Draft") {
-      drafts++;
+    if (p.status === "Draft") drafts++;
+    if (p.status !== "Published" && approvedReferenceProfiles.has(p.profile_id)) {
+      readyToPublish++;
+    } else if (p.status === "Draft" && legacyPublishEnabled) {
       const breed = breedsById.get(p.breed_id);
       if (breed && isProfilePublishable_(p, breed, sectionsByProfile, imagesByProfile, rendersById)) {
         readyToPublish++;

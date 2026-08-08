@@ -43,6 +43,8 @@ const OP_REGISTRY = {
   publish_profile:       op_publish_profile,
   unpublish_profile:     op_unpublish_profile,
   list_drafts:           op_list_drafts,
+  register_private_tv_release: op_register_private_tv_release,
+  private_tv_release_status:   op_private_tv_release_status,
 
   // Images (Week 3 — pre-Cropper. Stage 3 adds save_crop)
   save_image_record:     op_save_image_record,

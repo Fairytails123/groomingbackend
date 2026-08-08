@@ -212,15 +212,27 @@ The browser drives the whole intake sequence: pdf.js renders pages locally, Apps
 
 ### Publish
 
+#### `op: "register_private_tv_release"`
+**Request:** `{ op, auth_token, release:{ release_id, manifest_sha256, checksums_sha256, source_pdf_sha256, generated_at, breed_count, profile_count, section_count, image_count, breed_pack_sha256:{ "breed-slug":"<sha256>", ... } } }`
+**Behaviour:** reconciles the backend with an already-deployed, independently verified private salon-TV release. It validates that the release contains exactly the approved reference-catalogue breed set, that every linked profile is a non-archived `reference-catalog` profile, and that every intentionally unlinked entry is covered by an existing Published profile. It records the release in `Private TV Releases`, updates linked profiles to `Published` with `publication_target:"private-tv"`, and writes Version History rows in a bounded batch. It never uploads text or images to GitHub. Re-registering an identical release is idempotent; a reused release ID with different hashes returns `CONFLICT`.
+
+#### `op: "private_tv_release_status"`
+**Request:** `{ op, auth_token }`
+**Response:** the latest registered release ID, integrity hashes, counts, protected live URL and reconciliation timestamps. The per-breed hash map remains in the release ledger and is not returned to the browser.
+
 #### `op: "publish_profile"` (sync ≤30s, else async)
 **Request:** `{ op: "publish_profile", auth_token, profile_id, expected_version }`
 **Behaviour:** runs the atomic publish (spec §6.10) — validate, stage, commit JSON + images to GitHub, write Sheets, enqueue session-pack rewrite.
 **Response (success):** `{ profile_id, published_pack_url, today_json_refreshed: true }`
 **Errors:** `CONFLICT`, `VALIDATION_FAILED` (e.g. `no_main_image`, `missing_core_section`), `GITHUB_FAILED`, `TIMEOUT`.
 
+**Private-TV safety:** reference-catalogue profiles return `PRIVATE_TV_RELEASE_REQUIRED`. The legacy public GitHub publisher returns `PUBLIC_PUBLISH_DISABLED` unless the emergency Script Property `ALLOW_LEGACY_PUBLIC_PUBLISH` is explicitly set to `TRUE`; it is not part of the normal private-TV workflow.
+
 #### `op: "unpublish_profile"`
 **Request:** `{ op: "unpublish_profile", auth_token, profile_id }`
 **Behaviour:** removes JSON from GitHub Pages, flips status back to `Draft`, rewrites `today.json` if needed.
+
+Profiles with `publication_target:"private-tv"` return `PRIVATE_TV_RELEASE_REQUIRED`; their status must be changed only after a verified private TV release has removed or superseded the pack.
 
 ### Job control
 

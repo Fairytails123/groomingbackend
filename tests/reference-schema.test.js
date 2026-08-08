@@ -16,10 +16,15 @@ vm.runInContext(
 );
 
 const schemas = JSON.parse(JSON.stringify(context.__schemas));
-assert.equal(Object.keys(schemas).length, 16);
+assert.equal(Object.keys(schemas).length, 17);
 assert.ok(schemas["Reference Sources"].includes("source_pdf_sha256"));
 assert.ok(schemas["Reference Entries"].includes("record_sha256"));
 assert.ok(schemas["Reference Entries"].includes("stored_record_sha256"));
+assert.ok(schemas["Groom Profiles"].includes("publication_target"));
+assert.ok(schemas["Groom Profiles"].includes("private_tv_release_id"));
+assert.ok(schemas["Groom Profiles"].includes("private_tv_pack_sha256"));
+assert.ok(schemas["Private TV Releases"].includes("manifest_sha256"));
+assert.ok(schemas["Private TV Releases"].includes("breed_pack_sha256_json"));
 assert.equal(context.__ids.reference, "REF");
 
 console.log("reference schema regression test passed");
