@@ -1,10 +1,20 @@
 # HANDOVER — Fairy Tails Grooming Knowledge Software
 
-> **Read this in full before touching anything.** Then the spec at `.md/grooming-knowledge-software-architecture.md` (v3.11). Memory at `<.claude>/projects/.../memory/MEMORY.md` has user/feedback/reference notes that are authoritative for *how* to work on this project.
+> **Read this in full before touching anything.** Then the spec at `.md/grooming-knowledge-software-architecture.md` (v3.12). Memory at `<.claude>/projects/.../memory/MEMORY.md` has user/feedback/reference notes that are authoritative for *how* to work on this project.
 >
-> **System state — private salon TV LIVE.** The whole TV application is PIN-gated at `https://auto.thefairytails.co.uk/salon-tv/`; its private export contains the complete finalized book catalogue and exact breed illustrations. The former public GitHub Pages site is disabled. Apps Script Web App remains at Version 18 (`2026-08-08`). Spec at v3.11.
+> **System state — private salon TV LIVE.** The whole TV application is PIN-gated at `https://auto.thefairytails.co.uk/salon-tv/`; its private export contains the complete finalized book catalogue and exact breed illustrations. The former public GitHub Pages site is disabled. Apps Script Web App is at Version 19 (`2026-08-08`). Spec at v3.12.
 
-**Last updated:** 2026-08-08 — the full-book private reference catalogue is imported in admin and independently compiled into the PIN-hosted salon TV. Apps Script Version 18 remains on the existing persistent Web App URL. No reference entry or generated Pet Groom draft was published through the legacy public pipeline.
+**Last updated:** 2026-08-08 — the back end now records the sealed private TV release as the publication target. All 155 breed profiles are `Published`; the dashboard reads 155 live, 0 needs review, 0 pending TV release and 0 drafts. Apps Script Version 19 remains on the existing persistent Web App URL. Legacy public GitHub publishing is disabled by default.
+
+## 2026-08-08 — backend reconciled with the private TV release (Apps Script v19)
+
+- Commit `176a812` adds a private-release control plane without uploading book text or images to public GitHub Pages. The admin `Private TV` page accepts a hash-only registration manifest and records the sealed release ID, pack hashes and aggregate counts.
+- Release `20260808-knowledge-v2` reconciled all 155 profiles: 154 moved from `Needs Review` to `Published`, and the existing published Miniature Schnauzer profile was linked to the same private release. Final live read-back: 155 published, 0 needs review, 0 pending TV release and 0 drafts.
+- The reconciliation is idempotent. Re-registering the same release produced no additional profile transition and did not duplicate the `private_tv_publish` history entry.
+- `Profiles` now records `publication_target`, `private_tv_release_id` and `private_tv_pack_sha256`; the new `Private TV Releases` sheet holds the release ledger. The workbook therefore has 17 sheets.
+- Reference-derived profiles fail closed if sent through the legacy `publish_profile` route. All legacy public GitHub publishing is disabled unless the explicit emergency Script Property `ALLOW_LEGACY_PUBLIC_PUBLISH=TRUE` is set; private-TV profiles cannot be legacy-unpublished.
+- The sealed TV export was not modified. Public `groomingbackend` received no breed packs or book illustrations; the live TV continues to serve the already-verified private 155-pack, 271-image release behind its server-side PIN gate.
+- Production verification covered the authenticated admin release flow, dashboard and library totals, a profile-level publication/read-history check, idempotent retry, operation registration, GitHub Pages admin propagation, regression tests and the private/public HTTP boundary checks.
 
 ## 2026-08-08 — private salon TV and exact multi-angle illustrations live
 
@@ -61,7 +71,7 @@ After v8: PRF-001 (Miniature Schnauzer / Pet Groom) extracted 14 vision findings
    `C:\Users\FT Manager\OneDrive\Business\CODING\groomingtv\`. Skip this
    step only if the work is purely back-end (Apps Script / Sheets / n8n).
 3. **Skim memory:** `<.claude>/projects/.../memory/MEMORY.md` (entries are short).
-4. **Open the spec:** `.md/grooming-knowledge-software-architecture.md` v3.11, §0a is the diff-from-current-truth. Decision #48 is the private TV and exact-illustration delivery contract.
+4. **Open the spec:** `.md/grooming-knowledge-software-architecture.md` v3.12, §0a is the diff-from-current-truth. Decisions #48–49 are the private TV delivery and publication-control contracts.
 5. **Sanity check the live system** — both halves:
    ```bash
    curl -s -o /dev/null -w "admin login:  %{http_code}\n" \
@@ -107,14 +117,14 @@ Everything below is live unless flagged ⏳ pending or 🟡 not-yet-verified.
 | **TV display GitHub repo** | `Fairytails123/groomingtv` (private; Pages disabled) |
 | **TV display live URL** | https://auto.thefairytails.co.uk/salon-tv/ — server-side PIN gate, private same-origin breed packs and illustrations. Local working copy at `C:\Users\FT Manager\OneDrive\Business\CODING\groomingtv\` |
 | Apps Script project | https://script.google.com/home/projects/1sxgzOrmd2OEmuJmMeoW15Vbb1GkbO1GIhs3h0afmOafcgOb1tDErvIA1/edit (project ID `1sxgzOrmd2OEmuJmMeoW15Vbb1GkbO1GIhs3h0afmOafcgOb1tDErvIA1`) |
-| Apps Script Web App URL | `https://script.google.com/macros/s/AKfycby5CU8J-xyCn38ruoe_HdDswRBCNcxXLO9O2AyiiHDt781mwsJzWeyyahySfwjpq4ZL/exec` (deployment Version 18, persistent — same URL across all v1→v18 redeploys) |
+| Apps Script Web App URL | `https://script.google.com/macros/s/AKfycby5CU8J-xyCn38ruoe_HdDswRBCNcxXLO9O2AyiiHDt781mwsJzWeyyahySfwjpq4ZL/exec` (deployment Version 19, persistent — same URL across all v1→v19 redeploys) |
 | n8n workflow | https://auto.thefairytails.co.uk/workflow/6xHWEX3f9zrWtDDa ("Dog Grooming Back End") — self-hosted n8n on the Hostinger VPS; migrated off n8n Cloud 2026-07-05 |
 
 ### Data + storage
 
 | What | Where |
 |---|---|
-| Sheets workbook ("Grooming Backend") | https://docs.google.com/spreadsheets/d/1SZtkWUjXXgRIO5CzB_8NBeJ0_SEEq5k3IMAEPBZN01s/edit (ID `1SZtkWUjXXgRIO5CzB_8NBeJ0_SEEq5k3IMAEPBZN01s`) — **16 sheets populated** (14 prior sheets plus `Reference Sources` and `Reference Entries`) |
+| Sheets workbook ("Grooming Backend") | https://docs.google.com/spreadsheets/d/1SZtkWUjXXgRIO5CzB_8NBeJ0_SEEq5k3IMAEPBZN01s/edit (ID `1SZtkWUjXXgRIO5CzB_8NBeJ0_SEEq5k3IMAEPBZN01s`) — **17 sheets populated** (14 prior sheets plus `Reference Sources`, `Reference Entries` and `Private TV Releases`) |
 | Drive root folder ("Dog Grooming Back end") | https://drive.google.com/drive/folders/1Ry1YbBVhPwlvb6WFnsxiEBPvBzDDlNUk (ID `1Ry1YbBVhPwlvb6WFnsxiEBPvBzDDlNUk`) |
 | Per-breed folders | Auto-created under root by `op_save_page_render` / `op_save_crop` / `op_upload_pdf` / publish flow |
 
@@ -319,7 +329,7 @@ The breed working screen was redesigned same-day to an Apple-inspired layout via
 | Index.json live (TV search) | `curl -s https://fairytails123.github.io/groomingbackend/public/index.json \| jq '.breeds \| length'` | At least `1` |
 | Apps Script Web App reachable | The Web App URL serves a 302 to a `script.googleusercontent.com` echo URL on plain GET — that's normal Google interstitial behaviour. Easiest dispatcher check: log in via the admin site → DevTools Network tab → any successful op (e.g. `list_breeds`) shows `ok:true`. |
 | Login works | Visit login URL, password `fairytails22` | Lands on dashboard |
-| Sheets accessible | Open the Sheets workbook URL | 16 sheets visible, including `Reference Sources` and `Reference Entries` |
+| Sheets accessible | Open the Sheets workbook URL | 17 sheets visible, including `Reference Sources`, `Reference Entries` and `Private TV Releases` |
 | Drive root accessible | Open Drive root folder URL | One subfolder per breed digitised so far |
 | Phase 2 ops registered | Admin site → DevTools Console → `(await fetch("https://script.google.com/macros/s/AKfycby5CU8J-xyCn38ruoe_HdDswRBCNcxXLO9O2AyiiHDt781mwsJzWeyyahySfwjpq4ZL/exec",{method:"POST",headers:{"Content-Type":"text/plain"},body:'{"op":"extract_sections"}'})).json()` | `{ok:false, error:{code:"UNAUTHORIZED",…}}` — op exists, no auth_token. NOT `code:"NOT_FOUND"` (which would mean the OP_REGISTRY isn't picking up the new op). |
 | Public op `log_backlog_hit` reachable | Same console snippet but `body:'{"op":"log_backlog_hit","raw_breed":""}'` | `{ok:false, error:{code:"VALIDATION_FAILED",…}}` — op exists and is public; empty `raw_breed` triggers the validation. NOT `UNAUTHORIZED` (would mean it's not in the public set) and NOT `NOT_FOUND`. |
